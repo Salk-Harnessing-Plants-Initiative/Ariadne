@@ -7,6 +7,8 @@ Trait measurement
 Time series
 '''
 
+
+
 import argparse
 import networkx as nx
 import math
@@ -18,6 +20,8 @@ import pickle
 import numpy as np
 from collections import Counter
 import copy
+from scipy.spatial import ConvexHull  # Import ConvexHull class
+
 
 # parser = argparse.ArgumentParser(description='select file')
 # parser.add_argument('-i', '--input', help='Full path to input file', required=True)
@@ -50,7 +54,7 @@ def make_graph(target):
                 for el in metadata:
                     if el != root_metadata:
                         child_metadata.append(el)
-                
+
                 if not child_metadata: # terminal node, no children
                     G.add_node(node_num, pos=coords)
                     parent = q.get()
@@ -76,7 +80,7 @@ def make_graph(target):
                             G.add_edge(node_num, parent[0], length=distance(G.nodes[node_num]['pos'], G.nodes[parent[0]]['pos']))
                         else:
                             print("Error: edge assignment failed")
-                        
+
                     for child in child_metadata:
                         q.put(
                             (node_num, list(map(int, child.strip('[]').split(','))))
@@ -195,7 +199,7 @@ def calc_len_PR(G, root_node):
                 if G.nodes[child]['LR_index'] is None:
                     # catch the last node in the PR, which won't appear in the iterator since it has no children
                     final = child
-    
+
     PRs.append(final)
 
     # calculate pairwise Euclidean distances and sum
@@ -217,7 +221,7 @@ def calc_root_len(G, nodes):
 
 
 def calc_len_LRs(H):
-    '''Find the total length of each LR type in the graph.'''    
+    '''Find the total length of each LR type in the graph.'''
     # minimum length (px) for LR to be considered part of the network
     # based on root hair emergence times
     # threshold = 117
@@ -240,7 +244,7 @@ def calc_len_LRs(H):
                 selected.append(node[0])
                 # make note of the root degree (should be the same for all nodes in loop)
                 current_degree = H.nodes[node[0]]['root_deg']
-        
+
         # to find the shallowest node in LR, we iterate through them
         # until we find the one whose parent has a lesser root degree
         sub = H.subgraph(selected)
@@ -294,7 +298,7 @@ def calc_len_LRs(H):
 
 
 def calc_density_LRs(G):
-    pass    
+    pass
     # add up to _n_ degrees
 
 
@@ -375,9 +379,116 @@ def pareto_calcs(H):
     }
 
     return results, front, randoms
-    
+
     # [mactual, sactual, plant_alpha, plant_scaling, mrand, srand, rand_alpha, rand_scaling], front, actual, randoms, mrand, srand
 
+### CONVEX HULL calculations
+
+
+from scipy.spatial import ConvexHull
+import numpy as np
+import networkx as nx
+import math
+
+def distance(p1, p2):
+    '''Compute 2D Euclidian distance between two (x,y) points.'''
+    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+
+
+from scipy.spatial import ConvexHull
+import numpy as np
+
+def calculate_convex_hull_area(G):
+    # Check if the graph has at least 3 nodes
+    if len(G.nodes) < 3:
+        print("The graph must have at least 3 nodes to calculate the convex hull.")
+        return None
+
+    # Get the positions of the nodes
+    positions = np.array([data['pos'] for node, data in G.nodes(data=True)])
+
+    # Calculate the convex hull
+    hull = ConvexHull(positions)
+
+    # Get the area of the convex hull
+    hull_area = hull.area
+
+    return hull_area
+
+def calc_len_LRs_with_distances(H):
+    '''Calculate the 2D Euclidean distance for each lateral root from the first node to the last node, excluding intermediate nodes, and return the total length of each LR type in the graph.'''
+    # minimum length (px) for LR to be considered part of the network
+    # based on root hair emergence times
+    # threshold = 117
+    threshold = 0
+
+    # dict of node ids : LR index, for each LR node
+    idxs = nx.get_node_attributes(H, 'LR_index')
+    idxs = {k:v for k,v in idxs.items() if v is not None} # drop empty (PR) nodes
+
+    num_LRs = max(idxs.values()) + 1
+
+    results = {}
+
+    for i in range(num_LRs):
+        # gather nodes corresponding to the current LR index
+        selected = []
+
+        for node in H.nodes(data='LR_index'):
+            if node[1] == i:
+                selected.append(node[0])
+                # make note of the root degree (should be the same for all nodes in loop)
+                current_degree = H.nodes[node[0]]['root_deg']
+
+        # to find the shallowest node in LR, we iterate through them
+        # until we find the one whose parent has a lesser root degree
+        sub = H.subgraph(selected)
+        for node in sub.nodes():
+            parent = list(H.predecessors(node))
+            # print(node, parent)
+            assert len(parent) == 1 # should be a tree
+            if H.nodes[parent[0]]['root_deg'] < current_degree:
+                sub_top = node
+
+        # now we can DFS to order all nodes by increasing depth
+        ordered = list(nx.dfs_tree(sub, sub_top).nodes())
+
+        # also include the parent of the shallowest node in the LR (the 'branch point')
+        parent = list(H.predecessors(ordered[0]))
+        assert len(parent) == 1
+
+        nodes_list = parent + ordered
+
+        # Calculate the distance for the LR
+        length = calc_root_len(H, nodes_list)
+
+        # Exclude intermediate nodes
+        if length < threshold:
+            H.remove_nodes_from(ordered)
+        else:
+            # Now we can calculate the Euclidean distance from the first node to the last node
+            # excluding intermediate nodes
+            first_node_pos = H.nodes[nodes_list[0]]['pos']
+            last_node_pos = H.nodes[nodes_list[-1]]['pos']
+            distance_lr = distance(first_node_pos, last_node_pos)
+
+            results[i] = [length, distance_lr]
+
+    assert nx.is_tree(H)
+    return results
+
+def find_lowermost_node_of_primary_root(G, root_node):
+    '''Find the lowermost node of the primary root.'''
+    descendants = nx.descendants(G, root_node)
+    lowermost_node = max(descendants, key=lambda node: G.nodes[node]['pos'][1])  # Find the node with the maximum y-coordinate
+    return G.nodes[lowermost_node]['pos']
+
+def calculate_distance(p1, p2):
+    '''Compute 2D Euclidean distance between two (x,y) points.'''
+    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+
+
+import numpy as np
 
 def analyze(G):
     '''Report basic root metrics for a given graph.'''
@@ -387,8 +498,6 @@ def analyze(G):
     # independent deep copy of G, with LRs below threshold excluded
     H = copy.deepcopy(G)
 
-    # print(G.nodes(data=True))
-    
     # find top ("root") node
     for node in H.nodes(data='pos'):
         # for some reason, this returns pos coords as a list and not a tuple. Didn't I save them as a tuple?
@@ -412,18 +521,78 @@ def analyze(G):
     # print('Set point angles are:', angles_LRs)
 
     # primary LR density
-    density_LRs = len_PR/num_LRs
-    # print('LR density is:', len_PR/num_LRs)
+    density_LRs = num_LRs/len_PR
+    # print('LR density is:', num_LRs/len_PR)
+
+    # Calculate the Euclidean distance between the uppermost node and the lowermost node of the primary root
+    uppermost_node_pos = H.nodes[root_node]['pos']
+    lowermost_node_pos = find_lowermost_node_of_primary_root(H, root_node)
+    distance_root = calculate_distance(uppermost_node_pos, lowermost_node_pos)
 
     results, front, randoms = pareto_calcs(H)
 
+
+# Calculate lateral root distances with lengths and first-to-last distances
+    lateral_root_info = calc_len_LRs_with_distances(H)
+    num_LRs = len(lateral_root_info)
+
+    # Extract lengths and distances
+    lens_LRs = [info[0] for info in lateral_root_info.values()]
+    distances_LRs = [info[1] for info in lateral_root_info.values()]
+
+    # Calculate mean and median
+    mean_LR_lengths = np.mean(lens_LRs)
+    median_LR_lengths = np.median(lens_LRs)
+    mean_LR_angles = np.mean(angles_LRs)
+    median_LR_angles = np.median(angles_LRs)
+    mean_LR_distances = np.mean(distances_LRs)
+    median_LR_distances = np.median(distances_LRs)
+    sum_LR_distances = np.sum(distances_LRs)
+
+# Calculate the total distance (sum of LR distances and PR minimal distance)
+    total_distance = sum_LR_distances + distance_root
+
+
+    # Add lateral root lengths and distances to the results dictionary
+    results['Mean LR lengths'] = mean_LR_lengths
+    results['Median LR lengths'] = median_LR_lengths
+    results['Mean LR angles'] = mean_LR_angles
+    results['Median LR angles'] = median_LR_angles
+    results['Mean LR minimal distances'] = mean_LR_distances
+    results['Median LR minimal distances'] = median_LR_distances
+    results['sum LR minimal distances'] = sum_LR_distances
+    results['PR_minimal_distances'] = distance_root
     results['PR length'] = len_PR
     results['LR count'] = num_LRs
     results['LR lengths'] = lens_LRs
     results['LR angles'] = angles_LRs
-    results['primary LR density'] = density_LRs
-    
+    results['LR minimal distances'] = distances_LRs
+    results['LR density'] = density_LRs
+    results['Total minimal Distance'] = total_distance  # Add the total distance to the results
+
+
+
+
+# Calculate the material cost (total root length)
+    Total_root_length = len_PR + sum(lens_LRs)
+
+
+    # Calculate the ratio of the material cost with the Total minimal Distance
+    material_distance_ratio = Total_root_length / total_distance
+
+    results['Material/TotalDistance Ratio'] = material_distance_ratio
+
+
+    # Calculating convex hull area
+    points = np.array([H.nodes[node]['pos'] for node in H.nodes()])
+    hull = ConvexHull(points)
+    convex_hull_area = hull.volume  # Convex hull area in 2D is the same as its volume
+
+    results['Convex Hull Area'] = convex_hull_area
+
     return results, front, randoms
+
+
 
     # think about dynamics/time-series
     # distance of center-of-mass of randoms to the pareto front
