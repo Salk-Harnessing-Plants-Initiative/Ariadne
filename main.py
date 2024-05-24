@@ -701,7 +701,7 @@ class Tree:
     def popup(self):
         '''Popup menu for plant ID assignment.'''
         top = tk.Toplevel(base)
-        top.geometry('350x200')
+        top.geometry('350x500')
 
         label = tk.Label(top, text="Please select a plant ID:")
         label.pack(side='top', fill='both', expand=True)
@@ -719,6 +719,16 @@ class Tree:
         tk.Radiobutton(top, text='D', variable=v, value='D', bg='white', fg='black').pack()
 
         tk.Radiobutton(top, text='E', variable=v, value='E', bg='white', fg='black').pack()
+
+        tk.Radiobutton(top, text='F', variable=v, value='E', bg='white', fg='black').pack()
+
+        tk.Radiobutton(top, text='G', variable=v, value='E', bg='white', fg='black').pack()
+
+        tk.Radiobutton(top, text='H', variable=v, value='E', bg='white', fg='black').pack()
+
+        tk.Radiobutton(top, text='I', variable=v, value='E', bg='white', fg='black').pack()
+
+        tk.Radiobutton(top, text='J', variable=v, value='E', bg='white', fg='black').pack()
 
         def updater():
             top.destroy()
