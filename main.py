@@ -872,57 +872,59 @@ class AnalyzerUI(tk.Frame):
         else:
             self.output_path = Path(tk.filedialog.askdirectory(parent=self.base, initialdir='./', title='Select an output folder:'))
 
-            # create a csv to store analysis results
-            timestamp = datetime.now()
-            report_dest = self.output_path / f"report_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
+    # create a csv to store analysis results
+        timestamp = datetime.now()
+        report_dest = self.output_path / f"report_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
 
-            # spawn relevant buttons
-            # self.clear_button.pack(side='top', expand=True)
-            # self.analyze_button.pack(side='top', expand=True)
+    # add current file count
+        self.output_info = f'Current files: ({len(self.tree_paths)})'
+        i = 1
 
-            # add current file count
-            self.output_info = f'Current files: ({len(self.tree_paths)})'
-            i = 1
+        for json_file in self.tree_paths:
+            graph_name = json_file.split("/")[-1]
+            graph_name_noext = graph_name[:-5]
+            pareto_name = graph_name_noext + '_pareto.png'
+            # plot_name = graph_name_noext + '_tree.png'
+            pareto_path = self.output_path / pareto_name
 
-            for json_file in self.tree_paths:
-                graph_name = json_file.split("/")[-1]
-                graph_name_noext = graph_name[:-5]
-                pareto_name = graph_name_noext + '_pareto.png'
-                # plot_name = graph_name_noext + '_tree.png'
-                pareto_path = self.output_path / pareto_name
+        # update current file count list
+            self.output_info = self.output_info + '\n' + graph_name
+            self.output.config(text=self.output_info)
 
-                # update current file count list
-                self.output_info = self.output_info + '\n' + graph_name
-                self.output.config(text=self.output_info)
+        # load and process graph data
+            with open(json_file, mode='r') as h:
+                data = json.load(h)
+                graph = json_graph.adjacency_graph(data)
 
-                # load and process graph data
-                with open(json_file, mode='r') as h:
-                    data = json.load(h)
-                    graph = json_graph.adjacency_graph(data)
+            # perform analysis
+                results, front, randoms = quantify.analyze(graph)
+                results['filename'] = graph_name_noext
 
-                    # perform analysis
-                    results, front, randoms = quantify.analyze(graph)
-                    results['filename'] = graph_name_noext
-
-                    with open(report_dest, 'a', encoding='utf-8', newline='') as csvfile:
+            # Open the CSV file and write the header only once
+                with open(report_dest, 'a', encoding='utf-8', newline='') as csvfile:
+                    if i == 1:  # Write header only for the first file
                         w = csv.DictWriter(csvfile, fieldnames=results.keys())
                         w.writeheader()
-                        w.writerow(results)
 
-                    # make pareto plot and save
-                    quantify.plot_all(front, [results['material cost'], results['wiring cost']], randoms, results['material (random)'], results['wiring (random)'], pareto_path)
+                # Write results to the CSV for each file
+                    w = csv.DictWriter(csvfile, fieldnames=results.keys())
+                    w.writerow(results)
+
+            # make pareto plot and save
+                quantify.plot_all(front, [results['material cost'], results['wiring cost']], randoms, results['material (random)'], results['wiring (random)'], pareto_path)
 
                 print(f"Processed file {i}/{len(self.tree_paths)}")
                 i += 1
 
-            # show confirmation message
-            print('Finished.')
+    # show confirmation message
+        print('Finished.')
 
 
     def clear(self):
         '''Clean up a previously imported file.'''
         # take care of self.path, self.results, buttons, etc
         pass
+
 
 
 if __name__ == "__main__":
