@@ -98,7 +98,7 @@ class TracerUI(tk.Frame):
         self.button_undo = tk.Button(self.menu, text='Undo (Ctrl-z)', command=None, state='disabled')
         self.button_save = tk.Button(self.menu, text='Save (g)', command=None, state='disabled')
         self.button_show = tk.Button(self.menu, text='Show/hide tree (t)', command=None, state='disabled')
-        self.button_change_root = tk.Button(self.menu, text='Change Root', command=self.change_root)
+        self.button_change_root = tk.Button(self.menu, text='Change Root (c)', command=None, state='disabled')
 
         self.button_import.pack(fill='x', side='top')
         self.button_prev.pack(fill='x', side='top')
@@ -120,6 +120,7 @@ class TracerUI(tk.Frame):
         self.tree_flag = 'normal' # used for hiding/showing tree's edges
         self.colors = 0 # tracks LR color palette index
 
+
         # canvas scrollbars
         self.xsb_frame = tk.Frame(self.frame)
         self.ysb_frame = tk.Frame(self.frame)
@@ -139,6 +140,9 @@ class TracerUI(tk.Frame):
         # keybinds for canvas mouse panning (mac)
         self.canvas.bind("<Control-ButtonPress-1>", self.scroll_start)
         self.canvas.bind("<Control-B1-Motion>", self.scroll_move)
+
+        # keybinds for changing root
+        self.canvas.bind('<KeyRelease>', lambda event: self.change_root('c'))
 
         # bottom statusbar
         self.statusbar_frame = tk.Frame(self.frame)
@@ -233,6 +237,9 @@ class TracerUI(tk.Frame):
 
         self.button_insert.config(command=self.insert, state='normal')
         self.canvas.bind('i', self.insert)
+
+        self.button_change_root.config(command=self.change_root, state='normal')
+        self.canvas.bind('<KeyRelease-c>', self.change_root)
 
         self.button_show.config(command=self.show_tree, state='normal')
         self.canvas.bind('t', self.show_tree)
@@ -383,7 +390,8 @@ class TracerUI(tk.Frame):
             if not self.prox_override:
                 self.override()
 
-    def change_root(self):
+
+    def change_root(self, event):
         '''Clear current tree and prompt for a new plant ID.'''
     # Destroy all nodes and edges from the current tree
         for node in self.tree.nodes:
@@ -394,6 +402,7 @@ class TracerUI(tk.Frame):
 
     # Prompt for a new plant ID assignment and create a new tree
         self.tree.popup()
+
 
     def draw_edge(self, parent, child):
         '''Draw an edge between 2 nodes, and add it to the tree.'''
@@ -720,15 +729,15 @@ class Tree:
 
         tk.Radiobutton(top, text='E', variable=v, value='E', bg='white', fg='black').pack()
 
-        tk.Radiobutton(top, text='F', variable=v, value='E', bg='white', fg='black').pack()
+        tk.Radiobutton(top, text='F', variable=v, value='F', bg='white', fg='black').pack()
 
-        tk.Radiobutton(top, text='G', variable=v, value='E', bg='white', fg='black').pack()
+        tk.Radiobutton(top, text='G', variable=v, value='G', bg='white', fg='black').pack()
 
-        tk.Radiobutton(top, text='H', variable=v, value='E', bg='white', fg='black').pack()
+        tk.Radiobutton(top, text='H', variable=v, value='H', bg='white', fg='black').pack()
 
-        tk.Radiobutton(top, text='I', variable=v, value='E', bg='white', fg='black').pack()
+        tk.Radiobutton(top, text='I', variable=v, value='I', bg='white', fg='black').pack()
 
-        tk.Radiobutton(top, text='J', variable=v, value='E', bg='white', fg='black').pack()
+        tk.Radiobutton(top, text='J', variable=v, value='J', bg='white', fg='black').pack()
 
         def updater():
             top.destroy()
