@@ -141,9 +141,6 @@ class TracerUI(tk.Frame):
         self.canvas.bind("<Control-ButtonPress-1>", self.scroll_start)
         self.canvas.bind("<Control-B1-Motion>", self.scroll_move)
 
-        # keybinds for changing root
-        self.canvas.bind('<KeyRelease>', lambda event: self.change_root('c'))
-
         # bottom statusbar
         self.statusbar_frame = tk.Frame(self.frame)
         self.statusbar = tk.Label(self.statusbar_frame, text='Statusbar', bd=1, relief='sunken', anchor='w')
@@ -239,7 +236,7 @@ class TracerUI(tk.Frame):
         self.canvas.bind('i', self.insert)
 
         self.button_change_root.config(command=self.change_root, state='normal')
-        self.canvas.bind('<KeyRelease-c>', self.change_root)
+        self.canvas.bind('c', self.change_root)
 
         self.button_show.config(command=self.show_tree, state='normal')
         self.canvas.bind('t', self.show_tree)
@@ -391,7 +388,7 @@ class TracerUI(tk.Frame):
                 self.override()
 
 
-    def change_root(self, event):
+    def change_root(self, event=None):
         '''Clear current tree and prompt for a new plant ID.'''
     # Destroy all nodes and edges from the current tree
         for node in self.tree.nodes:
