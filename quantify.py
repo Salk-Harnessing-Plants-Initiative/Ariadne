@@ -156,35 +156,9 @@ def save_plot(path, name, title):
     for i in randoms:
         plt.plot(i[0], i[1], marker='+', color='green', markersize=4)
 
-    # plt.savefig(name, bbox_inches='tight', dpi=300)
+
     plt.show()
 
-# path, name, title
-# targets = [
-#     ['/home/kian/Lab/9_20200205-214859_003_plantB_day13.txt', '9-B-13-rand.jpg', '+Fe_B_Day13'],
-#     ['/home/kian/Lab/9_20200205-214859_003_plantE_day13.txt', '9-E-13-rand.jpg', '+Fe_E_Day13'],
-#     ['/home/kian/Lab/13_20200205-214859_005_plantB_day12.txt', '13-B-12-rand.jpg', '-Fe_B_Day12'],
-#     ['/home/kian/Lab/13_20200205-214859_005_plantE_day12.txt', '13-E-12-rand.jpg', '-Fe_E_Day12'],
-#     ['/home/kian/Lab/25_20200205-215844_026_plantB_day14.txt', '25-B-14-rand.jpg', '+N_B_Day14'],
-#     ['/home/kian/Lab/25_20200205-215844_026_plantD_day14.txt', '25-D-14-rand.jpg', '+N_D_Day14'],
-#     ['/home/kian/Lab/29_20200205-215844_028_plantA_day14.txt', '29-A-14-rand.jpg', '-N_A_Day14'],
-#     ['/home/kian/Lab/29_20200205-215844_028_plantB_day14.txt', '29-B-14-rand.jpg', '-N_B_Day14']
-# ]
-
-# for i in targets:
-#     save_plot(i[0], i[1], i[2])
-
-# save_plot('/Users/kianfaizi/projects/test-roots/BUGS/graph breaking and str/A/1_20200205-215035_009_plantA_day8.txt', 'test.jpg', 'test')
-
-# def pickle_test(target):
-#     with open(target, 'rb') as h:
-#         data = pickle.load(h)
-#         print(data)
-#         print(data.nodes)
-#         print(data.edges)
-
-# show_skel('/Users/kianfaizi/projects/ariadne/color-final_plantB_day1.txt')
-# pickle_test('/Users/kianfaizi/projects/ariadne/color-final_plantE_day1.txt')
 
 def calc_len_PR(G, root_node):
     '''For a given graph and the uppermost node, calculate the PR length.'''
@@ -380,7 +354,7 @@ def pareto_calcs(H):
 
     return results, front, randoms
 
-    # [mactual, sactual, plant_alpha, plant_scaling, mrand, srand, rand_alpha, rand_scaling], front, actual, randoms, mrand, srand
+   
 
 ### CONVEX HULL calculations
 
@@ -418,8 +392,7 @@ def calculate_convex_hull_area(G):
 def calc_len_LRs_with_distances(H):
     '''Calculate the 2D Euclidean distance for each lateral root from the first node to the last node, excluding intermediate nodes, and return the total length of each LR type in the graph.'''
     # minimum length (px) for LR to be considered part of the network
-    # based on root hair emergence times
-    # threshold = 117
+
     threshold = 0
 
     # dict of node ids : LR index, for each LR node
@@ -500,12 +473,11 @@ def analyze(G):
 
     # find top ("root") node
     for node in H.nodes(data='pos'):
-        # for some reason, this returns pos coords as a list and not a tuple. Didn't I save them as a tuple?
+       
         if node[1] == [0,0]:
             root_node = node[0]
     # the pareto functions are hardcoded to assume node 0 is the top.
-    # (i can always go back and modify them to accept root_node as an arg)
-    # I think this should always be true, but maybe there's an edge case I'm not considering (undos, etc).
+
     assert root_node == 0
 
     # PR len
@@ -573,7 +545,7 @@ def analyze(G):
 
 
 
-# Calculate the material cost (total root length)
+    # Calculate the material cost (total root length)
     Total_root_length = len_PR + sum(lens_LRs)
 
 
@@ -594,9 +566,4 @@ def analyze(G):
 
 
 
-    # think about dynamics/time-series
-    # distance of center-of-mass of randoms to the pareto front
-    # literally purchase a nice mouse for matt
-    # add secondary LR density
-    # add total root length.
-    # assert that the sum of PR and LR lengths == mactual, for sanity
+

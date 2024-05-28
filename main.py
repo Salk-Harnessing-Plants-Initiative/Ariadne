@@ -158,8 +158,6 @@ class TracerUI(tk.Frame):
         # highlighting/insertion tests
         self.highlight_choice = 0 # tracks highlighted root when cycling
         self.canvas.bind("<Right>", self.cycle_highlights)
-        # self.canvas.bind('x', self.EG_highlight_root)
-        # self.canvas.bind('<Button 2>', self.click_info)
 
         # place widgets using grid
         self.menu.grid(row=1, column=0, rowspan=3, sticky='news')
@@ -198,7 +196,6 @@ class TracerUI(tk.Frame):
 
     def import_image(self):
         '''Query user for an input file and load it onto the canvas.'''
-        ## think about what happens if this is called multiple times in a session!
         self.path = tk.filedialog.askopenfilename(parent=self.base, initialdir='./', title='Select an image file:')
         self.title_label.config(text=f'Tracing {self.path}')
         self.file = Image.open(self.path)
@@ -210,7 +207,7 @@ class TracerUI(tk.Frame):
         self.frame_id = self.canvas.create_image(0,0,image=self.img, anchor='nw')
 
         # current tree
-        self.tree = Tree(self.path) # instantiate first tree ## think about clearing/overwriting
+        self.tree = Tree(self.path) # instantiate first tree 
 
         self.history = deque(maxlen=6) # gets updated on every add_node()
 
@@ -347,10 +344,6 @@ class TracerUI(tk.Frame):
 
     def insert(self, event=None):
         '''Insert a new middle node between 2 existing nodes.'''
-        ## TODO comment this function better. also check this, but:
-        # 1) select the parent for new node
-        # 2) call this function
-        # 3) place the new node
         if self.inserting: # turn off insertion mode
             self.inserting = False
             self.inserting_indicator = ''
@@ -597,11 +590,6 @@ class TracerUI(tk.Frame):
 
         self.tree.index_LRs()
 
-        # sort all nodes by depth
-        # ordered_tree = sorted(self.nodes, key=lambda node: node.depth)
-        # then sort by ascending LR index, with PR last
-        # ordered_tree = sorted(ordered_tree, key=lambda node: (node.LR_index is None, node.LR_index))
-
         # prepare output file
         source = Path(self.tree.path.replace(" ","")).stem  # input name, no spaces
         output_name = f"{source}_plant{self.tree.plant}_day{self.frame_index + 1}.json"
@@ -767,12 +755,6 @@ class Tree:
             curr.children.remove(self.root_choice)
             curr.children.append(new)
 
-            # if self.root_choice.root_degree == 0:
-            #     new.root_degree = 0
-
-            # if self.root_choice.LR_index is not None:
-            #     new.LR_index = self.root_choice.LR_index
-
             new.root_degree = self.root_choice.root_degree
             new.LR_index = self.root_choice.LR_index
             new.pedge_color = self.root_choice.pedge_color
@@ -806,8 +788,6 @@ class Tree:
 
     def index_LRs(self):
         '''Walk tree breadth-first and assign indices to lateral roots.'''
-        # assumption 1: time-series data, indexed often (so primary LRs will always get indexed before secondary LRs)
-        # assumption 2: no LRs of higher degree than secondary
         q = Queue()
         q.put(self.top)
 
@@ -850,10 +830,6 @@ class AnalyzerUI(tk.Frame):
 
         self.load_button = tk.Button(self.left_frame, text='Load file(s)', command=self.import_file)
         self.load_button.pack(side='top', expand=True)
-
-        # these buttons are hidden until later
-        # self.analyze_button = tk.Button(self.left_frame, text='Generate report', command=self.generate_report)
-        # self.clear_button = tk.Button(self.left_frame, text='Clear', command=self.clear)
 
         # right-hand output
         self.right_frame = tk.Frame(self.frame)
