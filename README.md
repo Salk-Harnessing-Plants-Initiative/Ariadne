@@ -45,7 +45,7 @@ https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne
 -	Retrieve the location of Ariadne folder ( the oneyou just downloaded and unzipped) and click on the file “environment.yaml” located inside the folder.
 -	The installation is now running.
 -	When the installation is done you should see a new Folder created named “Ariadne” (see below)
-<img src="assets/Anaconda_Navigator.png" width="250" height="250">
+<img src="assets/Anaconda_Navigator.png" width="350" height="250">
 
 4)	STEP1 Run Ariadne to trace roots
 -	Once the installation is done you can now run Ariadne
@@ -53,24 +53,24 @@ https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne
 -	Click on ”Environments” top left
 -	Click on the play button right next to the “Ariadne”
 -	Click on open terminal (seebelow)
-<img src="assets/Open_terminal.png" width="250" height="250">
+<img src="assets/Open_terminal.png" width="350" height="250">
 
 -	A terminal where you’ll need to tap few lines of code will pop up.
 -	Retrieve the location where you stored Ariadne and do right click on the “__pycache “folder and click on the “get info” (See below)
-<img src="assets/Path_selection.png" width="250" height="250">
+<img src="assets/Path_selection.png" width="300" height="250">
 
 -	Copy the location of the folder where Ariadne is stored. See below
-<img src="assets/Directory.png" width="250" height="250">
+<img src="assets/Directory.png" width="450" height="250">
 
 -	Go back to the terminal, tap “cd” and paste the location (Location_1). See below.
-<img src="assets/Give_directory.png" width="250" height="250">
+<img src="assets/Give_directory.png" width="450" height="250">
 
 -	Click on enter
 -	Step 2: Then in the terminal tap:
 ```
 python main.py
 ```
-<img src="assets/Python_main.png" width="250" height="250">
+<img src="assets/Python_main.png" width="450" height="250">
 
 
 ### Trace with Ariadne
@@ -78,7 +78,7 @@ python main.py
 -	Click on “Trace” to trace Roots.
 -	The window below should be opened now:
 
-<img src="assets/Trace_Menu.png" width="250" height="250">
+<img src="assets/Trace_Menu.png" width="450" height="450">
 
 -	Step 3 : Click on “Import image file”
 -	Select the image to trace the roots
@@ -100,7 +100,7 @@ python main.py
 -	On the terminal do the step 2, see above.
 -	Click on analyze 
 
-<img src="assets/Welcome.png" width="250" height="250">
+<img src="assets/Welcome.png" width="450" height="250">
 
 -	Select the .json file to analyze which are stored at the  “location_2”.
 -	Then select the location_3
