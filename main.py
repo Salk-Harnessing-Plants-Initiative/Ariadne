@@ -30,7 +30,6 @@ import copy
 from datetime import datetime
 import csv
 
-# TODO: TEST HISTORY DEQUE ACCURACY
 
 
 class StartupUI:
