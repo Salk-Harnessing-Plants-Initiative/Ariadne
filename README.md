@@ -60,17 +60,17 @@ https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne
 <img src="assets/Path_selection.png" width="300" height="250">
 
 -	Copy the location of the folder where Ariadne is stored. See below
-<img src="assets/Directory.png" width="450" height="250">
+<img src="assets/Directory.png" width="250" height="150">
 
 -	Go back to the terminal, tap “cd” and paste the location (Location_1). See below.
-<img src="assets/Give_directory.png" width="450" height="250">
+<img src="assets/Give_directory.png" width="250" height="100">
 
 -	Click on enter
 -	Step 2: Then in the terminal tap:
 ```
 python main.py
 ```
-<img src="assets/Python_main.png" width="450" height="250">
+<img src="assets/Python_main.png" width="250" height="100">
 
 
 ### Trace with Ariadne
@@ -100,7 +100,7 @@ python main.py
 -	On the terminal do the step 2, see above.
 -	Click on analyze 
 
-<img src="assets/Welcome.png" width="450" height="250">
+<img src="assets/Welcome.png" width="400" height="250">
 
 -	Select the .json file to analyze which are stored at the  “location_2”.
 -	Then select the location_3
