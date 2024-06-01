@@ -109,30 +109,30 @@ python main.py
 -	In the location_3 folder, you’ll find a graph for each root where the Pareto optimality will be represented.
 -	You’ll find a .csv file where all the RSA traits will be store for each root.
 -	Each column contains the calculation for:
-o	Material cost = total root length
-o	Wiring cost = Sum of the length from the hypocotyl to each root tip (pareto related trait)
-o	Alpha = trade off value between growth and transport efficiency (pareto related trait)
-o	Scaling distance from the from the front =Pareto optimality value(pareto related trait)
-o	Material cost (random) = random total root length
-o	Wiring cost (random) = random Sum of the length from the hypocotyl to each root tip (pareto related trait)
-o	Alpha (random) = random trade off value between growth and transport efficiency (pareto related trait)
-o	Scaling distance from the from the front (random) = random Pareto optimality value(pareto related trait)
-o	Mean LR lengths = average of the length of all lateral roots
-o	Median LR lengths = Median of the length of all lateral roots
-o	Mean LR angles = average of lateral root set point angles 
-o	Median LR angles = Median of lateral root set point angles
-o	Mean LR minimal distances = average of the Euclidian distance between each lateral root tips to their insertion on the primary root for all the lateral roots.
-o	Median LR minimal distances = median of the Euclidian distance between each lateral root tips to their insertion on the primary root for all the lateral roots.
-o	Sum LR minimal distances = Sum of the Euclidian distance between each lateral root tips to their insertion on the primary root for all the lateral roots.
-o	PR minimal length = Euclidean distance between the hypocotyl to the primary root tip.
-o	PR length = length of the lateral root
-o	LR count = number of lateral root
-o	LR lengths = length of each individual lateral root
-o	LR angles = lateral root set point angle of each individual lateral root
-o	LR minimal distance = Euclidian distance between each lateral root tips to their insertion on the primary root for each lateral roots
-o	LR density = number of lateral root divided by PR length * 100
-o	Total minimal distance = Sum LR minimal distances plus PR minimal length
-o	Material/TotalDistance Ratio = Total root length / Total minimal distance
+*	Material cost = total root length
+*	Wiring cost = Sum of the length from the hypocotyl to each root tip (pareto related trait)
+*	Alpha = trade off value between growth and transport efficiency (pareto related trait)
+*	Scaling distance from the from the front =Pareto optimality value(pareto related trait)
+*	Material cost (random) = random total root length
+*	Wiring cost (random) = random Sum of the length from the hypocotyl to each root tip (pareto related trait)
+*	Alpha (random) = random trade off value between growth and transport efficiency (pareto related trait)
+*	Scaling distance from the from the front (random) = random Pareto optimality value(pareto related trait)
+*	Mean LR lengths = average of the length of all lateral roots
+*	Median LR lengths = Median of the length of all lateral roots
+*	Mean LR angles = average of lateral root set point angles 
+*	Median LR angles = Median of lateral root set point angles
+*	Mean LR minimal distances = average of the Euclidian distance between each lateral root tips to their insertion on the primary root for all the lateral roots.
+*	Median LR minimal distances = median of the Euclidian distance between each lateral root tips to their insertion on the primary root for all the lateral roots.
+*	Sum LR minimal distances = Sum of the Euclidian distance between each lateral root tips to their insertion on the primary root for all the lateral roots.
+*	PR minimal length = Euclidean distance between the hypocotyl to the primary root tip.
+*	PR length = length of the lateral root
+*	LR count = number of lateral root
+*	LR lengths = length of each individual lateral root
+*	LR angles = lateral root set point angle of each individual lateral root
+*	LR minimal distance = Euclidian distance between each lateral root tips to their insertion on the primary root for each lateral roots
+*	LR density = number of lateral root divided by PR length * 100
+*	Total minimal distance = Sum LR minimal distances plus PR minimal length
+*	Material/TotalDistance Ratio = Total root length / Total minimal distance
 7)	When you are done close everything
 8)	To restart Ariadne for tracing or analysing start from STEP 1.
 
