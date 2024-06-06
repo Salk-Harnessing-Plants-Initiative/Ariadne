@@ -1,13 +1,13 @@
-name: ariadne
+name: ariadne_dev
 channels:
   - conda-forge
   - defaults
 dependencies:
-
   - pillow
   - networkx
   - numpy
   - scipy
   - matplotlib
-
-prefix: ./envs
+  - pip
+  - pip:
+    - -e .
