@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ariadne_roots"
+version = "0.0.1a0"
+authors = [
+  { name="Matthieu Platre", email="mplatre@gmail.com" },
+  { name="Kian", email="kian@gmail.com" },
+  { name="Elizabeth Berrigan", email="eberrigan@salk.edu" },
+]
+description = "Ariadne root tracing GUI and trait calculator."
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["ariadne", "plants", "roots", "phenotyping", "pareto"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha"
+]
+dependencies = [
+    "pillow",
+    "networkx",
+    "numpy",
+    "scipy",
+    "matplotlib",
+]
+
+[project.urls]
+Homepage = "https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne"
+Issues = "https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/issues"
+
+[project.optional-dependencies]
+dev = [
+    "toml",
+    "twine",
+    "build"
+]
