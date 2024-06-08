@@ -21,33 +21,39 @@
 
 ## Installation
 
-Ariadne is installed as a Python package called `ariadne-roots`. We recommend installing a package manager and creating an isolated environment for `ariadne-roots` and its dependencies. Our recommended environment and package manager is Mamba. Follow the instructions to install (Miniforge3)[https://github.com/conda-forge/miniforge].
+Ariadne is installed as a Python package called `ariadne-roots`. We recommend using a package manager and creating an isolated environment for `ariadne-roots` and its dependencies. Our recommended package manager is Mamba. Follow the instructions to install [Miniforge3](https://github.com/conda-forge/miniforge).
 
-You can find the latest version of `ariadne-roots` in the (Releases)[https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases] page.
+You can find the latest version of `ariadne-roots` on the [Releases](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases) page.
 
-To make an isolated environment use
-```
-mamba create --name ariadne python=3.11
-```
+### Step-by-Step Installation
 
-then install `ariadne-roots` using `pip`
-```
-pip install ariadne-roots
-```
+1. **Create an isolated environment:**
+    ```sh
+    mamba create --name ariadne python=3.11
+    ```
+
+2. **Activate your environment:**
+    ```sh
+    mamba activate ariadne
+    ```
+
+3. **Install `ariadne-roots` using pip:**
+    ```sh
+    pip install ariadne-roots
+    ```
 
 ## Usage
 
-Activate your environment using
+1. **Activate your environment:**
+    ```sh
+    mamba activate ariadne
+    ```
 
-```
-mamba activate ariadne
-```
-
-Open the GUI using
-
-```
-python main.py
-```
+2. **Open the GUI:**
+    ```sh
+    python main.py
+    ```
+<!-- <img src="assets/Python_main.png" width="250" height="100"> -->
 <img src="assets/Python_main.png" width="250" height="100">
 
 
