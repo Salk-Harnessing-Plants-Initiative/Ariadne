@@ -38,3 +38,6 @@ dev = [
     "twine",
     "build"
 ]
+
+[project.scripts]
+ariadne-trace = "ariadne_roots.main:main"

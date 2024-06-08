@@ -51,7 +51,7 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
 
 2. **Open the GUI:**
     ```sh
-    python main.py
+    ariadne-trace
     ```
 
 

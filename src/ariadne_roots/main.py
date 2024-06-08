@@ -902,8 +902,11 @@ class AnalyzerUI(tk.Frame):
 
 
 
-if __name__ == "__main__":
+def main():
     base = tk.Tk()
     base.title('Ariadne')
     StartupUI(base)
     base.mainloop()
+
+if __name__ == "__main__":
+    main()
