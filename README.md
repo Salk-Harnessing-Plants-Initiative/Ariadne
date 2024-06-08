@@ -21,52 +21,30 @@
 
 ## Installation
 
-1)	Install anaconda from this website:
+Ariadne is installed as a Python package called `ariadne-roots`. We recommend installing a package manager and creating an isolated environment for `ariadne-roots` and its dependencies. Our recommended environment and package manager is Mamba. Follow the instructions to install (Miniforge3)[https://github.com/conda-forge/miniforge].
+
+You can find the latest version of `ariadne-roots` in the (Releases)[https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases] page.
+
+To make an isolated environment use
 ```
-https://www.anaconda.com/download/success
+mamba create --name ariadne python=3.11
 ```
--	Make sure you install the correct version according to your operating system.
--	After installation make sure you are running the latest Anaconda version. If not do the update.
-2)	Download Ariadne
+
+then install `ariadne-roots` using `pip`
 ```
-https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne
+pip install ariadne-roots
 ```
--	Click on the “<> Code” button highlighted in green
--	Click on download zip
--	Place the zip folder where you’d like to store Ariadne
--	Unzip it
--	Delete the zipped version
-3)	Installation of Ariadne
--	Open Anaconda navigator
--	Click on ”Environments” top left
--	Click on “import” bottom left
--	Give a new name to the environment named “Ariadne”
--	Click on the small folder icon on the right of “Specification file”
--	Retrieve the location of Ariadne folder ( the oneyou just downloaded and unzipped) and click on the file “environment.yaml” located inside the folder.
--	The installation is now running.
--	When the installation is done you should see a new Folder created named “Ariadne” (see below)
-<img src="assets/Anaconda_Navigator.png" width="350" height="250">
 
-4)	STEP1 Run Ariadne to trace roots
--	Once the installation is done you can now run Ariadne
--	Open Anaconda Navigator
--	Click on ”Environments” top left
--	Click on the play button right next to the “Ariadne”
--	Click on open terminal (seebelow)
-<img src="assets/Open_terminal.png" width="350" height="250">
+## Usage
 
--	A terminal where you’ll need to tap few lines of code will pop up.
--	Retrieve the location where you stored Ariadne and do right click on the “__pycache “folder and click on the “get info” (See below)
-<img src="assets/Path_selection.png" width="300" height="250">
+Activate your environment using
 
--	Copy the location of the folder where Ariadne is stored. See below
-<img src="assets/Directory.png" width="250" height="150">
+```
+mamba activate ariadne
+```
 
--	Go back to the terminal, tap “cd” and paste the location (Location_1). See below.
-<img src="assets/Give_directory.png" width="250" height="100">
+Open the GUI using
 
--	Click on enter
--	Step 2: Then in the terminal tap:
 ```
 python main.py
 ```
@@ -80,7 +58,7 @@ python main.py
 
 <img src="assets/Trace_Menu.png" width="450" height="450">
 
--	Step 3 : Click on “Import image file”
+-	Click on “Import image file”
 -	Select the image to trace the roots
 -	Trace the root number 1. 
         * Caution start to trace the entire primary root first (should appear green). To gain time place a dot on each region where a lateral root is emitted. 
@@ -92,7 +70,7 @@ python main.py
 -	Continue like that until you traced every root on your image. 
 -	When you are done tracing all roots on your image click on “change root” and restart from “Step 3” indicated above.
 
-#### Analyze with Ariadne
+### Analyze with Ariadne
 -	Ideally, gather all the .json stored in ”location_1” into a new Folder named “OUTPUT_JSON” for example, refereed as “location_2” later on.
 -	Create a file named for example named “RESULTS”, refereed as “location_3”
 -	Create a new folder named Output. 
@@ -105,7 +83,7 @@ python main.py
 -	Select the .json file to analyze which are stored at the  “location_2”.
 -	Then select the location_3
 -	The software is now running to analyze all the .json files selected. 
-6)	Results analysis
+### Results
 -	In the location_3 folder, you’ll find a graph for each root where the Pareto optimality will be represented.
 -	You’ll find a .csv file where all the RSA traits will be store for each root.
 -	Each column contains the calculation for:
@@ -133,8 +111,7 @@ python main.py
 *	LR density = number of lateral root divided by PR length * 100
 *	Total minimal distance = Sum LR minimal distances plus PR minimal length
 *	Material/TotalDistance Ratio = Total root length / Total minimal distance
-7)	When you are done close everything
-8)	To restart Ariadne for tracing or analysing start from STEP 1.
+
 
 
 ##### Keybinds
@@ -150,11 +127,17 @@ python main.py
 * `Ctrl-Z`: Undo last action
 
 
+## Contributing
+
+
+## Contributers
+
+
+## Contact
+
+
 
 ## References
 <b id="f1">1.</b> Chandrasekhar, Arjun, and Navlakha, Saket. "Neural arbors are Pareto optimal." _Proceedings of the Royal Society B_ 286.1902 (2019): 20182727. https://doi.org/10.1098/rspb.2018.2727 [↩](#a1)
 
 <b id="f2">2.</b> Conn, Adam, et al. "High-resolution laser scanning reveals plant architectures that reflect universal network design principles." _Cell Systems_ 5.1 (2017): 53-62. https://doi.org/10.1016/j.cels.2017.06.017 [↩](#a2)
-
-### Acknowledgments
-Matt (for guidance, ideas, and support); Illia (for technical advice); Tosh (for late-night debugging help)
