@@ -54,7 +54,7 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
     python main.py
     ```
 <!-- <img src="assets/Python_main.png" width="250" height="100"> -->
-<img src="assets/Python_main.png" width="250" height="100">
+<img src="assets/Python_main.png">
 
 
 ### Trace with Ariadne
