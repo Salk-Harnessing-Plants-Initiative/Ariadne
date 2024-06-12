@@ -170,7 +170,7 @@ Follow these steps to set up your development environment and start making contr
 
 5. **Activate the development environment:**
     ```sh
-    mamba activate ariadne-dev
+    mamba activate ariadne_dev
     ```
 
 6. **Create a branch for your changes:**
