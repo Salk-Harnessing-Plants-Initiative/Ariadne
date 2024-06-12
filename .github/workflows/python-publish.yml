@@ -33,4 +33,4 @@ jobs:
       env:
         PYPI_TOKEN: ${{ secrets.EBERRIGAN_PYPI_TOKEN }}
       run: |
-        twine upload -u __token__ -p "$EBERRIGAN_PYPI_TOKEN" dist/* --non-interactive --skip-existing --disable-progress-bar
+        twine upload -u __token__ -p "$PYPI_TOKEN" dist/* --non-interactive --skip-existing --disable-progress-bar
