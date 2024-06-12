@@ -1,61 +1,67 @@
-'''Parse graphs in custom .xyz format, and measure traits.
+"""Parse graphs in custom .xyz format, and measure traits.
 Points are stored in a tree using an undirected NetworkX graph.
 Each node has a unique numerical identifier (node_num), and an attribute "pos": an (x,y) coordinate pair corresponding to its position in 2D space.
 Each edge has an attribute "length": the Euclidean distance between the nodes it connects.
 TO-DO:
 Trait measurement
 Time series
-'''
+"""
 
-
-
-import argparse
-import networkx as nx
-import math
-from queue import Queue
-from pareto_functions import pareto_front, random_tree
 import matplotlib.pyplot as plt
 import re
 import pickle
 import numpy as np
-from collections import Counter
 import copy
+import argparse
+import networkx as nx
+import math
+
+from queue import Queue
+from collections import Counter
 from scipy.spatial import ConvexHull  # Import ConvexHull class
+
+from pareto_functions import pareto_front, random_tree
 
 
 # parser = argparse.ArgumentParser(description='select file')
 # parser.add_argument('-i', '--input', help='Full path to input file', required=True)
 # args = parser.parse_args()
 
+
 def distance(p1, p2):
-    '''Compute 2D Euclidian distance between two (x,y) points.'''
-    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+    """Compute 2D Euclidian distance between two (x,y) points."""
+    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+
 
 def make_graph(target):
-    '''Construct graph from file and check for errors.'''
+    """Construct graph from file and check for errors."""
     G = nx.Graph()
-    with open(target, "r") as f: # parse input file
+    with open(target, "r") as f:  # parse input file
         q = Queue()
-        node_num = 1 # label nodes with unique identifiers
+        node_num = 1  # label nodes with unique identifiers
         for line in f:
-            if line.startswith("##"): # Level heading
-                group_num = 0 # count nodes per level, and reset on level change, to match hierarchy info from tuples
+            if line.startswith("##"):  # Level heading
+                group_num = 0  # count nodes per level, and reset on level change, to match hierarchy info from tuples
                 level = int(line.rstrip().split(": ")[1])
                 continue
             else:
                 info = line.rstrip().split("; ")
 
-                coords = tuple(int(float(i)) for i in info[0].split())[0:2] # change output coords from floats to ints
-                metadata = re.findall(r'\(.+?\)|\[.+?\]', info[1]) # find chunks in brackets or parenthesis
+                coords = tuple(int(float(i)) for i in info[0].split())[
+                    0:2
+                ]  # change output coords from floats to ints
+                metadata = re.findall(
+                    r"\(.+?\)|\[.+?\]", info[1]
+                )  # find chunks in brackets or parenthesis
 
-                root_metadata = metadata[-1] # eg (PR, None)
-                child_metadata = [] # eg ['[1,0]']
+                root_metadata = metadata[-1]  # eg (PR, None)
+                child_metadata = []  # eg ['[1,0]']
 
                 for el in metadata:
                     if el != root_metadata:
                         child_metadata.append(el)
 
-                if not child_metadata: # terminal node, no children
+                if not child_metadata:  # terminal node, no children
                     G.add_node(node_num, pos=coords)
                     parent = q.get()
 
@@ -63,7 +69,13 @@ def make_graph(target):
                     parent_group = parent[1][1]
 
                     if level == parent_level and group_num == parent_group:
-                        G.add_edge(node_num, parent[0], length=distance(G.nodes[node_num]['pos'], G.nodes[parent[0]]['pos']))
+                        G.add_edge(
+                            node_num,
+                            parent[0],
+                            length=distance(
+                                G.nodes[node_num]["pos"], G.nodes[parent[0]]["pos"]
+                            ),
+                        )
                     else:
                         print("ERROR: edge assignment failed (terminal node)")
 
