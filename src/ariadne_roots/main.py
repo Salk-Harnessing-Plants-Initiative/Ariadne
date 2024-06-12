@@ -9,128 +9,155 @@ TODO:
 if imported file is not a GIF, block next/prev buttons
 try:except for dialog errors?
 easier selection of nearby points
-'''
+"""
 
 import tkinter as tk
-from tkinter import filedialog
-from PIL import Image, ImageTk, ImageSequence
-import quantify
+import csv
+import copy
 import networkx as nx
 from networkx.readwrite import json_graph
 import json
-
+import matplotlib.pyplot as plt
 import numpy as np
-
 import matplotlib.pyplot as plt
 
 from pathlib import Path
 from queue import Queue
 from collections import deque
-import copy
+from tkinter import filedialog
+from PIL import Image, ImageTk, ImageSequence
 from datetime import datetime
-import csv
 
+from ariadne_roots import quantify
 
 
 class StartupUI:
-    '''Startup window interface.'''
+    """Startup window interface."""
+
     def __init__(self, base):
         self.base = base
-        self.base.geometry('350x200')
+        self.base.geometry("350x200")
 
         # master frame
         self.frame = tk.Frame(self.base)
-        self.frame.pack(side='top', fill='both', expand=True)
+        self.frame.pack(side="top", fill="both", expand=True)
 
         # salutation
         self.title_frame = tk.Frame(self.frame)
         self.title_frame.pack()
 
-        self.title_label = tk.Label(self.frame, text='Welcome to Ariadne!')
-        self.title_label.pack(side='top', fill='both', expand=True)
+        self.title_label = tk.Label(self.frame, text="Welcome to Ariadne!")
+        self.title_label.pack(side="top", fill="both", expand=True)
 
         # buttons
-        self.trace_button = tk.Button(self.frame, text='Trace', command=self.to_trace)
-        self.analyze_button = tk.Button(self.frame, text='Analyze', command=self.to_analyze)
+        self.trace_button = tk.Button(self.frame, text="Trace", command=self.to_trace)
+        self.analyze_button = tk.Button(
+            self.frame, text="Analyze", command=self.to_analyze
+        )
 
-        self.trace_button.pack(side='top', fill='both', expand=True)
-        self.analyze_button.pack(side='bottom', fill='both', expand=True)
+        self.trace_button.pack(side="top", fill="both", expand=True)
+        self.analyze_button.pack(side="bottom", fill="both", expand=True)
 
     def to_trace(self):
-        '''Swap frames to tracing mode.'''
+        """Swap frames to tracing mode."""
         self.frame.destroy()
         TracerUI(self.base)
 
     def to_analyze(self):
-        '''Swap frames to analysis mode.'''
+        """Swap frames to analysis mode."""
         self.frame.destroy()
         AnalyzerUI(self.base)
 
 
-
 class TracerUI(tk.Frame):
-    '''Tracing mode interface.'''
+    """Tracing mode interface."""
+
     def __init__(self, base):
         super().__init__(base)
         self.base = base
-        self.base.geometry('750x600')
-        self.base.title('Ariadne: Trace')
+        self.base.geometry("750x600")
+        self.base.title("Ariadne: Trace")
 
         # master frame
         self.frame = tk.Frame(self.base)
-        self.frame.pack(side='top', fill='both', expand=True)
+        self.frame.pack(side="top", fill="both", expand=True)
 
         # filename titlebar
         self.title_frame = tk.Frame(self.frame)
-        self.title_label = tk.Label(self.title_frame, text='Tracing')
+        self.title_label = tk.Label(self.title_frame, text="Tracing")
         self.title_label.pack()
 
         # left-hand menu
-        self.menu = tk.Frame(self.frame, width=175,bg='skyblue')
-        self.menu.pack(side='top', fill='both')
+        self.menu = tk.Frame(self.frame, width=175, bg="skyblue")
+        self.menu.pack(side="top", fill="both")
 
-        self.button_import = tk.Button(self.menu, text='Import image file', command=self.import_image)
-        self.button_next = tk.Button(self.menu, text='Next day (e)', command=None, state='disabled')
-        self.button_prev = tk.Button(self.menu, text='Prev day (q)', command=None, state='disabled')
-        self.button_override = tk.Button(self.menu, text='Override (r)', command=None, state='disabled')
-        self.button_insert = tk.Button(self.menu, text='Insert (i)', command=None, state='disabled')
-        self.button_undo = tk.Button(self.menu, text='Undo (Ctrl-z)', command=None, state='disabled')
-        self.button_save = tk.Button(self.menu, text='Save (g)', command=None, state='disabled')
-        self.button_show = tk.Button(self.menu, text='Show/hide tree (t)', command=None, state='disabled')
-        self.button_change_root = tk.Button(self.menu, text='Change Root (c)', command=None, state='disabled')
+        self.button_import = tk.Button(
+            self.menu, text="Import image file", command=self.import_image
+        )
+        self.button_next = tk.Button(
+            self.menu, text="Next day (e)", command=None, state="disabled"
+        )
+        self.button_prev = tk.Button(
+            self.menu, text="Prev day (q)", command=None, state="disabled"
+        )
+        self.button_override = tk.Button(
+            self.menu, text="Override (r)", command=None, state="disabled"
+        )
+        self.button_insert = tk.Button(
+            self.menu, text="Insert (i)", command=None, state="disabled"
+        )
+        self.button_undo = tk.Button(
+            self.menu, text="Undo (Ctrl-z)", command=None, state="disabled"
+        )
+        self.button_save = tk.Button(
+            self.menu, text="Save (g)", command=None, state="disabled"
+        )
+        self.button_show = tk.Button(
+            self.menu, text="Show/hide tree (t)", command=None, state="disabled"
+        )
+        self.button_change_root = tk.Button(
+            self.menu, text="Change Root (c)", command=None, state="disabled"
+        )
 
-        self.button_import.pack(fill='x', side='top')
-        self.button_prev.pack(fill='x', side='top')
-        self.button_next.pack(fill='x', side='top')
-        self.button_override.pack(fill='x', side='top')
-        self.button_insert.pack(fill='x', side='top')
-        self.button_undo.pack(fill='x', side='top')
-        self.button_save.pack(fill='x', side='top')
-        self.button_show.pack(fill='x', side='top')
-        self.button_change_root.pack(fill='x', side='top')
+        self.button_import.pack(fill="x", side="top")
+        self.button_prev.pack(fill="x", side="top")
+        self.button_next.pack(fill="x", side="top")
+        self.button_override.pack(fill="x", side="top")
+        self.button_insert.pack(fill="x", side="top")
+        self.button_undo.pack(fill="x", side="top")
+        self.button_save.pack(fill="x", side="top")
+        self.button_show.pack(fill="x", side="top")
+        self.button_change_root.pack(fill="x", side="top")
 
         # image canvas
-        self.canvas = tk.Canvas(self.frame, width=600, height=700, bg='gray')
+        self.canvas = tk.Canvas(self.frame, width=600, height=700, bg="gray")
         self.img = None
 
         # useful flags
-        self.prox_override = False # tracks whether proximity override is on
-        self.inserting = False # tracks whether insertion mode is on
-        self.tree_flag = 'normal' # used for hiding/showing tree's edges
-        self.colors = 0 # tracks LR color palette index
-
+        self.prox_override = False  # tracks whether proximity override is on
+        self.inserting = False  # tracks whether insertion mode is on
+        self.tree_flag = "normal"  # used for hiding/showing tree's edges
+        self.colors = 0  # tracks LR color palette index
 
         # canvas scrollbars
         self.xsb_frame = tk.Frame(self.frame)
         self.ysb_frame = tk.Frame(self.frame)
 
-        self.xsb = tk.Scrollbar(self.xsb_frame, orient='horizontal', command=self.canvas.xview)
-        self.ysb = tk.Scrollbar(self.ysb_frame, orient='vertical', command=self.canvas.yview)
-        self.xsb.pack(fill='x', expand=True)
-        self.ysb.pack(fill='y', expand=True)
+        self.xsb = tk.Scrollbar(
+            self.xsb_frame, orient="horizontal", command=self.canvas.xview
+        )
+        self.ysb = tk.Scrollbar(
+            self.ysb_frame, orient="vertical", command=self.canvas.yview
+        )
+        self.xsb.pack(fill="x", expand=True)
+        self.ysb.pack(fill="y", expand=True)
 
-        self.canvas.configure(xscrollcommand=self.xsb.set, yscrollcommand=self.ysb.set, scrollregion=(0,0,7000,7000))
-        self.canvas.curr_coords = (0,0) # for statusbar tracking
+        self.canvas.configure(
+            xscrollcommand=self.xsb.set,
+            yscrollcommand=self.ysb.set,
+            scrollregion=(0, 0, 7000, 7000),
+        )
+        self.canvas.curr_coords = (0, 0)  # for statusbar tracking
 
         # keybinds for canvas mouse panning (linux)
         self.canvas.bind("<Alt-ButtonPress-1>", self.scroll_start)
