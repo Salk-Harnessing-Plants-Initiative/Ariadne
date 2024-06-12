@@ -165,12 +165,12 @@ Follow these steps to set up your development environment and start making contr
 4. **Create a development environment:**
     This will install the necessary dependencies and the `ariadne-roots` package in editable mode:
     ```sh
-    mamba env create -f environment.yaml --name ariadne-roots_dev
+    mamba env create -f environment.yaml
     ```
 
 5. **Activate the development environment:**
     ```sh
-    mamba activate ariadne-roots_dev
+    mamba activate ariadne-dev
     ```
 
 6. **Create a branch for your changes:**
