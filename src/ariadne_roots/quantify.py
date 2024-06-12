@@ -9,18 +9,15 @@ Time series
 
 import matplotlib.pyplot as plt
 import re
-import pickle
 import numpy as np
 import copy
-import argparse
 import networkx as nx
 import math
 
 from queue import Queue
-from collections import Counter
 from scipy.spatial import ConvexHull  # Import ConvexHull class
 
-from pareto_functions import pareto_front, random_tree
+from ariadne_roots.pareto_functions import pareto_front, random_tree
 
 
 # parser = argparse.ArgumentParser(description='select file')
