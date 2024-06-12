@@ -89,66 +89,94 @@ def make_graph(target):
                         parent_group = parent[1][1]
 
                         if level == parent_level and group_num == parent_group:
-                            G.add_edge(node_num, parent[0], length=distance(G.nodes[node_num]['pos'], G.nodes[parent[0]]['pos']))
+                            G.add_edge(
+                                node_num,
+                                parent[0],
+                                length=distance(
+                                    G.nodes[node_num]["pos"], G.nodes[parent[0]]["pos"]
+                                ),
+                            )
                         else:
                             print("Error: edge assignment failed")
 
                     for child in child_metadata:
-                        q.put(
-                            (node_num, list(map(int, child.strip('[]').split(','))))
-                        )
+                        q.put((node_num, list(map(int, child.strip("[]").split(",")))))
 
                 node_num += 1
                 group_num += 1
 
-    #return "Done!" (used for csv creation)
+    # return "Done!" (used for csv creation)
     return G
 
 
 # G = make_graph('/Users/kianfaizi/projects/ariadne/color-final_plantA_day1.txt')
 
+
 def make_graph_alt(target):
-    '''Construct a broken graph (without problematic edges).'''
+    """Construct a broken graph (without problematic edges)."""
     G = nx.Graph()
-    with open(target, "r") as f: # parse input file
+    with open(target, "r") as f:  # parse input file
         q = Queue()
-        node_num = 1 # label nodes with unique identifiers
+        node_num = 1  # label nodes with unique identifiers
         for line in f:
-            if line.startswith("##"): # Level heading
-                group_num = 0 # count nodes per level, and reset on level change, to match hierarchy info from tuples
+            if line.startswith("##"):  # Level heading
+                group_num = 0  # count nodes per level, and reset on level change, to match hierarchy info from tuples
                 level = int(line.rstrip().split(": ")[1])
                 continue
             else:
                 info = line.rstrip().split("; ")
-                if len(info) > 1: # node has degree > 1
-                    coords = tuple(int(float(i)) for i in info[0].split())[0:2] # change output coords from floats to ints
-                    G.add_node(node_num, pos = coords)
+                if len(info) > 1:  # node has degree > 1
+                    coords = tuple(int(float(i)) for i in info[0].split())[
+                        0:2
+                    ]  # change output coords from floats to ints
+                    G.add_node(node_num, pos=coords)
                     if not q.empty():
                         parent = q.get()
                         # print(parent, level, group_num, info)
-                        if level == parent[1][0] and group_num == parent[1][1]: # check that the expected and actual positions of the child match
-                            G.add_edge(node_num, parent[0], length = distance(G.nodes[node_num]['pos'], G.nodes[parent[0]]['pos']))
+                        if (
+                            level == parent[1][0] and group_num == parent[1][1]
+                        ):  # check that the expected and actual positions of the child match
+                            G.add_edge(
+                                node_num,
+                                parent[0],
+                                length=distance(
+                                    G.nodes[node_num]["pos"], G.nodes[parent[0]]["pos"]
+                                ),
+                            )
                         else:
-                            print(f"Edge assignment failed: {parent}; {level}; {group_num}; {info}")
+                            print(
+                                f"Edge assignment failed: {parent}; {level}; {group_num}; {info}"
+                            )
                     # place all descendants of the current node in the queue for processing in future rounds
                     children = info[1].split()
                     for child in children:
-                        q.put((node_num, list(map(int, child.strip('[]').split(','))))) # converts each child object from list of strings to list of ints
-                else: # terminal node (degree == 1)
-                    coords = tuple(int(float(i)) for i in info[0].rstrip(";").split())[0:2]
-                    G.add_node(node_num, pos = coords)
+                        q.put(
+                            (node_num, list(map(int, child.strip("[]").split(","))))
+                        )  # converts each child object from list of strings to list of ints
+                else:  # terminal node (degree == 1)
+                    coords = tuple(int(float(i)) for i in info[0].rstrip(";").split())[
+                        0:2
+                    ]
+                    G.add_node(node_num, pos=coords)
                     children = None
                     parent = q.get()
                     if level == parent[1][0] and group_num == parent[1][1]:
-                        G.add_edge(node_num, parent[0], length = distance(G.nodes[node_num]['pos'], G.nodes[parent[0]]['pos']))
+                        G.add_edge(
+                            node_num,
+                            parent[0],
+                            length=distance(
+                                G.nodes[node_num]["pos"], G.nodes[parent[0]]["pos"]
+                            ),
+                        )
                     else:
                         print("Edge assignment failed: terminal node.")
                 node_num += 1
                 group_num += 1
     return G
 
+
 def save_plot(path, name, title):
-    '''Plot a Pareto front and save to .jpg.'''
+    """Plot a Pareto front and save to .jpg."""
 
     G = make_graph(path)
     # check that graph is indeed a tree (acyclic, undirected, connected)
@@ -163,26 +191,25 @@ def save_plot(path, name, title):
     ax.set_xlabel("Total length", fontsize=15)
     ax.set_ylabel("Travel distance", fontsize=15)
 
-    plt.plot(mcosts, scosts, marker='s', linestyle='-', markeredgecolor='black')
-    plt.plot(actual[0], actual[1], marker='x', markersize=12)
+    plt.plot(mcosts, scosts, marker="s", linestyle="-", markeredgecolor="black")
+    plt.plot(actual[0], actual[1], marker="x", markersize=12)
     for i in randoms:
-        plt.plot(i[0], i[1], marker='+', color='green', markersize=4)
-
+        plt.plot(i[0], i[1], marker="+", color="green", markersize=4)
 
     plt.show()
 
 
 def calc_len_PR(G, root_node):
-    '''For a given graph and the uppermost node, calculate the PR length.'''
+    """For a given graph and the uppermost node, calculate the PR length."""
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
-    PRs = [] # list of PR nodes in order of increasing depth
+    PRs = []  # list of PR nodes in order of increasing depth
 
     for node, children in bfs_paths.items():
-        if G.nodes[node]['LR_index'] is None:
+        if G.nodes[node]["LR_index"] is None:
             PRs.append(node)
             for child in children:
-                if G.nodes[child]['LR_index'] is None:
+                if G.nodes[child]["LR_index"] is None:
                     # catch the last node in the PR, which won't appear in the iterator since it has no children
                     final = child
 
@@ -193,29 +220,29 @@ def calc_len_PR(G, root_node):
 
 
 def calc_root_len(G, nodes):
-    '''Return the pairwise Euclidean distance along a list of consecutive nodes.'''
+    """Return the pairwise Euclidean distance along a list of consecutive nodes."""
     dist = 0
 
     # order matters! assumes consecutive, increasing depth
     for prev, curr in zip(nodes, nodes[1:]):
-        segment = distance(G.nodes[prev]['pos'], G.nodes[curr]['pos'])
+        segment = distance(G.nodes[prev]["pos"], G.nodes[curr]["pos"])
         dist += segment
         # might as well annotate the edges while I'm here
-        G.edges[prev, curr]['weight'] = segment
+        G.edges[prev, curr]["weight"] = segment
 
     return dist
 
 
 def calc_len_LRs(H):
-    '''Find the total length of each LR type in the graph.'''
+    """Find the total length of each LR type in the graph."""
     # minimum length (px) for LR to be considered part of the network
     # based on root hair emergence times
     # threshold = 117
     threshold = 0
 
     # dict of node ids : LR index, for each LR node
-    idxs = nx.get_node_attributes(H, 'LR_index')
-    idxs = {k:v for k,v in idxs.items() if v is not None} # drop empty (PR) nodes
+    idxs = nx.get_node_attributes(H, "LR_index")
+    idxs = {k: v for k, v in idxs.items() if v is not None}  # drop empty (PR) nodes
 
     num_LRs = max(idxs.values()) + 1
 
@@ -225,11 +252,11 @@ def calc_len_LRs(H):
         # gather nodes corresponding to the current LR index
         selected = []
 
-        for node in H.nodes(data='LR_index'):
+        for node in H.nodes(data="LR_index"):
             if node[1] == i:
                 selected.append(node[0])
                 # make note of the root degree (should be the same for all nodes in loop)
-                current_degree = H.nodes[node[0]]['root_deg']
+                current_degree = H.nodes[node[0]]["root_deg"]
 
         # to find the shallowest node in LR, we iterate through them
         # until we find the one whose parent has a lesser root degree
@@ -237,8 +264,8 @@ def calc_len_LRs(H):
         for node in sub.nodes():
             parent = list(H.predecessors(node))
             # print(node, parent)
-            assert len(parent) == 1 # should be a tree
-            if H.nodes[parent[0]]['root_deg'] < current_degree:
+            assert len(parent) == 1  # should be a tree
+            if H.nodes[parent[0]]["root_deg"] < current_degree:
                 sub_top = node
 
         # now we can DFS to order all nodes by increasing depth
@@ -257,23 +284,23 @@ def calc_len_LRs(H):
         else:
             # now we can calculate the gravitropic set point angle
             # branch coordinates
-            p2 = np.array(H.nodes[parent[0]]['pos'])
+            p2 = np.array(H.nodes[parent[0]]["pos"])
             # LR coordinates
-            p3 = np.array(H.nodes[ordered[0]]['pos'])
+            p3 = np.array(H.nodes[ordered[0]]["pos"])
 
             # recall: in our coordinate system, the top node is (0,0)
             # x increases to the right; y increases downwards
             # unit vector of gravity
-            g = np.array([0,1])
+            g = np.array([0, 1])
             # normalized vector of LR emergence
             lr = p3 - p2
             norm_lr = np.linalg.norm(lr)
             assert norm_lr > 0
-            lr = lr/norm_lr
+            lr = lr / norm_lr
 
             # angle between LR emergence and the vector of gravity:
             # this will be symmetric, whichever side of the PR the LR is on
-            theta = np.rad2deg(math.acos(np.dot(lr,g)))
+            theta = np.rad2deg(math.acos(np.dot(lr, g)))
 
             # print(f'The ordered list of nodes that make up LR #{i} is:', nodes_list)
             results[i] = [length, theta]
@@ -295,24 +322,30 @@ def plot_all(front, actual, randoms, mrand, srand, dest):
     ax.set_xlabel("Total length (px)", fontsize=15)
     ax.set_ylabel("Travel distance (px)", fontsize=15)
 
-    plt.plot([x[0] for x in front.values()], [x[1] for x in front.values()], marker='s', linestyle='-', markeredgecolor='black')
-    plt.plot(actual[0], actual[1], marker='x', markersize=12)
+    plt.plot(
+        [x[0] for x in front.values()],
+        [x[1] for x in front.values()],
+        marker="s",
+        linestyle="-",
+        markeredgecolor="black",
+    )
+    plt.plot(actual[0], actual[1], marker="x", markersize=12)
     for i in randoms:
-        plt.plot(i[0], i[1], marker='+', color='green', markersize=4)
+        plt.plot(i[0], i[1], marker="+", color="green", markersize=4)
 
-    plt.plot(mrand, srand, marker='+', color='red', markersize=12)
+    plt.plot(mrand, srand, marker="+", color="red", markersize=12)
 
-    plt.savefig(dest, bbox_inches='tight', dpi=300)
+    plt.savefig(dest, bbox_inches="tight", dpi=300)
     # plt.show()
 
 
 def distance_from_front(front, actual_tree):
-    '''
+    """
     Return the closest alpha for the actual tree, and its distance to the front.
 
     actual_tree is just (mactual, sactual)
     front is a dict of form {alpha : [mcost, scost]}
-    '''
+    """
 
     # for each alpha value, find distance to the actual tree
     distances = {}
@@ -321,13 +354,13 @@ def distance_from_front(front, actual_tree):
         alpha_value = alpha[0]
         alpha_tree = alpha[1]
 
-        material_ratio = actual_tree[0]/alpha_tree[0]
-        transport_ratio = actual_tree[1]/alpha_tree[1]
+        material_ratio = actual_tree[0] / alpha_tree[0]
+        transport_ratio = actual_tree[1] / alpha_tree[1]
 
-        distances[alpha_value] = max(material_ratio,transport_ratio)
+        distances[alpha_value] = max(material_ratio, transport_ratio)
 
     # print(distances)
-    closest = min(distances.items(), key=lambda x:x[1])
+    closest = min(distances.items(), key=lambda x: x[1])
     # print(closest)
 
     characteristic_alpha, scaling_distance = closest
@@ -336,7 +369,7 @@ def distance_from_front(front, actual_tree):
 
 
 def pareto_calcs(H):
-    '''Perform Pareto-related calculations.'''
+    """Perform Pareto-related calculations."""
     front, actual = pareto_front(H)
     mactual, sactual = actual
 
@@ -354,19 +387,18 @@ def pareto_calcs(H):
 
     # assemble dict for export
     results = {
-        'material cost' : mactual,
-        'wiring cost' : sactual,
-        'alpha' : plant_alpha,
-        'scaling distance to front' : plant_scaling,
-        'material (random)' : mrand,
-        'wiring (random)' : srand,
-        'alpha (random)' : rand_alpha,
-        'scaling (random)' : rand_scaling
+        "material cost": mactual,
+        "wiring cost": sactual,
+        "alpha": plant_alpha,
+        "scaling distance to front": plant_scaling,
+        "material (random)": mrand,
+        "wiring (random)": srand,
+        "alpha (random)": rand_alpha,
+        "scaling (random)": rand_scaling,
     }
 
     return results, front, randoms
 
-   
 
 ### CONVEX HULL calculations
 
@@ -376,13 +408,15 @@ import numpy as np
 import networkx as nx
 import math
 
+
 def distance(p1, p2):
-    '''Compute 2D Euclidian distance between two (x,y) points.'''
-    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+    """Compute 2D Euclidian distance between two (x,y) points."""
+    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
 from scipy.spatial import ConvexHull
 import numpy as np
+
 
 def calculate_convex_hull_area(G):
     # Check if the graph has at least 3 nodes
@@ -391,7 +425,7 @@ def calculate_convex_hull_area(G):
         return None
 
     # Get the positions of the nodes
-    positions = np.array([data['pos'] for node, data in G.nodes(data=True)])
+    positions = np.array([data["pos"] for node, data in G.nodes(data=True)])
 
     # Calculate the convex hull
     hull = ConvexHull(positions)
@@ -401,15 +435,16 @@ def calculate_convex_hull_area(G):
 
     return hull_area
 
+
 def calc_len_LRs_with_distances(H):
-    '''Calculate the 2D Euclidean distance for each lateral root from the first node to the last node, excluding intermediate nodes, and return the total length of each LR type in the graph.'''
+    """Calculate the 2D Euclidean distance for each lateral root from the first node to the last node, excluding intermediate nodes, and return the total length of each LR type in the graph."""
     # minimum length (px) for LR to be considered part of the network
 
     threshold = 0
 
     # dict of node ids : LR index, for each LR node
-    idxs = nx.get_node_attributes(H, 'LR_index')
-    idxs = {k:v for k,v in idxs.items() if v is not None} # drop empty (PR) nodes
+    idxs = nx.get_node_attributes(H, "LR_index")
+    idxs = {k: v for k, v in idxs.items() if v is not None}  # drop empty (PR) nodes
 
     num_LRs = max(idxs.values()) + 1
 
@@ -419,11 +454,11 @@ def calc_len_LRs_with_distances(H):
         # gather nodes corresponding to the current LR index
         selected = []
 
-        for node in H.nodes(data='LR_index'):
+        for node in H.nodes(data="LR_index"):
             if node[1] == i:
                 selected.append(node[0])
                 # make note of the root degree (should be the same for all nodes in loop)
-                current_degree = H.nodes[node[0]]['root_deg']
+                current_degree = H.nodes[node[0]]["root_deg"]
 
         # to find the shallowest node in LR, we iterate through them
         # until we find the one whose parent has a lesser root degree
@@ -431,8 +466,8 @@ def calc_len_LRs_with_distances(H):
         for node in sub.nodes():
             parent = list(H.predecessors(node))
             # print(node, parent)
-            assert len(parent) == 1 # should be a tree
-            if H.nodes[parent[0]]['root_deg'] < current_degree:
+            assert len(parent) == 1  # should be a tree
+            if H.nodes[parent[0]]["root_deg"] < current_degree:
                 sub_top = node
 
         # now we can DFS to order all nodes by increasing depth
@@ -453,8 +488,8 @@ def calc_len_LRs_with_distances(H):
         else:
             # Now we can calculate the Euclidean distance from the first node to the last node
             # excluding intermediate nodes
-            first_node_pos = H.nodes[nodes_list[0]]['pos']
-            last_node_pos = H.nodes[nodes_list[-1]]['pos']
+            first_node_pos = H.nodes[nodes_list[0]]["pos"]
+            last_node_pos = H.nodes[nodes_list[-1]]["pos"]
             distance_lr = distance(first_node_pos, last_node_pos)
 
             results[i] = [length, distance_lr]
@@ -462,21 +497,26 @@ def calc_len_LRs_with_distances(H):
     assert nx.is_tree(H)
     return results
 
+
 def find_lowermost_node_of_primary_root(G, root_node):
-    '''Find the lowermost node of the primary root.'''
+    """Find the lowermost node of the primary root."""
     descendants = nx.descendants(G, root_node)
-    lowermost_node = max(descendants, key=lambda node: G.nodes[node]['pos'][1])  # Find the node with the maximum y-coordinate
-    return G.nodes[lowermost_node]['pos']
+    lowermost_node = max(
+        descendants, key=lambda node: G.nodes[node]["pos"][1]
+    )  # Find the node with the maximum y-coordinate
+    return G.nodes[lowermost_node]["pos"]
+
 
 def calculate_distance(p1, p2):
-    '''Compute 2D Euclidean distance between two (x,y) points.'''
-    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+    """Compute 2D Euclidean distance between two (x,y) points."""
+    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
 import numpy as np
 
+
 def analyze(G):
-    '''Report basic root metrics for a given graph.'''
+    """Report basic root metrics for a given graph."""
     # check that graph is indeed a tree (acyclic, undirected, connected)
     assert nx.is_tree(G)
 
@@ -484,9 +524,9 @@ def analyze(G):
     H = copy.deepcopy(G)
 
     # find top ("root") node
-    for node in H.nodes(data='pos'):
-       
-        if node[1] == [0,0]:
+    for node in H.nodes(data="pos"):
+
+        if node[1] == [0, 0]:
             root_node = node[0]
     # the pareto functions are hardcoded to assume node 0 is the top.
 
@@ -505,18 +545,17 @@ def analyze(G):
     # print('Set point angles are:', angles_LRs)
 
     # primary LR density
-    density_LRs = num_LRs/len_PR
+    density_LRs = num_LRs / len_PR
     # print('LR density is:', num_LRs/len_PR)
 
     # Calculate the Euclidean distance between the uppermost node and the lowermost node of the primary root
-    uppermost_node_pos = H.nodes[root_node]['pos']
+    uppermost_node_pos = H.nodes[root_node]["pos"]
     lowermost_node_pos = find_lowermost_node_of_primary_root(H, root_node)
     distance_root = calculate_distance(uppermost_node_pos, lowermost_node_pos)
 
     results, front, randoms = pareto_calcs(H)
 
-
-# Calculate lateral root distances with lengths and first-to-last distances
+    # Calculate lateral root distances with lengths and first-to-last distances
     lateral_root_info = calc_len_LRs_with_distances(H)
     num_LRs = len(lateral_root_info)
 
@@ -533,49 +572,41 @@ def analyze(G):
     median_LR_distances = np.median(distances_LRs)
     sum_LR_distances = np.sum(distances_LRs)
 
-# Calculate the total distance (sum of LR distances and PR minimal distance)
+    # Calculate the total distance (sum of LR distances and PR minimal distance)
     total_distance = sum_LR_distances + distance_root
 
-
     # Add lateral root lengths and distances to the results dictionary
-    results['Mean LR lengths'] = mean_LR_lengths
-    results['Median LR lengths'] = median_LR_lengths
-    results['Mean LR angles'] = mean_LR_angles
-    results['Median LR angles'] = median_LR_angles
-    results['Mean LR minimal distances'] = mean_LR_distances
-    results['Median LR minimal distances'] = median_LR_distances
-    results['sum LR minimal distances'] = sum_LR_distances
-    results['PR_minimal_distances'] = distance_root
-    results['PR length'] = len_PR
-    results['LR count'] = num_LRs
-    results['LR lengths'] = lens_LRs
-    results['LR angles'] = angles_LRs
-    results['LR minimal distances'] = distances_LRs
-    results['LR density'] = density_LRs
-    results['Total minimal Distance'] = total_distance  # Add the total distance to the results
-
-
-
+    results["Mean LR lengths"] = mean_LR_lengths
+    results["Median LR lengths"] = median_LR_lengths
+    results["Mean LR angles"] = mean_LR_angles
+    results["Median LR angles"] = median_LR_angles
+    results["Mean LR minimal distances"] = mean_LR_distances
+    results["Median LR minimal distances"] = median_LR_distances
+    results["sum LR minimal distances"] = sum_LR_distances
+    results["PR_minimal_distances"] = distance_root
+    results["PR length"] = len_PR
+    results["LR count"] = num_LRs
+    results["LR lengths"] = lens_LRs
+    results["LR angles"] = angles_LRs
+    results["LR minimal distances"] = distances_LRs
+    results["LR density"] = density_LRs
+    results["Total minimal Distance"] = (
+        total_distance  # Add the total distance to the results
+    )
 
     # Calculate the material cost (total root length)
     Total_root_length = len_PR + sum(lens_LRs)
 
-
     # Calculate the ratio of the material cost with the Total minimal Distance
     material_distance_ratio = Total_root_length / total_distance
 
-    results['Material/TotalDistance Ratio'] = material_distance_ratio
-
+    results["Material/TotalDistance Ratio"] = material_distance_ratio
 
     # Calculating convex hull area
-    points = np.array([H.nodes[node]['pos'] for node in H.nodes()])
+    points = np.array([H.nodes[node]["pos"] for node in H.nodes()])
     hull = ConvexHull(points)
     convex_hull_area = hull.volume  # Convex hull area in 2D is the same as its volume
 
-    results['Convex Hull Area'] = convex_hull_area
+    results["Convex Hull Area"] = convex_hull_area
 
     return results, front, randoms
-
-
-
-
