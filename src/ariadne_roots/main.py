@@ -15,7 +15,6 @@ import tkinter as tk
 import csv
 import copy
 import networkx as nx
-from networkx.readwrite import json_graph
 import json
 
 from pathlib import Path
@@ -23,6 +22,7 @@ from queue import Queue
 from collections import deque
 from PIL import Image, ImageTk, ImageSequence
 from datetime import datetime
+from networkx.readwrite import json_graph
 
 from ariadne_roots import quantify
 
