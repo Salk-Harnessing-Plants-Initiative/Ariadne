@@ -23,6 +23,7 @@ from collections import deque
 from PIL import Image, ImageTk, ImageSequence
 from datetime import datetime
 from networkx.readwrite import json_graph
+from tkinter import filedialog
 
 from ariadne_roots import quantify
 
