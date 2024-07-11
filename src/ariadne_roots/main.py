@@ -435,7 +435,7 @@ class TracerUI(tk.Frame):
         self.tree.clear_tree()
 
         # Prompt for a new plant ID assignment and create a new tree
-        self.tree.popup()
+        self.tree.popup(self.base)
 
     def draw_edge(self, parent, child):
         """Draw an edge between 2 nodes, and add it to the tree."""
@@ -646,7 +646,7 @@ class TracerUI(tk.Frame):
     def make_file(self, event=None):
         """Output tree data to file."""
         if self.tree.plant is None:  # get plant ID when called for the first time
-            self.tree.popup()
+            self.tree.popup(self.base)
             if self.tree.plant is None:  # user didn't update ID (pressed cancel)
                 return
 
@@ -768,7 +768,7 @@ class Tree:
         self.num_LRs = 0
         self.root_choice = None
 
-    def popup(self):
+    def popup(self, base):
         """Popup menu for plant ID assignment."""
         top = tk.Toplevel(base)
         top.geometry("350x500")
