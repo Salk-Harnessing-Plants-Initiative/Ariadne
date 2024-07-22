@@ -15,7 +15,7 @@
 
 📊 It also includes some (very cool) algorithms for analyzing those skeletons, which were mostly developed by other (very cool) people<sup id="a1">[1](#f1)</sup><sup>,</sup><sup id="a2">[2](#f2)</sup>. The focus is on measuring cost-performance trade-offs and Pareto optimality in RSA networks.
 
-⚠️ This is very much a work-in-progress! These are custom scripts written for a small, ongoing research project — so all code is provided as-is.
+⚠️ This is very much a work-in-progress! These are custom scripts written for an ongoing research project — so all code is provided as-is.
 
 🔨 That said, if you're interested in tinkering with the code, enjoy! PRs are always welcome. And please reach out with any comments, ideas, suggestions, or feedback.
 
@@ -80,8 +80,8 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
 ### Analyze with Ariadne
 
 1. **Organize your files:**
-    - Gather all the .json files stored in “location_1” into a new folder named “OUTPUT_JSON” (referred to as “location_2” later on).
-    - Create a folder named “RESULTS” (referred to as “location_3”).
+    - Gather all the .json files stored at the location where Ariadne has been installed into a new folder named “OUTPUT_JSON” (referred to as “location_1” later on).
+    - Create a folder named “RESULTS” (referred to as “location_2”).
     - Create a new folder named “Output”.
 2. **Prepare for analysis:**
     - Close Ariadne but keep the terminal open.
@@ -91,8 +91,8 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
 
     <img src="assets/Welcome.png" width="400" height="250">
 
-    - Select the .json files to analyze from “location_2”.
-    - Then select “location_3” for the output.
+    - Select the .json files to analyze from “location_1”.
+    - Then select “location_2” for the output.
     - The software will analyze all the selected .json files.
 
 ### Results
@@ -126,7 +126,7 @@ The RSA traits included in the CSV are
 - **LR minimal distance:** Euclidean distance between each lateral root tip and its insertion on the primary root for each lateral root
 - **LR density:** Number of lateral roots divided by primary root length, multiplied by 100
 - **Total minimal distance:** Sum of LR minimal distances plus PR minimal length
-- **Material/Total Distance Ratio:** Total root length divided by total minimal distance
+- **Tortuosity (Material/Total Distance Ratio):** Total root length divided by total minimal distance
 
 
 
