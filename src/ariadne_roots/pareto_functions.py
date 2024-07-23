@@ -24,18 +24,24 @@ def get_critical_nodes(G):
 
 
 def graph_costs(G, critical_nodes=None):
+    """Use BFS to compute the wiring cost, conduction delay of a graph G.
+
+    Args:
+        G (nx.Graph): The graph to compute the costs for
+        critical_nodes (list): The list of critical nodes to consider. If None, all
+            nodes are considered.
+
+    Returns:
+        mcost (float): The wiring cost of the graph. Wiring cost is the total length of
+            the edges in the network.
+        scost (float): The conduction delay of the graph. Conduction delay is the sum of
+            the distances from each point to the root. By default, computes conduction
+            delay for all nodes. If you specify a set of critical nodes, then only those
+            nodes are used for computing conduction delay.
     """
-    Uses a breadth first search to compute the wiring cost and conduction delay of G
-
-    Wiring cost is the total length of the edges in the network
-
-    Conduction delay is the sum of the distances from each point to the root.
-
-    By default, computes conduction delay for all nodes. If you specify a set of critical
-    nodes, then only those nodes are used for computing conduction delay
-    """
-    scost = 0
+    # initialize costs
     mcost = 0
+    scost = 0
 
     # dictionary that stores each node's distance to the root
     droot = {}
