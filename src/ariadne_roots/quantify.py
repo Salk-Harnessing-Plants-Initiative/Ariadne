@@ -179,7 +179,7 @@ def save_plot(path, name, title):
     # check that graph is indeed a tree (acyclic, undirected, connected)
     assert nx.is_tree(G)
 
-    mcosts, scosts, actual = pareto_front(G)
+    edge_lengths, travel_distances_to_base, actual = pareto_front(G)
     randoms = random_tree(G)
 
     fig = plt.figure()
@@ -188,7 +188,7 @@ def save_plot(path, name, title):
     ax.set_xlabel("Total length", fontsize=15)
     ax.set_ylabel("Travel distance", fontsize=15)
 
-    plt.plot(mcosts, scosts, marker="s", linestyle="-", markeredgecolor="black")
+    plt.plot(edge_lengths, travel_distances_to_base, marker="s", linestyle="-", markeredgecolor="black")
     plt.plot(actual[0], actual[1], marker="x", markersize=12)
     for i in randoms:
         plt.plot(i[0], i[1], marker="+", color="green", markersize=4)
@@ -341,7 +341,7 @@ def distance_from_front(front, actual_tree):
     Return the closest alpha for the actual tree, and its distance to the front.
 
     actual_tree is just (mactual, sactual)
-    front is a dict of form {alpha : [mcost, scost]}
+    front is a dict of form {alpha : [total_root_length, total_travel_distance]}
     """
 
     # for each alpha value, find distance to the actual tree
@@ -370,7 +370,7 @@ def pareto_calcs(H):
     front, actual = pareto_front(H)
     mactual, sactual = actual
 
-    # for debug: show mcost, scost
+    # for debug: show total_root_length, total_travel_distance
     print(list(front.items())[0:5])
 
     plant_alpha, plant_scaling = distance_from_front(front, actual)
