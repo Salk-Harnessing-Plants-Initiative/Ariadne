@@ -32,23 +32,23 @@ def graph_costs(G, critical_nodes=None):
             nodes are considered.
 
     Returns:
-        mcost (float): The wiring cost of the graph. Wiring cost is the total length of
+        total_root_length (float): The wiring cost of the graph. Wiring cost is the total length of
             the edges in the network.
-        scost (float): The conduction delay of the graph. Conduction delay is the sum of
+        total_travel_distance (float): The conduction delay of the graph. Conduction delay is the sum of
             the distances from each point to the root. By default, computes conduction
             delay for all nodes. If you specify a set of critical nodes, then only those
             nodes are used for computing conduction delay.
     """
     # initialize costs
-    mcost = 0
-    scost = 0
+    total_root_length = 0
+    total_travel_distance = 0
 
     # dictionary that stores each node's distance to the root
-    droot = {}
+    distance_to_base = {}
     # this method assumes node 0 is the root
     root = 0
     # node 1 has distance 0 from the root
-    droot[root] = 0
+    distance_to_base[root] = 0
 
     # dictionary that stores each node's parent in the bfs
     # this way we avoid visiting the same node twice
@@ -60,8 +60,8 @@ def graph_costs(G, critical_nodes=None):
     visited = set()
 
     # lists that store the edge lengths and the distances from the nodes to each root
-    mcosts = []
-    scosts = []
+    edge_lengths = []
+    travel_distances_to_base = []
     while len(queue) > 0:
         # visit the next discovered but not yet visited node
         curr = queue.pop(0)
@@ -78,26 +78,26 @@ def graph_costs(G, critical_nodes=None):
             # ignore curr's parent, this was already visited in the bfs
             if child != parent[curr]:
                 length = G[curr][child]["weight"]
-                mcosts.append(length)
+                edge_lengths.append(length)
 
                 # to get to the root, the child must go to curr and then to the root
                 # thus, child's distance to root = distance from child to curr + distance from curr to root
-                child_droot = length + droot[curr]
-                droot[child] = child_droot
+                child_distance_to_base = length + distance_to_base[curr]
+                distance_to_base[child] = child_distance_to_base
 
                 # if we have specified a set of critical nodes, only those nodes contribute to conduction delay
                 if critical_nodes == None or child in critical_nodes:
-                    scosts.append(child_droot)
+                    travel_distances_to_base.append(child_distance_to_base)
                 parent[child] = curr
                 queue.append(child)
 
     # if not every node was visited, graph is not connected
     assert len(visited) == G.number_of_nodes()
 
-    mcost = sum(sorted(mcosts))
-    scost = sum(sorted(scosts))
+    total_root_length = sum(sorted(edge_lengths))
+    total_travel_distance = sum(sorted(travel_distances_to_base))
 
-    return mcost, scost
+    return total_root_length, total_travel_distance
 
 
 def slope_vector(p1, p2):
@@ -161,21 +161,21 @@ def steiner_points(p1, p2, npoints=10):
     return midpoints
 
 
-def pareto_cost(mcost, scost, alpha):
+def pareto_cost(total_root_length, total_travel_distance, alpha):
     """
     Given a wiring cost, a conduction delay, and alpha, computes the overal pareto cost
 
     alpha tells us how much to prioritize each objective. If it's 0, we only care about
     conduction delay. If it's 1, we only care about wiring cost
 
-    mcost: the wiring cost (a.k.a. the material cost)
-    scost: the conduction delay (a.k.a. the satellite cost)
+    total_root_length: the wiring cost (a.k.a. the material cost)
+    total_travel_distance: the conduction delay (a.k.a. the satellite cost)
     """
     assert 0 <= alpha <= 1
 
-    mcost *= alpha
-    scost *= 1 - alpha
-    cost = mcost + scost
+    total_root_length *= alpha
+    total_travel_distance *= 1 - alpha
+    cost = total_root_length + total_travel_distance
     return cost
 
 
@@ -235,7 +235,7 @@ def satellite_tree(G):
     H = nx.Graph()
 
     H.add_node(root)
-    H.nodes[root]["droot"] = 0
+    H.nodes[root]["distance_to_base"] = 0
     root_pos = G.nodes[root]["pos"]
     H.nodes[root]["pos"] = root_pos
 
@@ -290,8 +290,8 @@ def pareto_steiner_fast(G, alpha):
     out_nodes = set(critical_nodes)
     out_nodes.remove(root)
 
-    graph_mcost = 0
-    graph_scost = 0
+    graph_total_root_length = 0
+    graph_total_travel_distance = 0
 
     """
     closest_neighbors is a dictionary. The keys are nodes that are currently in the tree.
@@ -329,8 +329,8 @@ def pareto_steiner_fast(G, alpha):
     while added_nodes < len(critical_nodes):
         assert len(out_nodes) > 0
         best_edge = None
-        best_mcost = None
-        best_scost = None
+        best_total_root_length = None
+        best_total_travel_distance = None
         best_cost = float("inf")
 
         best_choice = None
@@ -339,7 +339,7 @@ def pareto_steiner_fast(G, alpha):
         # go through nodes for which we need to (re)-compute its closest neighbor outside the tree
         for u in unpaired_nodes:
             assert H.has_node(u)
-            assert "droot" in H.nodes[u]
+            assert "distance_to_base" in H.nodes[u]
 
             invalid_neighbors = []
             closest_neighbor = None
@@ -371,9 +371,9 @@ def pareto_steiner_fast(G, alpha):
 
             # compute hypothetical cost of connecting u to its closest neighbor
             length = point_dist(p1, p2)
-            mcost = length
-            scost = length + H.nodes[u]["droot"]
-            cost = pareto_cost(mcost=mcost, scost=scost, alpha=alpha)
+            total_root_length = length
+            total_travel_distance = length + H.nodes[u]["distance_to_base"]
+            cost = pareto_cost(total_root_length=total_root_length, total_travel_distance=total_travel_distance, alpha=alpha)
 
             # add this candidate edge to the list of best edges
             # insort maintains the list in sorted order based on cost
@@ -441,8 +441,8 @@ def pareto_steiner_fast(G, alpha):
             n2 = line_nodes[i - 1]
             H.add_edge(n1, n2)
             H[n1][n2]["weight"] = node_dist(H, n1, n2)
-            assert "droot" in H.nodes[n1]
-            H.nodes[n2]["droot"] = node_dist(H, n2, u) + H.nodes[u]["droot"]
+            assert "distance_to_base" in H.nodes[n1]
+            H.nodes[n2]["distance_to_base"] = node_dist(H, n2, u) + H.nodes[u]["distance_to_base"]
 
         added_nodes += 1
     return H
@@ -458,11 +458,11 @@ def pareto_front(G):
 
     critical_nodes = get_critical_nodes(G)
 
-    # test: compute the actual mcost, scost for the original plant
+    # test: compute the actual total_root_length, total_travel_distance for the original plant
     mactual, sactual = graph_costs(G, critical_nodes=critical_nodes)
     actual = (mactual, sactual)
 
-    # dictionary of mcosts, scosts for each alpha value on the front
+    # dictionary of edge_lengths, travel_distances_to_base for each alpha value on the front
     front = {}
 
     for alpha in DEFAULT_ALPHAS:
@@ -475,8 +475,8 @@ def pareto_front(G):
 
         # compute the wiring cost and conduction delay
         # only the original critical nodes contribute to conduction delay
-        mcost, scost = graph_costs(H, critical_nodes=critical_nodes)
-        front[alpha] = [mcost, scost]
+        total_root_length, total_travel_distance = graph_costs(H, critical_nodes=critical_nodes)
+        front[alpha] = [total_root_length, total_travel_distance]
 
     return front, actual
 
