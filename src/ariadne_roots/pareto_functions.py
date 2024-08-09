@@ -276,7 +276,212 @@ def pareto_steiner_fast(G, alpha):
 
     H.add_node(root)
     # every node will keep track of its distance to the root
-    H.nodes[root]["droot"] = 0
+    H.nodes[root]["distance_to_base"] = 0
+    root_pos = G.nodes[root]["pos"]
+    H.nodes[root]["pos"] = root_pos
+    added_nodes = 1
+
+    critical_nodes = get_critical_nodes(G)
+
+    # critical nodes that have currently been added to the tree
+    in_nodes = set([root])
+
+    # critical nodes that have not yet been added to the tree
+    out_nodes = set(critical_nodes)
+    out_nodes.remove(root)
+
+    graph_total_root_length = 0
+    graph_total_travel_distance = 0
+
+    """
+    closest_neighbors is a dictionary. The keys are nodes that are currently in the tree.
+    The value associated with each node u is list of nodes that need to  be added to the
+    tree, sorted in order of how close each node is to u.
+    """
+    closest_neighbors = {}
+    for u in critical_nodes:
+        closest_neighbors[u] = k_nearest_neighbors(
+            G, u, k=None, candidate_nodes=critical_nodes[:]
+        )
+
+    """
+    unpaired_nodes contains the set of nodes for which we need to (re)-compute the closest
+    node that has not been added to the tree.
+    """
+    unpaired_nodes = set([root])
+
+    # keeps track of what the id of the next node added to the tree should be.
+    node_index = max(critical_nodes) + 1
+
+    steps = 0
+
+    """
+    The optimization this algorithm performs is that we don't need to consider every
+    combination (u, v) where u is in the tree and v is not in the tree. We only need to
+    consider combinations where u is in the tree, and v is the closest node to u that has
+    not been added to the  tree. This is because any other combination would never be the
+    optimal greedy choice.
+
+    best_edges stores all of these potentially optimal edges to add
+    """
+    best_edges = []
+
+    while added_nodes < len(critical_nodes):
+        assert len(out_nodes) > 0
+        best_edge = None
+        best_total_root_length = None
+        best_total_travel_distance = None
+        best_cost = float("inf")
+
+        best_choice = None
+        best_midpoint = None
+
+        # go through nodes for which we need to (re)-compute its closest neighbor outside the tree
+        for u in unpaired_nodes:
+            assert H.has_node(u)
+            assert "distance_to_base" in H.nodes[u]
+
+            invalid_neighbors = []
+            closest_neighbor = None
+            """
+            Go through u's closest neighbors and find the closest one that has not been
+            added to the tree
+            """
+            for i in range(len(closest_neighbors[u])):
+                v = closest_neighbors[u][i]
+                if H.has_node(v):
+                    invalid_neighbors.append(v)
+                else:
+                    # once we find the closest neighbor not in the tree,
+                    closest_neighbor = v
+                    break
+
+            """
+            if any of the closest neighbors are no longer valid partners, remove them from
+            the list of closest neighbors
+            """
+            for invalid_neighbor in invalid_neighbors:
+                closest_neighbors[u].remove(invalid_neighbor)
+
+            assert closest_neighbor != None
+            assert not H.has_node(closest_neighbor)
+
+            p1 = H.nodes[u]["pos"]
+            p2 = G.nodes[closest_neighbor]["pos"]
+
+            # compute hypothetical cost of connecting u to its closest neighbor
+            length = point_dist(p1, p2)
+            total_root_length = length
+            total_travel_distance = length + H.nodes[u]["distance_to_base"]
+            cost = pareto_cost(total_root_length=total_root_length, total_travel_distance=total_travel_distance, alpha=alpha)
+
+            # add this candidate edge to the list of best edges
+            # insort maintains the list in sorted order based on cost
+            insort(best_edges, (cost, u, closest_neighbor))
+
+        # We will add the candidate edge with the smallest cost
+        # because we maintained these edges in sorted order, it's O(1) to get the next edge to add
+        cost, u, v = best_edges.pop(0)
+
+        # go through all the candidate edges and see which ones are no longer valid
+        best_edges2 = []
+        # u and v are now unpaired, we need to find their respective closest neighbors outside of the tree
+        unpaired_nodes = set([u, v])
+        for cost, x, y in best_edges:
+            # if another node had v as its closet neighbor, we need to find its next-closest neighbor going forward
+            if y == v:
+                unpaired_nodes.add(x)
+            else:
+                best_edges2.append((cost, x, y))
+        best_edges = best_edges2
+
+        assert H.has_node(u)
+        assert not H.has_node(v)
+        H.add_node(v)
+        H.nodes[v]["pos"] = G.nodes[v]["pos"]
+        # v is now in the tree, not outside the tree
+        in_nodes.add(v)
+        out_nodes.remove(v)
+
+        # connect u to v, adding several midpoints along the way
+        p1 = H.nodes[u]["pos"]
+        p2 = H.nodes[v]["pos"]
+        midpoints = steiner_points(p1, p2, npoints=STEINER_MIDPOINTS)
+        midpoint_nodes = []
+
+        # add a new node for every midpoint being added along the u-v line segment
+        for midpoint in midpoints:
+            midpoint_node = node_index
+            node_index += 1
+            H.add_node(midpoint_node)
+            H.nodes[midpoint_node]["pos"] = midpoint
+
+            # get the distance from the midpoint  to all nodes that need to be added to t he tree
+            neighbors = []
+            for out_node in out_nodes:
+                out_coord = G.nodes[out_node]["pos"]
+                dist = point_dist(midpoint, out_coord)
+                neighbors.append((dist, out_node))
+
+            # add the newly-added midpoint node to closest_neighbors
+            neighbors = sorted(neighbors)
+            closest_neighbors[midpoint_node] = []
+            for dist, neighbor in neighbors:
+                closest_neighbors[midpoint_node].append(neighbor)
+
+            midpoint_nodes.append(midpoint_node)
+
+            # midpoint_node is unpaired, we need to add it to the candidate edges in the next iteration
+            unpaired_nodes.add(midpoint_node)
+
+        # connect all of the points in the line segment: u, v, and all the nodes in between
+        line_nodes = [v] + list(reversed(midpoint_nodes)) + [u]
+        for i in range(-1, -len(line_nodes), -1):
+            n1 = line_nodes[i]
+            n2 = line_nodes[i - 1]
+            H.add_edge(n1, n2)
+            H[n1][n2]["weight"] = node_dist(H, n1, n2)
+            assert "distance_to_base" in H.nodes[n1]
+            H.nodes[n2]["distance_to_base"] = node_dist(H, n2, u) + H.nodes[u]["distance_to_base"]
+
+        added_nodes += 1
+    return H
+
+
+def pareto_steiner_3d_root_tortuosity(G, alpha, beta):
+    """
+    Given a graph G and a value 0 <= {alpha, beta} <= 1, compute the Pareto-optimal tree 
+    connecting the root to all of the lateral root tips of G
+
+    The objective function is:
+    \text{Joint}(P, B) = \min \left( a \cdot \text{Travel} + b \cdot \text{Length} - c \cdot \text{Total Root Coverage} \right)
+    subject to the constraint:
+    a + b + c = 1
+    where (a), (b), and (c) are real numbers in the range ([0, 1]).
+
+    Travel: the sum of the lengths of the shortest paths from every
+    lateral root tip to the root node of the network.
+
+    Length: the total length of the tree.
+
+    Total Root Coverage: the tortuosity per root is defined as the ratio of the actual 
+    path length to the shortest path length between the root and the root tip. The total
+    root coverage is the sum of the tortuosity of all the roots.
+
+    The algorithm uses a greedy approach: always take the edge that will reduce the
+    pareto cost of the tree by the smallest amount
+    """
+    assert 0 <= alpha <= 1
+    assert 0 <= beta <= 1
+
+    # assume the root is node 0
+    root = 0
+
+    H = nx.Graph()
+
+    H.add_node(root)
+    # every node will keep track of its distance to the root
+    H.nodes[root]["distance_to_base"] = 0
     root_pos = G.nodes[root]["pos"]
     H.nodes[root]["pos"] = root_pos
     added_nodes = 1
