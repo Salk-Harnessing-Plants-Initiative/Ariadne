@@ -624,10 +624,13 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
             edge_length = point_dist(p1, p2)
             total_root_length = edge_length
             total_travel_distance = edge_length + H.nodes[u]["distance_to_base"]
-            cost = pareto_cost(
+            total_root_coverage = total_travel_distance / point_dist(base_pos, p2)
+            cost = pareto_cost_3d_path_tortuosity(
                 total_root_length=total_root_length,
                 total_travel_distance=total_travel_distance,
+                total_root_coverage=total_root_coverage,
                 alpha=alpha,
+                beta=beta,
             )
 
             # add this candidate edge to the list of best edges
@@ -700,6 +703,7 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
             H.nodes[n2]["distance_to_base"] = (
                 node_dist(H, n2, u) + H.nodes[u]["distance_to_base"]
             )
+            H.nodes[n2]["straight_distance_to_base"] = H.nodes[n2]["distance_to_base"] / node_dist(H, n2, base_node)
 
         added_nodes += 1
     return H
