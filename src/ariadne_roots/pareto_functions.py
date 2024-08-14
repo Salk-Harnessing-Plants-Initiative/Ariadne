@@ -487,25 +487,29 @@ def pareto_steiner_fast(G, alpha):
     return H
 
 
-def pareto_steiner_3d_root_tortuosity(G, alpha, beta):
+def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
     """
     Given a graph G and a value 0 <= {alpha, beta} <= 1, compute the Pareto-optimal tree
-    connecting the root to all of the lateral root tips of G
+    connecting the base node to all of the lateral root tips of G.
 
-    The objective function is:
-    \text{Joint}(P, B) = \min \left( a \cdot \text{Travel} + b \cdot \text{Length} - c \cdot \text{Total Root Coverage} \right)
-    subject to the constraint:
-    a + b + c = 1
-    where (a), (b), and (c) are real numbers in the range ([0, 1]).
+    cost = alpha * total_root_length + beta * total_travel_distance - gamma * total_path_coverage
 
-    Total Travel Distance: the sum of the lengths of the shortest paths from every
-    lateral root tip to the root node of the network.
+    alpha + beta + gamma = 1
 
-    Total Root Length: the total length of the tree.
+    When alpha = beta = 0, gamma = 1 => cost = -total_root_coverage will be minimized =>
+        total_root_coverage will be maximized
+    When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized
+    When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized
 
-    Total Root Coverage: the tortuosity per root is defined as the ratio of the actual
-    path length to the shortest path length between the root and the root tip. The total
-    root coverage is the sum of the tortuosity of all the roots.
+    total_root_length: the sum of the lengths of the edges in the root network 
+        (a.k.a. material cost, wiring cost)
+    total_travel_distance: the sum of the lengths of the shortest paths from every
+        lateral root tip to the base node of the network. (a.k.a. the satellite cost, 
+        conduction delay)
+    total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per 
+        path is defined as the ratio of the actual path length to the shortest path 
+        length between the root and the root tip. The total root coverage is the sum of 
+        the tortuosity of all the root paths.
 
     The algorithm uses a greedy approach: always take the edge that will reduce the
     pareto cost of the tree by the smallest amount
@@ -524,6 +528,9 @@ def pareto_steiner_3d_root_tortuosity(G, alpha, beta):
     base_pos = G.nodes[base_node]["pos"]
     H.nodes[base_node]["pos"] = base_pos
     added_nodes = 1
+
+    # every node will keep track of the shortest path to the base_node
+    H.nodes[base_node]["straight_distance_to_base"] = 0
 
     critical_nodes = get_critical_nodes(G)
 
