@@ -8,6 +8,7 @@ from bisect import insort
 STEINER_MIDPOINTS = 10
 
 DEFAULT_ALPHAS = np.arange(0, 1.01, 0.01)
+DEFAULT_BETAS = np.arange(0, 1.01, 0.01)
 
 
 def get_critical_nodes(G):
@@ -176,6 +177,38 @@ def pareto_cost(total_root_length, total_travel_distance, alpha):
     total_root_length *= alpha
     total_travel_distance *= 1 - alpha
     cost = total_root_length + total_travel_distance
+    return cost
+
+
+def pareto_cost_3d_path_tortuosity(total_root_length, total_travel_distance, total_root_coverage, alpha, beta):
+    """
+    Computes the pareto cost.
+
+    alpha * total_root_length + beta * total_travel_distance - gamma * total_root_coverage
+
+    alpha + beta + gamma = 1
+
+    When alpha = beta = 0, gamma = 1 => cost = -total_root_coverage will be minimized =>
+        total_root_coverage will be maximized
+    When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized
+    When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized
+
+    total_root_length: the sum of the lengths of the edges in the root network 
+        (a.k.a. material cost, wiring cost)
+    total_travel_distance: the sum of the lengths of the shortest paths from every
+        lateral root tip to the base node of the network. (a.k.a. the satellite cost, 
+        conduction delay)
+    total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per 
+        path is defined as the ratio of the actual path length to the shortest path 
+        length between the root and the root tip. The total root coverage is the sum of 
+        the tortuosity of all the root paths.
+    """
+    assert 0 <= alpha <= 1
+    assert 0 <= beta <= 1
+
+    gamma = 1 - alpha - beta
+    cost = alpha * total_root_length + beta * total_travel_distance - gamma * total_root_coverage
+
     return cost
 
 
