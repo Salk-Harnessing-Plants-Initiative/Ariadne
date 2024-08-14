@@ -64,31 +64,31 @@ def graph_costs(G, critical_nodes=None):
     travel_distances_to_base = []
     while len(nodes_to_visit) > 0:
         # visit the next discovered but not visited node
-        curr = nodes_to_visit.pop(0)
+        current_node = nodes_to_visit.pop(0)
 
         # if we are trying to  visit an already-visited node, => we have a cycle
-        if curr in visited_nodes:
+        if current_node in visited_nodes:
             return float("inf"), float("inf")
 
-        # we've visited curr
-        visited_nodes.add(curr)
+        # we've visited current_node
+        visited_nodes.add(current_node)
 
-        # go through curr's children and add the unvisited nodes to the nodes_to_visit
-        for child in G.neighbors(curr):
-            # ignore curr's parent_node, this was already visited in the bfs
-            if child != parent_node[curr]:
-                length = G[curr][child]["weight"]
+        # go through current_node's children and add the unvisited nodes to the nodes_to_visit
+        for child in G.neighbors(current_node):
+            # ignore current_node's parent_node, this was already visited in the bfs
+            if child != parent_node[current_node]:
+                length = G[current_node][child]["weight"]
                 edge_lengths.append(length)
 
-                # to get to the base, the child must go to curr and then to the base
-                # thus, child's distance to base = distance from child to curr + distance from curr to base
-                child_distance_to_base = length + distance_to_base[curr]
+                # to get to the base, the child must go to current_node and then to the base
+                # thus, child's distance to base = distance from child to current_node + distance from current_node to base
+                child_distance_to_base = length + distance_to_base[current_node]
                 distance_to_base[child] = child_distance_to_base
 
                 # if we have specified a set of critical nodes, only those nodes contribute to conduction delay
                 if critical_nodes == None or child in critical_nodes:
                     travel_distances_to_base.append(child_distance_to_base)
-                parent_node[child] = curr
+                parent_node[child] = current_node
                 nodes_to_visit.append(child)
 
     # if not every node was visited, => graph is not connected
