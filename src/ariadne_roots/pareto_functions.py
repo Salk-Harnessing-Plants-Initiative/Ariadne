@@ -74,22 +74,22 @@ def graph_costs(G, critical_nodes=None):
         visited_nodes.add(current_node)
 
         # go through current_node's children and add the unvisited nodes to the nodes_to_visit
-        for child in G.neighbors(current_node):
+        for child_node in G.neighbors(current_node):
             # ignore current_node's parent_node, this was already visited in the bfs
-            if child != parent_node[current_node]:
-                length = G[current_node][child]["weight"]
+            if child_node != parent_node[current_node]:
+                length = G[current_node][child_node]["weight"]
                 edge_lengths.append(length)
 
-                # to get to the base, the child must go to current_node and then to the base
-                # thus, child's distance to base = distance from child to current_node + distance from current_node to base
+                # to get to the base, the child_node must go to current_node and then to the base
+                # thus, child_node's distance to base = distance from child_node to current_node + distance from current_node to base
                 child_distance_to_base = length + distance_to_base[current_node]
-                distance_to_base[child] = child_distance_to_base
+                distance_to_base[child_node] = child_distance_to_base
 
                 # if we have specified a set of critical nodes, only those nodes contribute to conduction delay
-                if critical_nodes == None or child in critical_nodes:
+                if critical_nodes == None or child_node in critical_nodes:
                     travel_distances_to_base.append(child_distance_to_base)
-                parent_node[child] = current_node
-                nodes_to_visit.append(child)
+                parent_node[child_node] = current_node
+                nodes_to_visit.append(child_node)
 
     # if not every node was visited, => graph is not connected
     assert len(visited_nodes) == G.number_of_nodes()

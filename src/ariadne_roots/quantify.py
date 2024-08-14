@@ -97,8 +97,8 @@ def make_graph(target):
                         else:
                             print("Error: edge assignment failed")
 
-                    for child in child_metadata:
-                        q.put((node_num, list(map(int, child.strip("[]").split(",")))))
+                    for child_node in child_metadata:
+                        q.put((node_num, list(map(int, child_node.strip("[]").split(",")))))
 
                 node_num += 1
                 group_num += 1
@@ -149,9 +149,9 @@ def make_graph_alt(target):
                             )
                     # place all descendants of the current node in the queue for processing in future rounds
                     children = info[1].split()
-                    for child in children:
+                    for child_node in children:
                         q.put(
-                            (node_num, list(map(int, child.strip("[]").split(","))))
+                            (node_num, list(map(int, child_node.strip("[]").split(","))))
                         )  # converts each child object from list of strings to list of ints
                 else:  # terminal node (degree == 1)
                     coords = tuple(int(float(i)) for i in info[0].rstrip(";").split())[
@@ -214,10 +214,10 @@ def calc_len_PR(G, root_node):
     for node, children in bfs_paths.items():
         if G.nodes[node]["LR_index"] is None:
             PRs.append(node)
-            for child in children:
-                if G.nodes[child]["LR_index"] is None:
+            for child_node in children:
+                if G.nodes[child_node]["LR_index"] is None:
                     # catch the last node in the PR, which won't appear in the iterator since it has no children
-                    final = child
+                    final = child_node
 
     PRs.append(final)
 
