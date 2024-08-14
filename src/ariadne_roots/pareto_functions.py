@@ -77,12 +77,12 @@ def graph_costs(G, critical_nodes=None):
         for child_node in G.neighbors(current_node):
             # ignore current_node's parent_node, this was already visited in the bfs
             if child_node != parent_node[current_node]:
-                length = G[current_node][child_node]["weight"]
-                edge_lengths.append(length)
+                edge_length = G[current_node][child_node]["weight"]
+                edge_lengths.append(edge_length)
 
                 # to get to the base, the child_node must go to current_node and then to the base
                 # thus, child_node's distance to base = distance from child_node to current_node + distance from current_node to base
-                child_distance_to_base = length + distance_to_base[current_node]
+                child_distance_to_base = edge_length + distance_to_base[current_node]
                 distance_to_base[child_node] = child_distance_to_base
 
                 # if we have specified a set of critical nodes, only those nodes contribute to conduction delay
@@ -370,9 +370,9 @@ def pareto_steiner_fast(G, alpha):
             p2 = G.nodes[closest_neighbor]["pos"]
 
             # compute hypothetical cost of connecting u to its closest neighbor
-            length = point_dist(p1, p2)
-            total_root_length = length
-            total_travel_distance = length + H.nodes[u]["distance_to_base"]
+            edge_length = point_dist(p1, p2)
+            total_root_length = edge_length
+            total_travel_distance = edge_length + H.nodes[u]["distance_to_base"]
             cost = pareto_cost(
                 total_root_length=total_root_length,
                 total_travel_distance=total_travel_distance,
@@ -581,9 +581,9 @@ def pareto_steiner_3d_root_tortuosity(G, alpha, beta):
             p2 = G.nodes[closest_neighbor]["pos"]
 
             # compute hypothetical cost of connecting u to its closest neighbor
-            length = point_dist(p1, p2)
-            total_root_length = length
-            total_travel_distance = length + H.nodes[u]["distance_to_base"]
+            edge_length = point_dist(p1, p2)
+            total_root_length = edge_length
+            total_travel_distance = edge_length + H.nodes[u]["distance_to_base"]
             cost = pareto_cost(
                 total_root_length=total_root_length,
                 total_travel_distance=total_travel_distance,
