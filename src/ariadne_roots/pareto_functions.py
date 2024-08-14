@@ -465,10 +465,10 @@ def pareto_steiner_3d_root_tortuosity(G, alpha, beta):
     a + b + c = 1
     where (a), (b), and (c) are real numbers in the range ([0, 1]).
 
-    Travel: the sum of the lengths of the shortest paths from every
+    Total Travel Distance: the sum of the lengths of the shortest paths from every
     lateral root tip to the root node of the network.
 
-    Length: the total length of the tree.
+    Total Root Length: the total length of the tree.
 
     Total Root Coverage: the tortuosity per root is defined as the ratio of the actual
     path length to the shortest path length between the root and the root tip. The total
