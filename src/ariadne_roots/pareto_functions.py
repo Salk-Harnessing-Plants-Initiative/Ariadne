@@ -43,23 +43,23 @@ def graph_costs(G, critical_nodes=None):
     total_root_length = 0
     total_travel_distance = 0
 
-    # dictionary that stores each node's distance to the base
+    # dictionary that stores each node's distance to the base_node
     distance_to_base = {}
-    # this method assumes node 0 is the base
-    base = 0
-    # node 1 has distance 0 from the base
-    distance_to_base[base] = 0
+    # this method assumes node 0 is the base_node
+    base_node = 0
+    # node 1 has distance 0 from the base_node
+    distance_to_base[base_node] = 0
 
     # dictionary that stores each node's parent_node in the bfs
     # this way we avoid visiting the same node twice
     parent_node = {}
-    parent_node[base] = None
+    parent_node[base_node] = None
 
     # nodes_to_visit: nodes that have been discovered but not yet visited
-    nodes_to_visit = [base]
+    nodes_to_visit = [base_node]
     visited_nodes = set()
 
-    # lists that store the edge lengths and the distances from the nodes to each base
+    # lists that store the edge lengths and the distances from the nodes to each base_node
     edge_lengths = []
     travel_distances_to_base = []
     while len(nodes_to_visit) > 0:
@@ -80,8 +80,8 @@ def graph_costs(G, critical_nodes=None):
                 edge_length = G[current_node][child_node]["weight"]
                 edge_lengths.append(edge_length)
 
-                # to get to the base, the child_node must go to current_node and then to the base
-                # thus, child_node's distance to base = distance from child_node to current_node + distance from current_node to base
+                # to get to the base_node, the child_node must go to current_node and then to the base_node
+                # thus, child_node's distance_to_base = distance from child_node to current_node + distance from current_node to base
                 child_distance_to_base = edge_length + distance_to_base[current_node]
                 distance_to_base[child_node] = child_distance_to_base
 
@@ -229,25 +229,25 @@ def satellite_tree(G):
     to the root base by a direct line
     """
 
-    # assume the base is node 0
-    base = 0
+    # assume the _node is node 0
+    base_node = 0
 
     H = nx.Graph()
 
-    H.add_node(base)
-    H.nodes[base]["distance_to_base"] = 0
-    base_pos = G.nodes[base]["pos"]
-    H.nodes[base]["pos"] = base_pos
+    H.add_node(base_node)
+    H.nodes[base_node]["distance_to_base"] = 0
+    base_pos = G.nodes[base_node]["pos"]
+    H.nodes[base_node]["pos"] = base_pos
 
     critical_nodes = get_critical_nodes(G)
 
-    # connect every critical node to the base with a direct edge
+    # connect every critical node to the base_node with a direct edge
     for u in critical_nodes:
-        if u == base:
+        if u == base_node:
             continue
-        H.add_edge(base, u)
+        H.add_edge(base_node, u)
         H.nodes[u]["pos"] = G.nodes[u]["pos"]
-        H[base][u]["weight"] = node_dist(G, base, u)
+        H[base_node][u]["weight"] = node_dist(G, base_node, u)
 
     return H
 
@@ -255,12 +255,12 @@ def satellite_tree(G):
 def pareto_steiner_fast(G, alpha):
     """
     Given a graph G and a value 0 <= alpha <= 1, compute the Pareto-optimal tree connecting
-    the root base to all of the lateral root tips of G
+    the root base_node to all of the lateral root tips of G
 
     The algorithm attempts to optimize alpha * D + (1 - alpha) * W
 
     D is the conduction delay: the sum of the lengths of the shortest paths from every
-    lateral root tip to the root base of the network
+    lateral root tip to the root base_node of the network
 
     W is the wiring cost: the total length of the tree
 
@@ -269,26 +269,26 @@ def pareto_steiner_fast(G, alpha):
     """
     assert 0 <= alpha <= 1
 
-    # assume the base is node 0
-    base = 0
+    # assume the base_node is node 0
+    base_node = 0
 
     H = nx.Graph()
 
-    H.add_node(base)
-    # every node will keep track of its distance to the base
-    H.nodes[base]["distance_to_base"] = 0
-    base_pos = G.nodes[base]["pos"]
-    H.nodes[base]["pos"] = base_pos
+    H.add_node(base_node)
+    # every node will keep track of its distance to the base_node
+    H.nodes[base_node]["distance_to_base"] = 0
+    base_pos = G.nodes[base_node]["pos"]
+    H.nodes[base_node]["pos"] = base_pos
     added_nodes = 1
 
     critical_nodes = get_critical_nodes(G)
 
     # critical nodes that have currently been added to the tree
-    in_nodes = set([base])
+    in_nodes = set([base_node])
 
     # critical nodes that have not yet been added to the tree
     out_nodes = set(critical_nodes)
-    out_nodes.remove(base)
+    out_nodes.remove(base_node)
 
     graph_total_root_length = 0
     graph_total_travel_distance = 0
@@ -308,7 +308,7 @@ def pareto_steiner_fast(G, alpha):
     unpaired_nodes contains the set of nodes for which we need to (re)-compute the closest
     node that has not been added to the tree.
     """
-    unpaired_nodes = set([base])
+    unpaired_nodes = set([base_node])
 
     # keeps track of what the id of the next node added to the tree should be.
     node_index = max(critical_nodes) + 1
@@ -480,26 +480,26 @@ def pareto_steiner_3d_root_tortuosity(G, alpha, beta):
     assert 0 <= alpha <= 1
     assert 0 <= beta <= 1
 
-    # assume the base is node 0
-    base = 0
+    # assume the base_node is node 0
+    base_node = 0
 
     H = nx.Graph()
 
-    H.add_node(base)
+    H.add_node(base_node)
     # every node will keep track of its distance to the base
-    H.nodes[base]["distance_to_base"] = 0
-    base_pos = G.nodes[base]["pos"]
-    H.nodes[base]["pos"] = base_pos
+    H.nodes[base_node]["distance_to_base"] = 0
+    base_pos = G.nodes[base_node]["pos"]
+    H.nodes[base_node]["pos"] = base_pos
     added_nodes = 1
 
     critical_nodes = get_critical_nodes(G)
 
     # critical nodes that have currently been added to the tree
-    in_nodes = set([base])
+    in_nodes = set([base_node])
 
     # critical nodes that have not yet been added to the tree
     out_nodes = set(critical_nodes)
-    out_nodes.remove(base)
+    out_nodes.remove(base_node)
 
     graph_total_root_length = 0
     graph_total_travel_distance = 0
@@ -519,7 +519,7 @@ def pareto_steiner_3d_root_tortuosity(G, alpha, beta):
     unpaired_nodes contains the set of nodes for which we need to (re)-compute the closest
     node that has not been added to the tree.
     """
-    unpaired_nodes = set([base])
+    unpaired_nodes = set([base_node])
 
     # keeps track of what the id of the next node added to the tree should be.
     node_index = max(critical_nodes) + 1

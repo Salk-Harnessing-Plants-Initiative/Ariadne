@@ -437,30 +437,30 @@ class TracerUI(tk.Frame):
         # Prompt for a new plant ID assignment and create a new tree
         self.tree.popup(self.base)
 
-    def draw_edge(self, parent, child):
+    def draw_edge(self, parent_node, child_node):
         """Draw an edge between 2 nodes, and add it to the tree."""
         # TODO: test that checks if drawn edge matches the data/hierarchy
-        if child.root_degree == 0:  # PR
+        if child_node.root_degree == 0:  # PR
             color = "green"
-        elif parent.root_degree < child.root_degree:  # branch point
-            if child.pedge_color is None:  # nascent LR
+        elif parent_node.root_degree < child_node.root_degree:  # branch point
+            if child_node.pedge_color is None:  # nascent LR
                 color = self.get_color()
             else:  # existing LR, already indexed (insertion mode)
-                color = child.pedge_color
+                color = child_node.pedge_color
         else:  # LR
-            color = parent.pedge_color
+            color = parent_node.pedge_color
 
         edge = self.canvas.create_line(
-            parent.coords[0],
-            parent.coords[1],
-            child.coords[0],
-            child.coords[1],
+            parent_node.coords[0],
+            parent_node.coords[1],
+            child_node.coords[0],
+            child_node.coords[1],
             fill=color,
             state=f"{self.tree_flag}",
         )
         self.tree.edges.append(edge)
-        child.pedge = edge
-        child.pedge_color = color
+        child_node.pedge = edge
+        child_node.pedge_color = color
 
     def get_color(self):
         """Fetch a new LR color from the palette."""
@@ -702,7 +702,7 @@ class Node:
         )
         self.is_highlighted = False
 
-        self.pedge = None  # id of parent edge incident upon node
+        self.pedge = None  # id of parent_node edge incident upon node
         self.pedge_color = None
 
     def select(self):
