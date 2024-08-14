@@ -230,11 +230,11 @@ def calc_root_len(G, nodes):
     dist = 0
 
     # order matters! assumes consecutive, increasing depth
-    for prev, curr in zip(nodes, nodes[1:]):
-        segment = distance(G.nodes[prev]["pos"], G.nodes[curr]["pos"])
+    for prev, current_node in zip(nodes, nodes[1:]):
+        segment = distance(G.nodes[prev]["pos"], G.nodes[current_node]["pos"])
         dist += segment
         # might as well annotate the edges while I'm here
-        G.edges[prev, curr]["weight"] = segment
+        G.edges[prev, current_node]["weight"] = segment
 
     return dist
 
