@@ -60,17 +60,17 @@ def make_graph(target):
 
                 if not child_metadata:  # terminal node, no children
                     G.add_node(node_num, pos=coords)
-                    parent = q.get()
+                    parent_node = q.get()
 
-                    parent_level = parent[1][0]
-                    parent_group = parent[1][1]
+                    parent_level = parent_node[1][0]
+                    parent_group = parent_node[1][1]
 
                     if level == parent_level and group_num == parent_group:
                         G.add_edge(
                             node_num,
-                            parent[0],
+                            parent_node[0],
                             length=distance(
-                                G.nodes[node_num]["pos"], G.nodes[parent[0]]["pos"]
+                                G.nodes[node_num]["pos"], G.nodes[parent_node[0]]["pos"]
                             ),
                         )
                     else:
@@ -80,24 +80,25 @@ def make_graph(target):
                     G.add_node(node_num, pos=coords)
 
                     if not q.empty():
-                        parent = q.get()
+                        parent_node = q.get()
 
-                        parent_level = parent[1][0]
-                        parent_group = parent[1][1]
+                        parent_level = parent_node[1][0]
+                        parent_group = parent_node[1][1]
 
                         if level == parent_level and group_num == parent_group:
                             G.add_edge(
                                 node_num,
-                                parent[0],
+                                parent_node[0],
                                 length=distance(
-                                    G.nodes[node_num]["pos"], G.nodes[parent[0]]["pos"]
+                                    G.nodes[node_num]["pos"],
+                                    G.nodes[parent_node[0]]["pos"],
                                 ),
                             )
                         else:
                             print("Error: edge assignment failed")
 
-                    for child in child_metadata:
-                        q.put((node_num, list(map(int, child.strip("[]").split(",")))))
+                    for child_node in child_metadata:
+                        q.put((node_num, list(map(int, child_node.strip("[]").split(",")))))
 
                 node_num += 1
                 group_num += 1
@@ -128,27 +129,29 @@ def make_graph_alt(target):
                     ]  # change output coords from floats to ints
                     G.add_node(node_num, pos=coords)
                     if not q.empty():
-                        parent = q.get()
-                        # print(parent, level, group_num, info)
+                        parent_node = q.get()
+                        # print(parent_node, level, group_num, info)
                         if (
-                            level == parent[1][0] and group_num == parent[1][1]
+                            level == parent_node[1][0]
+                            and group_num == parent_node[1][1]
                         ):  # check that the expected and actual positions of the child match
                             G.add_edge(
                                 node_num,
-                                parent[0],
+                                parent_node[0],
                                 length=distance(
-                                    G.nodes[node_num]["pos"], G.nodes[parent[0]]["pos"]
+                                    G.nodes[node_num]["pos"],
+                                    G.nodes[parent_node[0]]["pos"],
                                 ),
                             )
                         else:
                             print(
-                                f"Edge assignment failed: {parent}; {level}; {group_num}; {info}"
+                                f"Edge assignment failed: {parent_node}; {level}; {group_num}; {info}"
                             )
                     # place all descendants of the current node in the queue for processing in future rounds
                     children = info[1].split()
-                    for child in children:
+                    for child_node in children:
                         q.put(
-                            (node_num, list(map(int, child.strip("[]").split(","))))
+                            (node_num, list(map(int, child_node.strip("[]").split(","))))
                         )  # converts each child object from list of strings to list of ints
                 else:  # terminal node (degree == 1)
                     coords = tuple(int(float(i)) for i in info[0].rstrip(";").split())[
@@ -156,13 +159,13 @@ def make_graph_alt(target):
                     ]
                     G.add_node(node_num, pos=coords)
                     children = None
-                    parent = q.get()
-                    if level == parent[1][0] and group_num == parent[1][1]:
+                    parent_node = q.get()
+                    if level == parent_node[1][0] and group_num == parent_node[1][1]:
                         G.add_edge(
                             node_num,
-                            parent[0],
+                            parent_node[0],
                             length=distance(
-                                G.nodes[node_num]["pos"], G.nodes[parent[0]]["pos"]
+                                G.nodes[node_num]["pos"], G.nodes[parent_node[0]]["pos"]
                             ),
                         )
                     else:
@@ -179,7 +182,7 @@ def save_plot(path, name, title):
     # check that graph is indeed a tree (acyclic, undirected, connected)
     assert nx.is_tree(G)
 
-    mcosts, scosts, actual = pareto_front(G)
+    edge_lengths, travel_distances_to_base, actual = pareto_front(G)
     randoms = random_tree(G)
 
     fig = plt.figure()
@@ -188,7 +191,13 @@ def save_plot(path, name, title):
     ax.set_xlabel("Total length", fontsize=15)
     ax.set_ylabel("Travel distance", fontsize=15)
 
-    plt.plot(mcosts, scosts, marker="s", linestyle="-", markeredgecolor="black")
+    plt.plot(
+        edge_lengths,
+        travel_distances_to_base,
+        marker="s",
+        linestyle="-",
+        markeredgecolor="black",
+    )
     plt.plot(actual[0], actual[1], marker="x", markersize=12)
     for i in randoms:
         plt.plot(i[0], i[1], marker="+", color="green", markersize=4)
@@ -205,10 +214,10 @@ def calc_len_PR(G, root_node):
     for node, children in bfs_paths.items():
         if G.nodes[node]["LR_index"] is None:
             PRs.append(node)
-            for child in children:
-                if G.nodes[child]["LR_index"] is None:
+            for child_node in children:
+                if G.nodes[child_node]["LR_index"] is None:
                     # catch the last node in the PR, which won't appear in the iterator since it has no children
-                    final = child
+                    final = child_node
 
     PRs.append(final)
 
@@ -221,11 +230,11 @@ def calc_root_len(G, nodes):
     dist = 0
 
     # order matters! assumes consecutive, increasing depth
-    for prev, curr in zip(nodes, nodes[1:]):
-        segment = distance(G.nodes[prev]["pos"], G.nodes[curr]["pos"])
+    for prev, current_node in zip(nodes, nodes[1:]):
+        segment = distance(G.nodes[prev]["pos"], G.nodes[current_node]["pos"])
         dist += segment
         # might as well annotate the edges while I'm here
-        G.edges[prev, curr]["weight"] = segment
+        G.edges[prev, current_node]["weight"] = segment
 
     return dist
 
@@ -256,23 +265,23 @@ def calc_len_LRs(H):
                 current_degree = H.nodes[node[0]]["root_deg"]
 
         # to find the shallowest node in LR, we iterate through them
-        # until we find the one whose parent has a lesser root degree
+        # until we find the one whose parent_node has a lesser root degree
         sub = H.subgraph(selected)
         for node in sub.nodes():
-            parent = list(H.predecessors(node))
-            # print(node, parent)
-            assert len(parent) == 1  # should be a tree
-            if H.nodes[parent[0]]["root_deg"] < current_degree:
+            parent_node = list(H.predecessors(node))
+            # print(node, parent_node)
+            assert len(parent_node) == 1  # should be a tree
+            if H.nodes[parent_node[0]]["root_deg"] < current_degree:
                 sub_top = node
 
         # now we can DFS to order all nodes by increasing depth
         ordered = list(nx.dfs_tree(sub, sub_top).nodes())
 
-        # also include the parent of the shallowest node in the LR (the 'branch point')
-        parent = list(H.predecessors(ordered[0]))
-        assert len(parent) == 1
+        # also include the parent_node of the shallowest node in the LR (the 'branch point')
+        parent_node = list(H.predecessors(ordered[0]))
+        assert len(parent_node) == 1
 
-        nodes_list = parent + ordered
+        nodes_list = parent_node + ordered
 
         length = calc_root_len(H, nodes_list)
 
@@ -281,7 +290,7 @@ def calc_len_LRs(H):
         else:
             # now we can calculate the gravitropic set point angle
             # branch coordinates
-            p2 = np.array(H.nodes[parent[0]]["pos"])
+            p2 = np.array(H.nodes[parent_node[0]]["pos"])
             # LR coordinates
             p3 = np.array(H.nodes[ordered[0]]["pos"])
 
@@ -341,7 +350,7 @@ def distance_from_front(front, actual_tree):
     Return the closest alpha for the actual tree, and its distance to the front.
 
     actual_tree is just (mactual, sactual)
-    front is a dict of form {alpha : [mcost, scost]}
+    front is a dict of form {alpha : [total_root_length, total_travel_distance]}
     """
 
     # for each alpha value, find distance to the actual tree
@@ -370,7 +379,7 @@ def pareto_calcs(H):
     front, actual = pareto_front(H)
     mactual, sactual = actual
 
-    # for debug: show mcost, scost
+    # for debug: show total_root_length, total_travel_distance
     print(list(front.items())[0:5])
 
     plant_alpha, plant_scaling = distance_from_front(front, actual)
@@ -458,23 +467,23 @@ def calc_len_LRs_with_distances(H):
                 current_degree = H.nodes[node[0]]["root_deg"]
 
         # to find the shallowest node in LR, we iterate through them
-        # until we find the one whose parent has a lesser root degree
+        # until we find the one whose parent_node has a lesser root degree
         sub = H.subgraph(selected)
         for node in sub.nodes():
-            parent = list(H.predecessors(node))
-            # print(node, parent)
-            assert len(parent) == 1  # should be a tree
-            if H.nodes[parent[0]]["root_deg"] < current_degree:
+            parent_node = list(H.predecessors(node))
+            # print(node, parent_node)
+            assert len(parent_node) == 1  # should be a tree
+            if H.nodes[parent_node[0]]["root_deg"] < current_degree:
                 sub_top = node
 
         # now we can DFS to order all nodes by increasing depth
         ordered = list(nx.dfs_tree(sub, sub_top).nodes())
 
-        # also include the parent of the shallowest node in the LR (the 'branch point')
-        parent = list(H.predecessors(ordered[0]))
-        assert len(parent) == 1
+        # also include the parent_node of the shallowest node in the LR (the 'branch point')
+        parent_node = list(H.predecessors(ordered[0]))
+        assert len(parent_node) == 1
 
-        nodes_list = parent + ordered
+        nodes_list = parent_node + ordered
 
         # Calculate the distance for the LR
         length = calc_root_len(H, nodes_list)

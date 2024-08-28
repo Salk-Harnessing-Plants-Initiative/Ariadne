@@ -437,30 +437,30 @@ class TracerUI(tk.Frame):
         # Prompt for a new plant ID assignment and create a new tree
         self.tree.popup(self.base)
 
-    def draw_edge(self, parent, child):
+    def draw_edge(self, parent_node, child_node):
         """Draw an edge between 2 nodes, and add it to the tree."""
         # TODO: test that checks if drawn edge matches the data/hierarchy
-        if child.root_degree == 0:  # PR
+        if child_node.root_degree == 0:  # PR
             color = "green"
-        elif parent.root_degree < child.root_degree:  # branch point
-            if child.pedge_color is None:  # nascent LR
+        elif parent_node.root_degree < child_node.root_degree:  # branch point
+            if child_node.pedge_color is None:  # nascent LR
                 color = self.get_color()
             else:  # existing LR, already indexed (insertion mode)
-                color = child.pedge_color
+                color = child_node.pedge_color
         else:  # LR
-            color = parent.pedge_color
+            color = parent_node.pedge_color
 
         edge = self.canvas.create_line(
-            parent.coords[0],
-            parent.coords[1],
-            child.coords[0],
-            child.coords[1],
+            parent_node.coords[0],
+            parent_node.coords[1],
+            child_node.coords[0],
+            child_node.coords[1],
             fill=color,
             state=f"{self.tree_flag}",
         )
         self.tree.edges.append(edge)
-        child.pedge = edge
-        child.pedge_color = color
+        child_node.pedge = edge
+        child_node.pedge_color = color
 
     def get_color(self):
         """Fetch a new LR color from the palette."""
@@ -702,7 +702,7 @@ class Node:
         )
         self.is_highlighted = False
 
-        self.pedge = None  # id of parent edge incident upon node
+        self.pedge = None  # id of parent_node edge incident upon node
         self.pedge_color = None
 
     def select(self):
@@ -831,23 +831,23 @@ class Tree:
         base.wait_window(top)  # wait for a button to be pressed
 
     ##########################
-    def insert_child(self, curr, new):
+    def insert_child(self, current_node, new):
         """Assign child when using insertion mode."""
-        if len(curr.children) == 1:  # easy case
-            new.children.append(curr.children[0])
-            del curr.children[0]
-            curr.children.append(new)
+        if len(current_node.children) == 1:  # easy case
+            new.children.append(current_node.children[0])
+            del current_node.children[0]
+            current_node.children.append(new)
 
-            # if curr.root_degree == 0:
+            # if current_node.root_degree == 0:
             #     new.root_degree = 0
-            new.root_degree = curr.root_degree
-            new.LR_index = curr.LR_index
-            new.pedge_color = curr.pedge_color
+            new.root_degree = current_node.root_degree
+            new.LR_index = current_node.LR_index
+            new.pedge_color = current_node.pedge_color
 
         else:  # use root_choice
             new.children.append(self.root_choice)
-            curr.children.remove(self.root_choice)
-            curr.children.append(new)
+            current_node.children.remove(self.root_choice)
+            current_node.children.append(new)
 
             new.root_degree = self.root_choice.root_degree
             new.LR_index = self.root_choice.LR_index
@@ -858,13 +858,13 @@ class Tree:
 
     ##########################
 
-    def add_child(self, curr, new):
+    def add_child(self, current_node, new):
         """Assign child in all other cases."""
-        if len(curr.children) == 0:
-            if curr.root_degree == 0:
+        if len(current_node.children) == 0:
+            if current_node.root_degree == 0:
                 new.root_degree = 0
 
-        curr.children.append(new)
+        current_node.children.append(new)
 
     def DFS(self, root):
         """Walk tree depth-first and increment subtree depths +1. For insertion mode."""
@@ -885,21 +885,21 @@ class Tree:
         q.put(self.top)
 
         while not q.empty():
-            curr = q.get()
+            current_node = q.get()
             # arbitrarily, we assign LR indices left-to-right
             # sort by x-coordinate
-            curr_children = sorted(curr.children, key=lambda x: x.relcoords[0])
+            current_node_children = sorted(current_node.children, key=lambda x: x.relcoords[0])
 
-            for n in curr_children:
+            for n in current_node_children:
                 if n.root_degree is None:  # only index nodes that haven't been already
                     if (
-                        len(curr_children) == 1
-                    ):  # then n is part of the same root as curr
-                        n.root_degree = curr.root_degree
-                        if curr.LR_index is not None:
-                            n.LR_index = curr.LR_index
-                    else:  # curr is a branch point (aka LR found)
-                        n.root_degree = curr.root_degree + 1
+                        len(current_node_children) == 1
+                    ):  # then n is part of the same root as current_node
+                        n.root_degree = current_node.root_degree
+                        if current_node.LR_index is not None:
+                            n.LR_index = current_node.LR_index
+                    else:  # current_node is a branch point (aka LR found)
+                        n.root_degree = current_node.root_degree + 1
                         n.LR_index = self.num_LRs
                         self.num_LRs += 1
                 q.put(n)
