@@ -180,16 +180,16 @@ def pareto_cost(total_root_length, total_travel_distance, alpha):
     return cost
 
 
-def pareto_cost_3d_path_tortuosity(total_root_length, total_travel_distance, total_root_coverage, alpha, beta):
+def pareto_cost_3d_path_tortuosity(total_root_length, total_travel_distance, total_path_coverage, alpha, beta):
     """
     Computes the pareto cost.
 
-    alpha * total_root_length + beta * total_travel_distance - gamma * total_root_coverage
+    alpha * total_root_length + beta * total_travel_distance - gamma * total_path_coverage
 
     alpha + beta + gamma = 1
 
-    When alpha = beta = 0, gamma = 1 => cost = -total_root_coverage will be minimized =>
-        total_root_coverage will be maximized
+    When alpha = beta = 0, gamma = 1 => cost = -total_path_coverage will be minimized =>
+        total_path_coverage will be maximized
     When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized
     When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized
 
@@ -207,7 +207,7 @@ def pareto_cost_3d_path_tortuosity(total_root_length, total_travel_distance, tot
     assert 0 <= beta <= 1
 
     gamma = 1 - alpha - beta
-    cost = alpha * total_root_length + beta * total_travel_distance - gamma * total_root_coverage
+    cost = alpha * total_root_length + beta * total_travel_distance - gamma * total_path_coverage
 
     return cost
 
@@ -496,8 +496,8 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
 
     alpha + beta + gamma = 1
 
-    When alpha = beta = 0, gamma = 1 => cost = -total_root_coverage will be minimized =>
-        total_root_coverage will be maximized
+    When alpha = beta = 0, gamma = 1 => cost = -total_path_coverage will be minimized =>
+        total_path_coverage will be maximized
     When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized
     When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized
 
@@ -624,11 +624,11 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
             edge_length = point_dist(p1, p2)
             total_root_length = edge_length
             total_travel_distance = edge_length + H.nodes[u]["distance_to_base"]
-            total_root_coverage = total_travel_distance / point_dist(base_pos, p2)
+            total_path_coverage = total_travel_distance / point_dist(base_pos, p2)
             cost = pareto_cost_3d_path_tortuosity(
                 total_root_length=total_root_length,
                 total_travel_distance=total_travel_distance,
-                total_root_coverage=total_root_coverage,
+                total_path_coverage=total_path_coverage,
                 alpha=alpha,
                 beta=beta,
             )
