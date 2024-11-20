@@ -993,10 +993,10 @@ class AnalyzerUI(tk.Frame):
                 # make pareto plot and save
                 quantify.plot_all(
                     front,
-                    [results["material cost"], results["wiring cost"]],
+                    [results["Total root length"], results["Travel distance"]],
                     randoms,
-                    results["material (random)"],
-                    results["wiring (random)"],
+                    results["Total root length (random)"],
+                    results["Travel distance (random)"],
                     pareto_path,
                 )
 
