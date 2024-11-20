@@ -561,21 +561,19 @@ def calc_apical_zone(G, root_node):
     # Collect primary root nodes
     PR_nodes = []
     for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:
+        if G.nodes[node].get("LR_index") is None:  # Check for primary root node
             PR_nodes.append(node)
             for child in children:
-                if G.nodes[child].get("LR_index") is None:
+                if G.nodes[child].get("LR_index") is None:  # Still primary root node
                     PR_nodes.append(child)
 
     # Identify the last node with a lateral root insertion
     last_lr_insertion_point = None
-    for node in reversed(PR_nodes):
+    for node in reversed(PR_nodes):  # Start from the deepest node
         neighbors = list(G.neighbors(node))
-        for neighbor in neighbors:
-            if G.nodes[neighbor].get("LR_index") is not None:
-                last_lr_insertion_point = node
-                break
-        if last_lr_insertion_point:
+        # Ensure the node is on the primary root and has a lateral root insertion point
+        if G.nodes[node].get("LR_index") is None and any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
+            last_lr_insertion_point = node
             break
 
     if last_lr_insertion_point is None:
@@ -597,6 +595,7 @@ def calc_apical_zone(G, root_node):
                 break
 
     return apical_zone_length
+
 
 def calc_len_LRs_with_distances(H):
     """Calculate the 2D Euclidean distance for each lateral root from the first node to the last node, excluding intermediate nodes, and return the total length of each LR type in the graph."""
