@@ -441,6 +441,50 @@ def calculate_convex_hull_area(G):
 
     return hull_area
 
+def calc_basal_zone(G, root_node):
+    """
+    Calculate the length of the Basal Zone: 
+    the distance along the primary root from the uppermost node to the first lateral root insertion point.
+    """
+    # Perform BFS to find the nodes along the primary root
+    bfs_paths = dict(nx.bfs_successors(G, root_node))
+
+    # Collect primary root nodes
+    PR_nodes = []
+    for node, children in bfs_paths.items():
+        if G.nodes[node].get("LR_index") is None:
+            PR_nodes.append(node)
+            for child in children:
+                if G.nodes[child].get("LR_index") is None:
+                    PR_nodes.append(child)
+
+    # Identify the first node with a lateral root insertion
+    first_lr_insertion_point = None
+    for node in PR_nodes:
+        neighbors = list(G.neighbors(node))
+        for neighbor in neighbors:
+            if G.nodes[neighbor].get("LR_index") is not None:
+                first_lr_insertion_point = node
+                break
+        if first_lr_insertion_point:
+            break
+
+    if first_lr_insertion_point is None:
+        # If no lateral root insertion point exists
+        print("No lateral root insertion found.")
+        return 0
+
+    # Calculate the basal zone length
+    basal_zone_length = 0
+    for prev, current in zip(PR_nodes, PR_nodes[1:]):
+        if current == first_lr_insertion_point:
+            basal_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
+            break
+        basal_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
+
+    return basal_zone_length
+
+
 
 def calc_len_LRs_with_distances(H):
     """Calculate the 2D Euclidean distance for each lateral root from the first node to the last node, excluding intermediate nodes, and return the total length of each LR type in the graph."""
@@ -542,6 +586,9 @@ def analyze(G):
     len_PR = calc_len_PR(H, root_node)
     # print('PR length is:', len_PR)
 
+    # Basal Zone length
+    basal_zone_length = calc_basal_zone(H, root_node)
+
     # LR len/number
     LR_info = calc_len_LRs(H)
     num_LRs = len(LR_info)
@@ -596,6 +643,7 @@ def analyze(G):
     results["LR angles"] = angles_LRs
     results["LR minimal distances"] = distances_LRs
     results["LR density"] = density_LRs
+    results["Basal Zone length"]= basal_zone_length
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
     )
