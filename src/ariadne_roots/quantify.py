@@ -488,52 +488,65 @@ def calc_basal_zone(G, root_node):
 
 #Calculate Branched zone
 
-def calc_branch_zone(G, root_node):
-    """Calculate the Branch Zone: the distance along the primary root from the first node with LR insertion to the last node with LR insertion."""
+def calc_branched_zone(G, root_node):
+    """
+    Calculate the length of the Branched Zone:
+    the distance along the primary root from the first lateral root insertion point 
+    to the last lateral root insertion point along the primary root.
+    """
     # Perform BFS to find the nodes along the primary root
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
     # Collect primary root nodes
     PR_nodes = []
     for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:
+        if G.nodes[node].get("LR_index") is None:  # It's a primary root node
             PR_nodes.append(node)
             for child in children:
                 if G.nodes[child].get("LR_index") is None:
                     PR_nodes.append(child)
 
-    # Identify the first node with a lateral root insertion
+    # Identify the first lateral root insertion point
     first_lr_insertion_point = None
-    last_lr_insertion_point = None
     for node in PR_nodes:
         neighbors = list(G.neighbors(node))
         for neighbor in neighbors:
             if G.nodes[neighbor].get("LR_index") is not None:
-                if first_lr_insertion_point is None:
-                    first_lr_insertion_point = node
-                last_lr_insertion_point = node
+                first_lr_insertion_point = node
                 break
-        if first_lr_insertion_point and last_lr_insertion_point:
+        if first_lr_insertion_point:
             break
 
-    if first_lr_insertion_point is None or last_lr_insertion_point is None:
+    # If no lateral root insertion point exists, return 0 for branched zone length
+    if first_lr_insertion_point is None:
         print("No lateral root insertion found.")
         return 0
 
-    # Calculate the branch zone length from the first to the last LR insertion point
-    branch_zone_length = 0
-    start_adding = False
+    # Identify the last lateral root insertion point (deepest lateral root)
+    last_lr_insertion_point = None
+    for node in reversed(PR_nodes):  # Start from the deepest node
+        neighbors = list(G.neighbors(node))
+        for neighbor in neighbors:
+            if G.nodes[neighbor].get("LR_index") is not None:
+                last_lr_insertion_point = node
+                break
+        if last_lr_insertion_point:
+            break
+
+    # Calculate the branched zone length from the first to the last lateral root insertion point
+    branched_zone_length = 0
+    found_first = False
     for prev, current in zip(PR_nodes, PR_nodes[1:]):
+        # Add distance only after finding the first LR insertion point
         if current == first_lr_insertion_point:
-            start_adding = True
-
-        if start_adding:
-            branch_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
-
+            found_first = True
+        if found_first:
+            branched_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
         if current == last_lr_insertion_point:
             break
 
-    return branch_zone_length
+    return branched_zone_length
+
 
 
 def calc_len_LRs_with_distances(H):
@@ -640,7 +653,7 @@ def analyze(G):
     basal_zone_length = calc_basal_zone(H, root_node)
 
     # Calculate branched zone length
-    branch_zone_length = calc_branch_zone(H, root_node)
+    branched_zone_length = calc_branched_zone(H, root_node)
 
     # LR len/number
     LR_info = calc_len_LRs(H)
@@ -696,7 +709,7 @@ def analyze(G):
     results["LR angles"] = angles_LRs
     results["LR minimal distances"] = distances_LRs
     results["LR density"] = density_LRs
-    results["Branched zone length"] = branch_zone_length
+    results["Branched zone length"] = branched_zone_length
     results["Basal Zone length"]= basal_zone_length
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
