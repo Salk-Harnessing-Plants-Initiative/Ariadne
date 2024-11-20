@@ -547,7 +547,56 @@ def calc_branched_zone(G, root_node):
 
     return branched_zone_length
 
+# Calculate the Apical zone
 
+def calc_apical_zone(G, root_node):
+    """
+    Calculate the length of the Apical Zone:
+    the distance along the primary root from the last lateral root insertion point
+    to the tip of the primary root.
+    """
+    # Perform BFS to find nodes along the primary root
+    bfs_paths = dict(nx.bfs_successors(G, root_node))
+
+    # Collect primary root nodes
+    PR_nodes = []
+    for node, children in bfs_paths.items():
+        if G.nodes[node].get("LR_index") is None:
+            PR_nodes.append(node)
+            for child in children:
+                if G.nodes[child].get("LR_index") is None:
+                    PR_nodes.append(child)
+
+    # Identify the last node with a lateral root insertion
+    last_lr_insertion_point = None
+    for node in reversed(PR_nodes):
+        neighbors = list(G.neighbors(node))
+        for neighbor in neighbors:
+            if G.nodes[neighbor].get("LR_index") is not None:
+                last_lr_insertion_point = node
+                break
+        if last_lr_insertion_point:
+            break
+
+    if last_lr_insertion_point is None:
+        print("No lateral root insertion found.")
+        return 0
+
+    # Find the tip of the primary root (lowermost node in terms of y-coordinate)
+    tip_of_primary_root = max(PR_nodes, key=lambda node: G.nodes[node]["pos"][1])
+
+    # Calculate the apical zone length
+    apical_zone_length = 0
+    collecting = False
+    for prev, current in zip(PR_nodes, PR_nodes[1:]):
+        if current == last_lr_insertion_point:
+            collecting = True
+        if collecting:
+            apical_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
+            if current == tip_of_primary_root:
+                break
+
+    return apical_zone_length
 
 def calc_len_LRs_with_distances(H):
     """Calculate the 2D Euclidean distance for each lateral root from the first node to the last node, excluding intermediate nodes, and return the total length of each LR type in the graph."""
@@ -655,6 +704,9 @@ def analyze(G):
     # Calculate branched zone length
     branched_zone_length = calc_branched_zone(H, root_node)
 
+    # Calculate Apical zone length
+    apical_zone_length = calc_apical_zone(G, root_node)
+
     # LR len/number
     LR_info = calc_len_LRs(H)
     num_LRs = len(LR_info)
@@ -709,8 +761,9 @@ def analyze(G):
     results["LR angles"] = angles_LRs
     results["LR minimal distances"] = distances_LRs
     results["LR density"] = density_LRs
-    results["Branched zone length"] = branched_zone_length
+    results["Branched Zone length"] = branched_zone_length
     results["Basal Zone length"]= basal_zone_length
+    results["Apical Zone length"]= apical_zone_length
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
     )
