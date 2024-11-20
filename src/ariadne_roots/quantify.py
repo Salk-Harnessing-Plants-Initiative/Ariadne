@@ -444,36 +444,26 @@ def calculate_convex_hull_area(G):
     # Caculation Basal zone
 
 def calc_basal_zone(G, root_node):
-    """
-    Calculate the length of the Basal Zone: 
-    the distance along the primary root from the uppermost node to the first lateral root insertion point.
-    """
-    # Perform BFS to find the nodes along the primary root
+    """Calculate the length of the Basal Zone."""
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
-    # Collect primary root nodes
     PR_nodes = []
     for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:  # Node is part of the primary root
+        if G.nodes[node].get("LR_index") is None:  # Part of the primary root
             PR_nodes.append(node)
             for child in children:
                 if G.nodes[child].get("LR_index") is None:
                     PR_nodes.append(child)
 
-    # Identify the first node with a lateral root insertion
+    # Find the first lateral root insertion point
     first_lr_insertion_point = None
     for node in PR_nodes:
-        # Ensure the node itself is on the primary root and has a lateral root neighbor
-        neighbors = list(G.neighbors(node))
-        has_lateral_root = any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors)
-        if has_lateral_root:  # Check if the node has a lateral root neighbor
+        if any(G.nodes[neighbor].get("LR_index") is not None for neighbor in G.neighbors(node)):
             first_lr_insertion_point = node
             break
 
     if first_lr_insertion_point is None:
-        # If no lateral root insertion point exists
-        print("No lateral root insertion found.")
-        return 0
+        return 0  # No lateral root insertion found
 
     # Calculate the basal zone length
     basal_zone_length = 0
@@ -484,103 +474,78 @@ def calc_basal_zone(G, root_node):
 
     return basal_zone_length
 
-
-#Calculate Branched zone
+# Calculate Branched zone
 
 def calc_branched_zone(G, root_node):
-    """
-    Calculate the length of the Branched Zone:
-    the distance along the primary root from the first lateral root insertion point 
-    to the last lateral root insertion point along the primary root.
-    """
-    # Perform BFS to find the nodes along the primary root
+    """Calculate the length of the Branched Zone."""
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
-    # Collect primary root nodes
     PR_nodes = []
     for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:  # It's a primary root node
+        if G.nodes[node].get("LR_index") is None:
             PR_nodes.append(node)
             for child in children:
                 if G.nodes[child].get("LR_index") is None:
                     PR_nodes.append(child)
 
-    # Identify the first lateral root insertion point
+    # Find the first lateral root insertion point
     first_lr_insertion_point = None
     for node in PR_nodes:
-        neighbors = list(G.neighbors(node))
-        # Ensure that the node is on the primary root and has a lateral root neighbor
-        if G.nodes[node].get("LR_index") is None and any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
+        if any(G.nodes[neighbor].get("LR_index") is not None for neighbor in G.neighbors(node)):
             first_lr_insertion_point = node
             break
 
     if first_lr_insertion_point is None:
-        # If no lateral root insertion point exists, return 0 for branched zone length
-        print("No lateral root insertion found.")
-        return 0
+        return 0  # No lateral root insertion found
 
-    # Identify the last lateral root insertion point (deepest lateral root)
+    # Find the last lateral root insertion point
     last_lr_insertion_point = None
-    for node in reversed(PR_nodes):  # Start from the deepest node
-        neighbors = list(G.neighbors(node))
-        # Ensure that the node is on the primary root and has a lateral root neighbor
-        if G.nodes[node].get("LR_index") is None and any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
+    for node in reversed(PR_nodes):
+        if any(G.nodes[neighbor].get("LR_index") is not None for neighbor in G.neighbors(node)):
             last_lr_insertion_point = node
             break
 
     if last_lr_insertion_point is None:
-        print("No lateral root insertion found.")
-        return 0
+        return 0  # No lateral root insertion found
 
     # Calculate the branched zone length from the first to the last lateral root insertion point
     branched_zone_length = 0
-    found_first = False
+    collecting = False
     for prev, current in zip(PR_nodes, PR_nodes[1:]):
-        # Add distance only after finding the first LR insertion point
         if current == first_lr_insertion_point:
-            found_first = True
-        if found_first:
+            collecting = True
+        if collecting:
             branched_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
         if current == last_lr_insertion_point:
             break
 
     return branched_zone_length
 
-
-# Calculate the Apical zone
+# Calculate Apical zone
 
 def calc_apical_zone(G, root_node):
-    """
-    Calculate the length of the Apical Zone:
-    the distance along the primary root from the last lateral root insertion point
-    to the tip of the primary root.
-    """
-    # Perform BFS to find nodes along the primary root
+    """Calculate the length of the Apical Zone."""
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
-    # Collect primary root nodes
     PR_nodes = []
     for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:  # Check for primary root node
+        if G.nodes[node].get("LR_index") is None:
             PR_nodes.append(node)
             for child in children:
-                if G.nodes[child].get("LR_index") is None:  # Still primary root node
+                if G.nodes[child].get("LR_index") is None:
                     PR_nodes.append(child)
 
-    # Identify the last node with a lateral root insertion
+    # Find the last lateral root insertion point
     last_lr_insertion_point = None
-    for node in reversed(PR_nodes):  # Start from the deepest node
-        neighbors = list(G.neighbors(node))
-        # Ensure the node is on the primary root and has a lateral root insertion point
-        if G.nodes[node].get("LR_index") is None and any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
+    for node in reversed(PR_nodes):
+        if any(G.nodes[neighbor].get("LR_index") is not None for neighbor in G.neighbors(node)):
             last_lr_insertion_point = node
             break
 
     if last_lr_insertion_point is None:
-        print("No lateral root insertion found.")
-        return 0
+        return 0  # No lateral root insertion found
 
-    # Find the tip of the primary root (lowermost node in terms of y-coordinate)
+    # Find the tip of the primary root (lowest node in y-coordinate)
     tip_of_primary_root = max(PR_nodes, key=lambda node: G.nodes[node]["pos"][1])
 
     # Calculate the apical zone length
@@ -591,10 +556,11 @@ def calc_apical_zone(G, root_node):
             collecting = True
         if collecting:
             apical_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
-            if current == tip_of_primary_root:
-                break
+        if current == tip_of_primary_root:
+            break
 
     return apical_zone_length
+
 
 
 def calc_len_LRs_with_distances(H):
