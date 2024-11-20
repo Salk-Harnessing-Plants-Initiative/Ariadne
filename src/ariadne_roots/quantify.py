@@ -509,15 +509,13 @@ def calc_branched_zone(G, root_node):
     first_lr_insertion_point = None
     for node in PR_nodes:
         neighbors = list(G.neighbors(node))
-        for neighbor in neighbors:
-            if G.nodes[neighbor].get("LR_index") is not None:
-                first_lr_insertion_point = node
-                break
-        if first_lr_insertion_point:
+        # Ensure that the node is on the primary root and has a lateral root neighbor
+        if G.nodes[node].get("LR_index") is None and any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
+            first_lr_insertion_point = node
             break
 
-    # If no lateral root insertion point exists, return 0 for branched zone length
     if first_lr_insertion_point is None:
+        # If no lateral root insertion point exists, return 0 for branched zone length
         print("No lateral root insertion found.")
         return 0
 
@@ -525,12 +523,14 @@ def calc_branched_zone(G, root_node):
     last_lr_insertion_point = None
     for node in reversed(PR_nodes):  # Start from the deepest node
         neighbors = list(G.neighbors(node))
-        for neighbor in neighbors:
-            if G.nodes[neighbor].get("LR_index") is not None:
-                last_lr_insertion_point = node
-                break
-        if last_lr_insertion_point:
+        # Ensure that the node is on the primary root and has a lateral root neighbor
+        if G.nodes[node].get("LR_index") is None and any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
+            last_lr_insertion_point = node
             break
+
+    if last_lr_insertion_point is None:
+        print("No lateral root insertion found.")
+        return 0
 
     # Calculate the branched zone length from the first to the last lateral root insertion point
     branched_zone_length = 0
@@ -545,6 +545,7 @@ def calc_branched_zone(G, root_node):
             break
 
     return branched_zone_length
+
 
 # Calculate the Apical zone
 
