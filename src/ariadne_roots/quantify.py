@@ -689,6 +689,15 @@ def analyze(G):
     # Calculate the total distance (sum of LR distances and PR minimal distance)
     total_distance = sum_LR_distances + distance_root
 
+    def convert_numpy_to_python(data):
+    if isinstance(data, dict):
+        return {key: convert_numpy_to_python(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [convert_numpy_to_python(item) for item in data]
+    elif isinstance(data, np.generic):  # Handles np.float64, np.int32, etc.
+        return data.item()
+    return data  # Return as-is for non-NumPy types
+
     # Add lateral root lengths and distances to the results dictionary
     results["PR length"] = len_PR
     results["PR_minimal_length"] = distance_root
@@ -728,5 +737,9 @@ def analyze(G):
     convex_hull_area = hull.volume  # Convex hull area in 2D is the same as its volume
 
     results["Convex Hull Area"] = convex_hull_area
+   
+    # Convert NumPy types in the results dictionary
+results = convert_numpy_to_python(results)
+
 
     return results, front, randoms
