@@ -393,12 +393,12 @@ def pareto_calcs(H):
 
     # assemble dict for export
     results = {
-        "material cost": mactual,
-        "wiring cost": sactual,
+        "Total root length": mactual,
+        "Travel distance": sactual,
         "alpha": plant_alpha,
         "scaling distance to front": plant_scaling,
-        "material (random)": mrand,
-        "wiring (random)": srand,
+        "Total root length (random)": mrand,
+        "Travel distance (random)": srand,
         "alpha (random)": rand_alpha,
         "scaling (random)": rand_scaling,
     }
@@ -690,24 +690,24 @@ def analyze(G):
     total_distance = sum_LR_distances + distance_root
 
     # Add lateral root lengths and distances to the results dictionary
-    results["Mean LR lengths"] = mean_LR_lengths
-    results["Median LR lengths"] = median_LR_lengths
-    results["Mean LR angles"] = mean_LR_angles
-    results["Median LR angles"] = median_LR_angles
-    results["Mean LR minimal distances"] = mean_LR_distances
-    results["Median LR minimal distances"] = median_LR_distances
-    results["sum LR minimal distances"] = sum_LR_distances
-    results["PR_minimal_distances"] = distance_root
     results["PR length"] = len_PR
-    results["LR count"] = num_LRs
-    results["LR lengths"] = lens_LRs
-    results["LR angles"] = angles_LRs
-    results["LR minimal distances"] = distances_LRs
-    results["LR density"] = density_LRs
+    results["PR_minimal_distances"] = distance_root
     results["Basal Zone length"]= basal_zone_length
     results["Branched Zone length"] = branched_zone_length
     results["Apical Zone length"]= apical_zone_length
+    results["Mean LR lengths"] = mean_LR_lengths
+    results["Mean LR minimal lengths"] = mean_LR_distances
+    results["Median LR lengths"] = median_LR_lengths
+    results["Median LR minimal lengths"] = median_LR_distances
+    results["sum LR minimal lengths"] = sum_LR_distances
+    results["Mean LR angles"] = mean_LR_angles
+    results["Median LR angles"] = median_LR_angles
+    results["LR count"] = num_LRs
+    results["LR density"] = density_LRs
     results["Branched Zone density"]= Branched_zone_density
+    results["LR lengths"] = lens_LRs
+    results["LR angles"] = angles_LRs
+    results["LR minimal distances"] = distances_LRs
     results["Barycenter x displacement"]= barycenter_x_displacement
     results["Barycenter y displacement"]= barycenter_y_displacement
     results["Total minimal Distance"] = (
@@ -720,7 +720,7 @@ def analyze(G):
     # Calculate the ratio of the material cost with the Total minimal Distance
     material_distance_ratio = Total_root_length / total_distance
 
-    results["Material/TotalDistance Ratio"] = material_distance_ratio
+    results["Tortuosity"] = material_distance_ratio
 
     # Calculating convex hull area
     points = np.array([H.nodes[node]["pos"] for node in H.nodes()])
