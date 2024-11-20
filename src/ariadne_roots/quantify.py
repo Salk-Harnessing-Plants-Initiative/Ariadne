@@ -687,7 +687,7 @@ def analyze(G):
     results["LR angles"] = angles_LRs
     results["LR minimal distances"] = distances_LRs
     results["LR density"] = density_LRs
-    results["Branched zone length"]= branch_zone_length
+    results["Branch zone length"] = branch_zone_length
     results["Basal Zone length"]= basal_zone_length
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
