@@ -680,7 +680,7 @@ def analyze(G):
     # Calculate mean and median
     mean_LR_lengths = np.mean(lens_LRs)
     median_LR_lengths = np.median(lens_LRs)
-    mean_LR_angles = np.mean(angles_LRs)
+    mean_LR_angles = mean(angles_LRs)
     median_LR_angles = np.median(angles_LRs)
     mean_LR_distances = np.mean(distances_LRs)
     median_LR_distances = np.median(distances_LRs)
@@ -691,7 +691,7 @@ def analyze(G):
 
     # Add lateral root lengths and distances to the results dictionary
     results["PR length"] = len_PR
-    results["PR_minimal_distances"] = distance_root
+    results["PR_minimal_length"] = distance_root
     results["Basal Zone length"]= basal_zone_length
     results["Branched Zone length"] = branched_zone_length
     results["Apical Zone length"]= apical_zone_length
@@ -707,7 +707,7 @@ def analyze(G):
     results["Branched Zone density"]= Branched_zone_density
     results["LR lengths"] = lens_LRs
     results["LR angles"] = angles_LRs
-    results["LR minimal distances"] = distances_LRs
+    results["LR minimal lengths"] = distances_LRs
     results["Barycenter x displacement"]= barycenter_x_displacement
     results["Barycenter y displacement"]= barycenter_y_displacement
     results["Total minimal Distance"] = (
