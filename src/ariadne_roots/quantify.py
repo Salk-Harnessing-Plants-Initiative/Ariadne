@@ -637,7 +637,7 @@ def analyze(G):
     apical_zone_length = calc_apical_zone(G, root_node)
 
     # Basal Zone length
-    basal_zone_length = len_PR - (branched_zone_length + apical_zone_length )
+    basal_zone_length = len_PR - branched_zone_length + apical_zone_length 
 
     # LR len/number
     LR_info = calc_len_LRs(H)
