@@ -706,7 +706,7 @@ def analyze(G):
     results["LR density"] = density_LRs
     results["Branched Zone density"]= Branched_zone_density
     results["LR lengths"] = lens_LRs
-    results["LR angles"] = np.angles_LRs
+    results["LR angles"] = angles_LRs
     results["LR minimal lengths"] = distances_LRs
     results["Barycenter x displacement"]= barycenter_x_displacement
     results["Barycenter y displacement"]= barycenter_y_displacement
