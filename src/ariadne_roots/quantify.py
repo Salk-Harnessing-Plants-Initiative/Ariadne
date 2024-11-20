@@ -658,6 +658,25 @@ def analyze(G):
     lens_LRs = [info[0] for info in lateral_root_info.values()]
     distances_LRs = [info[1] for info in lateral_root_info.values()]
 
+    # Convex Hull calculations
+    points = np.array([H.nodes[node]["pos"] for node in H.nodes()])
+    hull = ConvexHull(points)
+    
+    # Barycenter (centroid) of the Convex Hull
+    # Centroid formula: (mean x, mean y) of the vertices of the convex hull
+    hull_points = points[hull.vertices]
+    barycenter_x = np.mean(hull_points[:, 0])
+    barycenter_y = np.mean(hull_points[:, 1])
+    barycenter = (barycenter_x, barycenter_y)
+
+    # Find the uppermost node (node with the minimum y-coordinate)
+    uppermost_node = min(H.nodes(data="pos"), key=lambda node: node[1][1])
+    uppermost_node_pos = uppermost_node[1]
+
+    # Build quadrilateral (barycenter and uppermost node form the quadrilateral)
+    barycenter_y_displacement = abs(barycenter_y - uppermost_node_pos[1])  # Displacement in y-direction
+    barycenter_x_displacement = abs(barycenter_x - uppermost_node_pos[0])  # Displacement in x-direction
+
     # Calculate mean and median
     mean_LR_lengths = np.mean(lens_LRs)
     median_LR_lengths = np.median(lens_LRs)
@@ -689,6 +708,8 @@ def analyze(G):
     results["Branched Zone length"] = branched_zone_length
     results["Apical Zone length"]= apical_zone_length
     results["Branched Zone density"]= Branched_zone_density
+    results["Barycenter x displacement"]= barycenter_x_displacement
+    results["Barycenter y displacement"]= barycenter_y_displacement
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
     )
