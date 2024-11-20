@@ -441,15 +441,15 @@ def calculate_convex_hull_area(G):
 
     return hull_area
 
-# Calculate Branched zone
+    # Caculation Basal zone
 
-def calc_branched_zone(G, root_node):
-    """Calculate the length of the Branched Zone."""
+def calc_basal_zone(G, root_node):
+    """Calculate the length of the Basal Zone."""
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
     PR_nodes = []
     for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:
+        if G.nodes[node].get("LR_index") is None:  # Part of the primary root
             PR_nodes.append(node)
             for child in children:
                 if G.nodes[child].get("LR_index") is None:
@@ -465,28 +465,16 @@ def calc_branched_zone(G, root_node):
     if first_lr_insertion_point is None:
         return 0  # No lateral root insertion found
 
-    # Find the last lateral root insertion point
-    last_lr_insertion_point = None
-    for node in reversed(PR_nodes):
-        if any(G.nodes[neighbor].get("LR_index") is not None for neighbor in G.neighbors(node)):
-            last_lr_insertion_point = node
-            break
-
-    if last_lr_insertion_point is None:
-        return 0  # No lateral root insertion found
-
-    # Calculate the branched zone length from the first to the last lateral root insertion point
-    branched_zone_length = 0
-    collecting = False
+    # Calculate the basal zone length
+    basal_zone_length = 0
     for prev, current in zip(PR_nodes, PR_nodes[1:]):
+        basal_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
         if current == first_lr_insertion_point:
-            collecting = True
-        if collecting:
-            branched_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
-        if current == last_lr_insertion_point:
             break
 
-    return branched_zone_length
+    return basal_zone_length
+
+
 
 # Calculate Apical zone
 
@@ -630,14 +618,14 @@ def analyze(G):
     len_PR = calc_len_PR(H, root_node)
     # print('PR length is:', len_PR)
 
-    # Calculate branched zone length
-    branched_zone_length = calc_branched_zone(H, root_node)
+    # Basal Zone length
+    basal_zone_length = calc_basal_zone(H, root_node)
 
     # Calculate Apical zone length
     apical_zone_length = calc_apical_zone(G, root_node)
 
-    # Basal Zone length
-    basal_zone_length = len_PR - branched_zone_length - apical_zone_length 
+    # Calculate branched zone length
+    branched_zone_length = len_PR - basal_zone_length - apical_zone_length
 
     # LR len/number
     LR_info = calc_len_LRs(H)
