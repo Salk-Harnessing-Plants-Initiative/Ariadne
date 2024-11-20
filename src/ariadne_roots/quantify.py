@@ -680,7 +680,7 @@ def analyze(G):
     # Calculate mean and median
     mean_LR_lengths = np.mean(lens_LRs)
     median_LR_lengths = np.median(lens_LRs)
-    mean_LR_angles = mean(angles_LRs)
+    mean_LR_angles = np.mean(angles_LRs)
     median_LR_angles = np.median(angles_LRs)
     mean_LR_distances = np.mean(distances_LRs)
     median_LR_distances = np.median(distances_LRs)
