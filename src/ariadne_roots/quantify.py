@@ -639,6 +639,10 @@ def analyze(G):
     density_LRs = num_LRs / len_PR
     # print('LR density is:', num_LRs/len_PR)
 
+    # LR density Branched zone
+
+    Branched_zone_density = num_LRs / branched_zone_length
+
     # Calculate the Euclidean distance between the uppermost node and the lowermost node of the primary root
     uppermost_node_pos = H.nodes[root_node]["pos"]
     lowermost_node_pos = find_lowermost_node_of_primary_root(H, root_node)
@@ -684,6 +688,7 @@ def analyze(G):
     results["Basal Zone length"]= basal_zone_length
     results["Branched Zone length"] = branched_zone_length
     results["Apical Zone length"]= apical_zone_length
+    results["Branched Zone density"]= Branched_zone_density
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
     )
