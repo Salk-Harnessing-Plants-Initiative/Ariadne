@@ -454,7 +454,7 @@ def calc_basal_zone(G, root_node):
     # Collect primary root nodes
     PR_nodes = []
     for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:
+        if G.nodes[node].get("LR_index") is None:  # Node is part of the primary root
             PR_nodes.append(node)
             for child in children:
                 if G.nodes[child].get("LR_index") is None:
@@ -463,12 +463,11 @@ def calc_basal_zone(G, root_node):
     # Identify the first node with a lateral root insertion
     first_lr_insertion_point = None
     for node in PR_nodes:
+        # Ensure the node itself is on the primary root and has a lateral root neighbor
         neighbors = list(G.neighbors(node))
-        for neighbor in neighbors:
-            if G.nodes[neighbor].get("LR_index") is not None:
-                first_lr_insertion_point = node
-                break
-        if first_lr_insertion_point:
+        has_lateral_root = any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors)
+        if has_lateral_root:  # Check if the node has a lateral root neighbor
+            first_lr_insertion_point = node
             break
 
     if first_lr_insertion_point is None:
@@ -479,12 +478,12 @@ def calc_basal_zone(G, root_node):
     # Calculate the basal zone length
     basal_zone_length = 0
     for prev, current in zip(PR_nodes, PR_nodes[1:]):
-        if current == first_lr_insertion_point:
-            basal_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
-            break
         basal_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
+        if current == first_lr_insertion_point:
+            break
 
     return basal_zone_length
+
 
 #Calculate Branched zone
 
@@ -761,8 +760,8 @@ def analyze(G):
     results["LR angles"] = angles_LRs
     results["LR minimal distances"] = distances_LRs
     results["LR density"] = density_LRs
-    results["Branched Zone length"] = branched_zone_length
     results["Basal Zone length"]= basal_zone_length
+    results["Branched Zone length"] = branched_zone_length
     results["Apical Zone length"]= apical_zone_length
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
