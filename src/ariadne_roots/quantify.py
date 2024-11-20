@@ -486,46 +486,55 @@ def calc_basal_zone(G, root_node):
 
     return basal_zone_length
 
-#Calcualtion of the branched zone
+#Calculate Branched zone
 
 def calc_branch_zone(G, root_node):
-    """Calculate the length of the branch zone on the primary root (PR)."""
+    """Calculate the Branch Zone: the distance along the primary root from the first node with LR insertion to the last node with LR insertion."""
+    # Perform BFS to find the nodes along the primary root
     bfs_paths = dict(nx.bfs_successors(G, root_node))
-    PR_nodes = []  # List of PR nodes in order of increasing depth
 
-    # Collect PR nodes
+    # Collect primary root nodes
+    PR_nodes = []
     for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:  # Node is part of PR
+        if G.nodes[node].get("LR_index") is None:
             PR_nodes.append(node)
-        for child_node in children:
-            if G.nodes[child_node].get("LR_index") is None:
-                # Catch the last PR node
-                final = child_node
-                PR_nodes.append(final)
+            for child in children:
+                if G.nodes[child].get("LR_index") is None:
+                    PR_nodes.append(child)
 
-    # Find the first and last nodes of PR with LR insertions
-    first_LR_node = None
-    last_LR_node = None
-
+    # Identify the first node with a lateral root insertion
+    first_lr_insertion_point = None
+    last_lr_insertion_point = None
     for node in PR_nodes:
-        # Check if the current node has any edges leading to LR nodes
-        for neighbor in G.neighbors(node):
-            if G.nodes[neighbor].get("LR_index") is not None:  # LR insertion
-                if first_LR_node is None:
-                    first_LR_node = node
-                last_LR_node = node  # Continuously update to get the last one
+        neighbors = list(G.neighbors(node))
+        for neighbor in neighbors:
+            if G.nodes[neighbor].get("LR_index") is not None:
+                if first_lr_insertion_point is None:
+                    first_lr_insertion_point = node
+                last_lr_insertion_point = node
+                break
+        if first_lr_insertion_point and last_lr_insertion_point:
+            break
 
-    if first_LR_node is not None and last_LR_node is not None:
-        # Get the sub-list of PR nodes between the first and last LR nodes
-        branch_zone_nodes = PR_nodes[
-            PR_nodes.index(first_LR_node): PR_nodes.index(last_LR_node) + 1
-        ]
-        # Calculate the length of the branch zone
-        branch_zone_length = calc_root_len(G, branch_zone_nodes)
-    else:
-        branch_zone_length = 0  # No branch zone if no LRs are present
+    if first_lr_insertion_point is None or last_lr_insertion_point is None:
+        print("No lateral root insertion found.")
+        return 0
+
+    # Calculate the branch zone length from the first to the last LR insertion point
+    branch_zone_length = 0
+    start_adding = False
+    for prev, current in zip(PR_nodes, PR_nodes[1:]):
+        if current == first_lr_insertion_point:
+            start_adding = True
+
+        if start_adding:
+            branch_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
+
+        if current == last_lr_insertion_point:
+            break
 
     return branch_zone_length
+
 
 def calc_len_LRs_with_distances(H):
     """Calculate the 2D Euclidean distance for each lateral root from the first node to the last node, excluding intermediate nodes, and return the total length of each LR type in the graph."""
@@ -687,7 +696,7 @@ def analyze(G):
     results["LR angles"] = angles_LRs
     results["LR minimal distances"] = distances_LRs
     results["LR density"] = density_LRs
-    results["Branch zone length"] = branch_zone_length
+    results["Branched zone length"] = branch_zone_length
     results["Basal Zone length"]= basal_zone_length
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
