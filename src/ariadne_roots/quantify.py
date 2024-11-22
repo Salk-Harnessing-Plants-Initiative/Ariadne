@@ -608,14 +608,6 @@ def analyze(G):
     len_PR = calc_len_PR(H, root_node)
     # print('PR length is:', len_PR)
 
-    # Basal Zone length
-    basal_zone_length = calc_basal_zone(H, root_node)
-
-    # Calculate Apical zone length
-    apical_zone_length = calc_apical_zone(G, root_node)
-
-    # Calculate branched zone length
-    branched_zone_length = calc_branched_zone(G, root_node)
 
     # LR len/number
     LR_info = calc_len_LRs(H)
