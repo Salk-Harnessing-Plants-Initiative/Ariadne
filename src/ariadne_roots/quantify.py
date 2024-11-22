@@ -443,67 +443,65 @@ def calculate_convex_hull_area(G):
 
 
 
+import networkx as nx
+import math
+
+def distance(pos1, pos2):
+    """Calculate the Euclidean distance between two positions."""
+    return math.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
+
 def calc_zones(G, root_node):
     """
     Calculate the Branched Zone, Basal Zone, and Apical Zone lengths along the primary root.
     """
-    # Perform BFS to find the nodes along the primary root
+    # Perform BFS to find nodes along the primary root
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
     # Collect primary root nodes
     PR_nodes = []
     for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:  # It's a primary root node
+        if G.nodes[node].get("LR_index") is None:  # Primary root node
             PR_nodes.append(node)
             for child in children:
                 if G.nodes[child].get("LR_index") is None:
                     PR_nodes.append(child)
 
-    # Identify the first lateral root insertion point
+    # Ensure PR_nodes are in order along the root path
+    PR_nodes = list(dict.fromkeys(PR_nodes))
+
+    # Identify the first and last lateral root insertion points
     first_lr_insertion_point = None
+    last_lr_insertion_point = None
+
     for node in PR_nodes:
         neighbors = list(G.neighbors(node))
-        if G.nodes[node].get("LR_index") is None and any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
-            first_lr_insertion_point = node
-            break
-
-    # Identify the last lateral root insertion point
-    last_lr_insertion_point = None
-    for node in reversed(PR_nodes):
-        neighbors = list(G.neighbors(node))
-        if G.nodes[node].get("LR_index") is None and any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
+        if any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
+            if first_lr_insertion_point is None:
+                first_lr_insertion_point = node
             last_lr_insertion_point = node
-            break
 
-    # Calculate the Branched Zone length
+    # Calculate zone lengths
     branched_zone_length = 0
+    basal_zone_length = 0
+    apical_zone_length = 0
+
     found_first = False
+    found_last = False
+
     for prev, current in zip(PR_nodes, PR_nodes[1:]):
+        segment_length = distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
+
         if current == first_lr_insertion_point:
             found_first = True
-        if found_first:
-            branched_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
         if current == last_lr_insertion_point:
-            break
-
-    # Calculate the Basal Zone length
-    if first_lr_insertion_point == PR_nodes[0]:  # First insertion is at the root node
-        basal_zone_length = 0
-    else:
-        basal_zone_length = 0
-        for prev, current in zip(PR_nodes, PR_nodes[1:]):
-            basal_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
-            if current == first_lr_insertion_point:
-                break
-
-    # Calculate the Apical Zone length
-    apical_zone_length = 0
-    found_last = False
-    for prev, current in zip(PR_nodes, PR_nodes[1:]):
-        if prev == last_lr_insertion_point:
             found_last = True
-        if found_last:
-            apical_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
+
+        if found_first and not found_last:
+            branched_zone_length += segment_length
+        elif not found_first:
+            basal_zone_length += segment_length
+        elif found_last:
+            apical_zone_length += segment_length
 
     return {
         "branched_zone_length": branched_zone_length,
