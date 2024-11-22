@@ -505,7 +505,11 @@ def calc_zones(G, root_node):
         if found_last:
             apical_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
 
-
+    return {
+        "branched_zone_length": branched_zone_length,
+        "basal_zone_length": basal_zone_length,
+        "apical_zone_length": apical_zone_length,
+    }
 
 
 def calc_len_LRs_with_distances(H):
