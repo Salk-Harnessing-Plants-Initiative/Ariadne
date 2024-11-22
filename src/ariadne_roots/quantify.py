@@ -689,7 +689,7 @@ def analyze(G):
     results["Median LR lengths"] = median_LR_lengths
     results["Median LR minimal lengths"] = median_LR_distances
     results["sum LR minimal lengths"] = sum_LR_distances
-    results["Mean LR angles"] = nmean_LR_angles
+    results["Mean LR angles"] = mean_LR_angles
     results["Median LR angles"] = median_LR_angles
     results["LR count"] = num_LRs
     results["LR density"] = density_LRs
