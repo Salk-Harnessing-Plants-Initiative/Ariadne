@@ -612,15 +612,7 @@ def analyze(G):
     len_PR = calc_len_PR(H, root_node)
     # print('PR length is:', len_PR)
 
-    # Calculate Branched, Basal, and Apical Zones
-    zone_lengths = calc_zones(G, root_node)
-    branched_zone_length = zone_lengths["branched_zone_length"]
-    basal_zone_length = zone_lengths["basal_zone_length"]
-    apical_zone_length = zone_lengths["apical_zone_length"]
 
-    #Branched Zone density
-
-    branched_zone_density = num_LRs / branched_zone_length
 
     # LR len/number
     LR_info = calc_len_LRs(H)
@@ -668,6 +660,16 @@ def analyze(G):
     # Build quadrilateral (barycenter and uppermost node form the quadrilateral)
     barycenter_y_displacement = abs(barycenter_y - uppermost_node_pos[1])  # Displacement in y-direction
     barycenter_x_displacement = abs(barycenter_x - uppermost_node_pos[0])  # Displacement in x-direction
+
+    # Calculate Branched, Basal, and Apical Zones
+    zone_lengths = calc_zones(H, root_node)
+    branched_zone_length = zone_lengths["branched_zone_length"]
+    basal_zone_length = zone_lengths["basal_zone_length"]
+    apical_zone_length = zone_lengths["apical_zone_length"]
+
+    #Branched Zone density
+
+    branched_zone_density = num_LRs / branched_zone_length
 
     # Calculate mean and median
     mean_LR_lengths = np.mean(lens_LRs)
