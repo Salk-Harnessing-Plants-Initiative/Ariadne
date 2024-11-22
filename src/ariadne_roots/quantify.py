@@ -641,7 +641,8 @@ def analyze(G):
 
     # LR density Branched zone
 
-    Branched_zone_density = num_LRs / branched_zone_length
+    Branched_zone_density = num_LRs / branched_zone_length if branched_zone_length != 0 else 0
+
 
     # Calculate the Euclidean distance between the uppermost node and the lowermost node of the primary root
     uppermost_node_pos = H.nodes[root_node]["pos"]
