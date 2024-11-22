@@ -625,12 +625,7 @@ def analyze(G):
     density_LRs = num_LRs / len_PR
     # print('LR density is:', num_LRs/len_PR)
 
-    # LR density Branched zone
 
-    if branched_zone_length == 0:
-    Branched_zone_density = 0  # Or handle it differently, depending on your requirements
-    else:
-    Branched_zone_density = num_LRs / branched_zone_length
 
 
     # Calculate the Euclidean distance between the uppermost node and the lowermost node of the primary root
