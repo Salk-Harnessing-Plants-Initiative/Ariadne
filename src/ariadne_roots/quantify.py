@@ -613,7 +613,7 @@ def analyze(G):
     # print('PR length is:', len_PR)
 
     # Calculate Branched, Basal, and Apical Zones
-    zone_lengths = calc_zones(H, root_node)
+    zone_lengths = calc_zones(G, root_node)
     branched_zone_length = zone_lengths["branched_zone_length"]
     basal_zone_length = zone_lengths["basal_zone_length"]
     apical_zone_length = zone_lengths["apical_zone_length"]
