@@ -669,7 +669,7 @@ def analyze(G):
 
     #Branched Zone density
 
-    branched_zone_density = num_LRs / branched_zone_length
+    branched_zone_density = num_LRs / branched_zone_length if branched_zone_length != 0 else 0
 
     # Calculate mean and median
     mean_LR_lengths = np.mean(lens_LRs)
