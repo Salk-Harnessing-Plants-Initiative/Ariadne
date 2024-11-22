@@ -441,80 +441,70 @@ def calculate_convex_hull_area(G):
 
     return hull_area
 
-    # Caculation Basal zone
 
-def calc_basal_zone(G, root_node):
-    """Calculate the length of the Basal Zone."""
+
+def calc_zones(G, root_node):
+    """
+    Calculate the Branched Zone, Basal Zone, and Apical Zone lengths along the primary root.
+    """
+    # Perform BFS to find the nodes along the primary root
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
+    # Collect primary root nodes
     PR_nodes = []
     for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:  # Part of the primary root
+        if G.nodes[node].get("LR_index") is None:  # It's a primary root node
             PR_nodes.append(node)
             for child in children:
                 if G.nodes[child].get("LR_index") is None:
                     PR_nodes.append(child)
 
-    # Find the first lateral root insertion point
+    # Identify the first lateral root insertion point
     first_lr_insertion_point = None
     for node in PR_nodes:
-        if any(G.nodes[neighbor].get("LR_index") is not None for neighbor in G.neighbors(node)):
+        neighbors = list(G.neighbors(node))
+        if G.nodes[node].get("LR_index") is None and any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
             first_lr_insertion_point = node
             break
 
-    if first_lr_insertion_point is None:
-        return 0  # No lateral root insertion found
-
-    # Calculate the basal zone length
-    basal_zone_length = 0
-    for prev, current in zip(PR_nodes, PR_nodes[1:]):
-        basal_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
-        if current == first_lr_insertion_point:
-            break
-
-    return basal_zone_length
-
-
-
-# Calculate Apical zone
-
-def calc_apical_zone(G, root_node):
-    """Calculate the length of the Apical Zone."""
-    bfs_paths = dict(nx.bfs_successors(G, root_node))
-
-    PR_nodes = []
-    for node, children in bfs_paths.items():
-        if G.nodes[node].get("LR_index") is None:
-            PR_nodes.append(node)
-            for child in children:
-                if G.nodes[child].get("LR_index") is None:
-                    PR_nodes.append(child)
-
-    # Find the last lateral root insertion point
+    # Identify the last lateral root insertion point
     last_lr_insertion_point = None
     for node in reversed(PR_nodes):
-        if any(G.nodes[neighbor].get("LR_index") is not None for neighbor in G.neighbors(node)):
+        neighbors = list(G.neighbors(node))
+        if G.nodes[node].get("LR_index") is None and any(G.nodes[neighbor].get("LR_index") is not None for neighbor in neighbors):
             last_lr_insertion_point = node
             break
 
-    if last_lr_insertion_point is None:
-        return 0  # No lateral root insertion found
-
-    # Find the tip of the primary root (lowest node in y-coordinate)
-    tip_of_primary_root = max(PR_nodes, key=lambda node: G.nodes[node]["pos"][1])
-
-    # Calculate the apical zone length
-    apical_zone_length = 0
-    collecting = False
+    # Calculate the Branched Zone length
+    branched_zone_length = 0
+    found_first = False
     for prev, current in zip(PR_nodes, PR_nodes[1:]):
+        if current == first_lr_insertion_point:
+            found_first = True
+        if found_first:
+            branched_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
         if current == last_lr_insertion_point:
-            collecting = True
-        if collecting:
-            apical_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
-        if current == tip_of_primary_root:
             break
 
-    return apical_zone_length
+    # Calculate the Basal Zone length
+    if first_lr_insertion_point == PR_nodes[0]:  # First insertion is at the root node
+        basal_zone_length = 0
+    else:
+        basal_zone_length = 0
+        for prev, current in zip(PR_nodes, PR_nodes[1:]):
+            basal_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
+            if current == first_lr_insertion_point:
+                break
+
+    # Calculate the Apical Zone length
+    apical_zone_length = 0
+    found_last = False
+    for prev, current in zip(PR_nodes, PR_nodes[1:]):
+        if prev == last_lr_insertion_point:
+            found_last = True
+        if found_last:
+            apical_zone_length += distance(G.nodes[prev]["pos"], G.nodes[current]["pos"])
+
 
 
 
@@ -619,13 +609,13 @@ def analyze(G):
     # print('PR length is:', len_PR)
 
     # Basal Zone length
-    basal_zone_length = calc_basal_zone(H, root_node)
+    basal_zone_length = calc_basal_zone(G, root_node)
 
     # Calculate Apical zone length
     apical_zone_length = calc_apical_zone(G, root_node)
 
     # Calculate branched zone length
-    branched_zone_length = len_PR - (basal_zone_length + apical_zone_length)
+    branched_zone_length = calc_branched_zone(G, root_node)
 
     # LR len/number
     LR_info = calc_len_LRs(H)
