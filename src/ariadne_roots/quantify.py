@@ -611,7 +611,6 @@ def analyze(G):
     # print('PR length is:', len_PR)
 
 
-
     # LR len/number
     LR_info = calc_len_LRs(H)
     num_LRs = len(LR_info)
