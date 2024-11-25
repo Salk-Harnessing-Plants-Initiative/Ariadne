@@ -464,18 +464,30 @@ class TracerUI(tk.Frame):
         # Update image on canvas
     def update_image(self):
         if self.img and self.file:
-            # Resize image based on scale factor
+            # Resize the image based on the scale factor
             scaled_image = self.file.resize(
                 (
                     int(self.file.width * self.scale_factor),
                     int(self.file.height * self.scale_factor),
                 ),
-                Image.ANTIALIAS,
+                Image.Resampling.LANCZOS,  # Use LANCZOS for high-quality downscaling
             )
             self.img = ImageTk.PhotoImage(scaled_image)
+
+        # Update the canvas with the new image
             self.canvas.itemconfig(self.frame_id, image=self.img)
+
+        # Update the scroll region to match the new image size
             self.canvas.config(scrollregion=self.canvas.bbox("all"))
-    
+
+    def zoom_in(self, event=None):
+        self.scale_factor *= 1.5  # Increase scale
+        self.update_image()
+
+    def zoom_out(self, event=None):
+        self.scale_factor /= 1.5  # Decrease scale
+        self.update_image()
+
 
     def draw_edge(self, parent_node, child_node):
         """Draw an edge between 2 nodes, and add it to the tree."""
