@@ -73,7 +73,7 @@ class TracerUI(tk.Frame):
     def __init__(self, base):
         super().__init__(base)
         self.base = base
-        self.base.geometry("750x600")
+        self.base.geometry("1750x1600")
         self.base.title("Ariadne: Trace")
         # Initialize scale factor
         self.scale_factor = 1.0
@@ -239,7 +239,7 @@ class TracerUI(tk.Frame):
 
         # update statusbar contents
         self.statusbar.config(
-            text=f"{self.canvas.curr_coords}, {self.day_indicator}, {self.override_indicator}, {self.inserting_indicator}"
+            text=f"{self.canvas.curr_coords}, {self.day_indicator}, {self.override_indicator}, {self.inserting_indicator}, {self.scale_factor}"
         )
 
     def import_image(self):
@@ -281,6 +281,9 @@ class TracerUI(tk.Frame):
 
         self.button_insert.config(command=self.insert, state="normal")
         self.canvas.bind("i", self.insert)
+
+        self.button_show.config(command=self.show_tree, state="normal")
+        self.canvas.bind("c", self.show_tree)
 
         self.button_change_root.config(command=self.change_root, state="normal")
         self.canvas.bind("c", self.change_root)
@@ -451,18 +454,21 @@ class TracerUI(tk.Frame):
         # Prompt for a new plant ID assignment and create a new tree
         self.tree.popup(self.base)
 
-        # Zoom in function
+# Zoom function
+    #zoom in
     def zoom_in(self):
         self.scale_factor *= 1.5  # Increase scale
         self.update_image()
+        self.update_statusbar()   # Update the status bar with zoom info
 
-        # Zoom out function
+    # Zoom out
     def zoom_out(self):
         self.scale_factor /= 1.5  # Decrease scale
         self.update_image()
+        self.update_statusbar()   # Update the status bar with zoom info
 
-        # Update image on canvas
     def update_image(self):
+        """Update the image on the canvas based on the scale factor."""
         if self.img and self.file:
             # Resize the image based on the scale factor
             scaled_image = self.file.resize(
@@ -474,19 +480,22 @@ class TracerUI(tk.Frame):
             )
             self.img = ImageTk.PhotoImage(scaled_image)
 
-        # Update the canvas with the new image
+            # Update the canvas with the new image
             self.canvas.itemconfig(self.frame_id, image=self.img)
 
-        # Update the scroll region to match the new image size
+            # Update the scroll region to match the new image size
             self.canvas.config(scrollregion=self.canvas.bbox("all"))
 
-    def zoom_in(self, event=None):
-        self.scale_factor *= 1.5  # Increase scale
-        self.update_image()
+        # Update the status bar with the current zoom level
+        self.update_statusbar()
 
-    def zoom_out(self, event=None):
-        self.scale_factor /= 1.5  # Decrease scale
-        self.update_image()
+    def update_statusbar(self):
+        """Update the status bar text with scale factor and other information."""
+        self.statusbar.config(
+            text=f"{self.canvas.curr_coords}, {self.day_indicator}, "
+                 f"{self.override_indicator}, {self.inserting_indicator}, "
+                 f"Zoom Scale: {self.scale_factor:.1f}x"
+        )
 
 
     def draw_edge(self, parent_node, child_node):
