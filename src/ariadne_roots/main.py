@@ -35,6 +35,7 @@ class StartupUI:
         self.base = base
         self.base.geometry("350x200")
 
+
         # master frame
         self.frame = tk.Frame(self.base)
         self.frame.pack(side="top", fill="both", expand=True)
@@ -74,6 +75,8 @@ class TracerUI(tk.Frame):
         self.base = base
         self.base.geometry("750x600")
         self.base.title("Ariadne: Trace")
+        # Initialize scale factor
+        self.scale_factor = 1.0
 
         # master frame
         self.frame = tk.Frame(self.base)
@@ -447,9 +450,6 @@ class TracerUI(tk.Frame):
 
         # Prompt for a new plant ID assignment and create a new tree
         self.tree.popup(self.base)
-
-    # Initialize scale factor
-    self.scale_factor = 1.0
 
         # Zoom in function
     def zoom_in(self):
