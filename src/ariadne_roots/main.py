@@ -115,7 +115,12 @@ class TracerUI(tk.Frame):
         self.button_change_root = tk.Button(
             self.menu, text="Change Root (c)", command=None, state="disabled"
         )
-
+        self.button_zoom_in = tk.Button(
+            self.menu, text="Zoom In (+)", command=None, state="disabled"
+        )
+        self.button_zoom_out = tk.Button(
+             self.menu, text="Zoom Out (-)", command=None, state="disabled"
+        )
         self.button_import.pack(fill="x", side="top")
         self.button_prev.pack(fill="x", side="top")
         self.button_next.pack(fill="x", side="top")
@@ -125,6 +130,8 @@ class TracerUI(tk.Frame):
         self.button_save.pack(fill="x", side="top")
         self.button_show.pack(fill="x", side="top")
         self.button_change_root.pack(fill="x", side="top")
+        self.button_zoom_in.pack(fill="x", side="top")
+        self.button_zoom_out.pack(fill="x", side="top")
 
         # image canvas
         self.canvas = tk.Canvas(self.frame, width=600, height=700, bg="gray")
@@ -152,7 +159,7 @@ class TracerUI(tk.Frame):
         self.canvas.configure(
             xscrollcommand=self.xsb.set,
             yscrollcommand=self.ysb.set,
-            scrollregion=(0, 0, 7000, 7000),
+            scrollregion=(0, 0, 12000, 12000),
         )
         self.canvas.curr_coords = (0, 0)  # for statusbar tracking
 
@@ -275,8 +282,12 @@ class TracerUI(tk.Frame):
         self.button_change_root.config(command=self.change_root, state="normal")
         self.canvas.bind("c", self.change_root)
 
-        self.button_show.config(command=self.show_tree, state="normal")
-        self.canvas.bind("t", self.show_tree)
+        self.button_zoom_in.config(command=self.zoom_in, state="normal")
+        self.canvas.bind("+", self.zoom_in)
+
+        self.button_zoom_out.config(command=self.zoom_out, state="normal")
+        self.canvas.bind("-", self.zoom_out)
+
 
     def change_frame(self, next_index):
         """Move frames in the GIF."""
@@ -436,6 +447,35 @@ class TracerUI(tk.Frame):
 
         # Prompt for a new plant ID assignment and create a new tree
         self.tree.popup(self.base)
+
+    # Initialize scale factor
+    self.scale_factor = 1.0
+
+        # Zoom in function
+    def zoom_in(self):
+        self.scale_factor *= 1.5  # Increase scale
+        self.update_image()
+
+        # Zoom out function
+    def zoom_out(self):
+        self.scale_factor /= 1.5  # Decrease scale
+        self.update_image()
+
+        # Update image on canvas
+    def update_image(self):
+        if self.img and self.file:
+            # Resize image based on scale factor
+            scaled_image = self.file.resize(
+                (
+                    int(self.file.width * self.scale_factor),
+                    int(self.file.height * self.scale_factor),
+                ),
+                Image.ANTIALIAS,
+            )
+            self.img = ImageTk.PhotoImage(scaled_image)
+            self.canvas.itemconfig(self.frame_id, image=self.img)
+            self.canvas.config(scrollregion=self.canvas.bbox("all"))
+    
 
     def draw_edge(self, parent_node, child_node):
         """Draw an edge between 2 nodes, and add it to the tree."""
