@@ -256,8 +256,11 @@ class TracerUI(tk.Frame):
 
         # If this is the first import, ask for the zoom factor
         if self.first_import:
-        self.first_import = False
-        self.ask_zoom_factor()
+            self.first_import = False
+            self.ask_zoom_factor()
+
+        # Apply the stored zoom factor to the image
+        self.update_image()
 
     def update_image(self):
     """Update the image on the canvas based on the scale factor."""
@@ -268,7 +271,7 @@ class TracerUI(tk.Frame):
                 int(self.file.width * self.scale_factor),
                 int(self.file.height * self.scale_factor),
             ),
-            Image.Resampling.LANCZOS,
+            Image.Resampling.LANCZOS,  # Use LANCZOS for high-quality downscaling
         )
         self.img = ImageTk.PhotoImage(scaled_image)
 
@@ -278,8 +281,9 @@ class TracerUI(tk.Frame):
         # Update the scroll region to match the new image size
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
 
-        # Update the status bar with the current zoom level
-        self.statusbar.config(text=f"Zoom Scale: {self.scale_factor:.1f}x")
+    # Update the status bar with the current zoom level
+    self.update_statusbar()
+
 
 
         # create gif iterator for pagination
