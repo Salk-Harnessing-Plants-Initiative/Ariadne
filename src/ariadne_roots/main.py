@@ -76,6 +76,7 @@ class TracerUI(tk.Frame):
         self.base.geometry("1750x1600")
         self.base.title("Ariadne: Trace")
         # Initialize scale factor
+        self.first_import = True  # Track if it's the first image import    
         self.scale_factor = 1.0
 
         # master frame
@@ -247,9 +248,39 @@ class TracerUI(tk.Frame):
         self.path = tk.filedialog.askopenfilename(
             parent=self.base, initialdir="./", title="Select an image file:"
         )
+        if not self.path:  # If no file is selected, exit
+            return
         self.title_label.config(text=f"Tracing {self.path}")
         self.file = Image.open(self.path)
         self.img = ImageTk.PhotoImage(self.file)
+
+        # If this is the first import, ask for the zoom factor
+        if self.first_import:
+        self.first_import = False
+        self.ask_zoom_factor()
+
+    def update_image(self):
+    """Update the image on the canvas based on the scale factor."""
+    if self.img and self.file:
+        # Resize the image based on the scale factor
+        scaled_image = self.file.resize(
+            (
+                int(self.file.width * self.scale_factor),
+                int(self.file.height * self.scale_factor),
+            ),
+            Image.Resampling.LANCZOS,
+        )
+        self.img = ImageTk.PhotoImage(scaled_image)
+
+        # Update the canvas with the new image
+        self.canvas.itemconfig(self.frame_id, image=self.img)
+
+        # Update the scroll region to match the new image size
+        self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
+        # Update the status bar with the current zoom level
+        self.statusbar.config(text=f"Zoom Scale: {self.scale_factor:.1f}x")
+
 
         # create gif iterator for pagination
         self.iterframes = ImageSequence.Iterator(self.file)
@@ -293,6 +324,30 @@ class TracerUI(tk.Frame):
 
         self.button_zoom_out.config(command=self.zoom_out, state="normal")
         self.canvas.bind("-", self.zoom_out)
+
+    def ask_zoom_factor(self):
+        """Display a popup asking for the zoom factor."""
+        popup = tk.Toplevel(self.base)
+        popup.title("Choose Zoom Factor")
+
+        tk.Label(popup, text="Choose the zoom factor:").pack(pady=10)
+
+        def set_zoom():
+            self.statusbar.config(text=f"Zoom Scale: {self.scale_factor:.1f}x")
+            self.button_zoom_in.config(state="disabled")  # Disable zoom buttons
+            self.button_zoom_out.config(state="disabled")
+            popup.destroy()
+
+        def cancel_popup():
+            popup.destroy()
+
+    # "OK" button sets the zoom and disables buttons
+        tk.Button(popup, text="OK", command=set_zoom).pack(side="left", padx=10, pady=10)
+
+    # "Cancel" button closes the popup
+        tk.Button(popup, text="Cancel", command=cancel_popup).pack(side="right", padx=10, pady=10)
+
+        popup.grab_set()  # Make popup modal
 
 
     def change_frame(self, next_index):
