@@ -664,6 +664,10 @@ def analyze(G):
     basal_zone_length = zone_lengths["basal_zone_length"]
     apical_zone_length = zone_lengths["apical_zone_length"]
 
+    # Ensure basal zone length is 0 if it equals the primary root length
+    if basal_zone_length == len_PR:
+        basal_zone_length = 0
+
     #Branched Zone density
 
     branched_zone_density = num_LRs / branched_zone_length if branched_zone_length != 0 else 0
