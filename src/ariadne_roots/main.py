@@ -832,52 +832,17 @@ class Tree:
     def popup(self, base):
         """Popup menu for plant ID assignment."""
         top = tk.Toplevel(base)
-        top.geometry("350x500")
+        top.geometry("350x200")
 
-        label = tk.Label(top, text="Please select a plant ID:")
+        label = tk.Label(top, text="Please enter a plant ID:")
         label.pack(side="top", fill="both", expand=True)
 
         v = tk.StringVar()  # holds plant ID
 
-        a = tk.Radiobutton(top, text="A", variable=v, value="A", bg="white", fg="black")
-        a.pack()
-        a.select()  # default option for nicer aesthetics
-
-        tk.Radiobutton(
-            top, text="B", variable=v, value="B", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="C", variable=v, value="C", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="D", variable=v, value="D", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="E", variable=v, value="E", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="F", variable=v, value="F", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="G", variable=v, value="G", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="H", variable=v, value="H", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="I", variable=v, value="I", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="J", variable=v, value="J", bg="white", fg="black"
-        ).pack()
+        # Entry widget for typing the ID
+        entry = tk.Entry(top, textvariable=v, font=("Arial", 14))
+        entry.pack(pady=20)
+        entry.focus_set()  # focus on the entry for convenience
 
         def updater():
             top.destroy()
@@ -886,10 +851,11 @@ class Tree:
         ok = tk.Button(top, text="OK", command=updater)
         cancel = tk.Button(top, text="Cancel", command=top.destroy)
 
-        ok.pack(side="top", fill="both", expand=True)
-        cancel.pack(side="bottom", fill="both", expand=True)
+        ok.pack(side="left", padx=20, pady=10, expand=True)
+        cancel.pack(side="right", padx=20, pady=10, expand=True)
 
         base.wait_window(top)  # wait for a button to be pressed
+
 
     ##########################
     def insert_child(self, current_node, new):
