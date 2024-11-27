@@ -63,18 +63,24 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
     <img src="assets/Trace_Menu.png" width="450" height="450">
 
 3. **Click on “Import image file”** and select the image to trace the roots.
-4. **Trace the first root:**
+4. **Select the zoom factor for your image** 
+    - A window should popup asking for the zoom factor
+    - Use the "Zoom in" and Zoom out" button to adjust the zoom needed to trace the root system with high precision
+    - Click on "OK"
+    - After this, any new image imported will be opened with the identical zoom factor
+    - Remark: after closing Ariadne, the zoom factor will be canceled. Therefore, take note of the zoom factor used and reapply the same everytime when restarting Ariadne.
+5. **Trace the first root:**
     - Start tracing the entire primary root first (it should appear green).
     - To save time, place a dot on each region where a lateral root is emitted.
-5. **Save the traced root:**
+6. **Save the traced root:**
     - When the first root is fully traced, click on the “Save” button on the left-hand menu of Ariadne or press “g” on your keyboard.
-    - A new window will pop up asking for the plant ID. For the first plant, enter “A”.
+    - A new window will pop up asking for the plant ID. Tap any letter “A” or number "1".
         - Each time you click on “Save”, a .json file will be saved in the folder at the location of Location_1 (see above).
-6. **Trace additional roots:**
+7. **Trace additional roots:**
     - When you are done tracing the first root, click on the “Change root” button on the left-hand menu of Ariadne.
     - Select a new plant ID, like “B”, to trace the second root.
     - Continue tracing each root on your image following these steps.
-7. **Finish tracing:**
+8. **Finish tracing:**
     - When you have traced all roots on your image, click on “Change root” and repeat from “Step 3” above for any new images.
 
 ### Analyze with Ariadne
@@ -103,35 +109,43 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
 
 The RSA traits included in the CSV are
 
-- **Material cost:** Total root length
-- **Wiring cost:** Sum of the length from the hypocotyl to each root tip (Pareto related trait)
+- **Total root length:** Total root length
+- **Travel distance:** Sum of the length from the hypocotyl to each root tip (Pareto related trait)
 - **Alpha:** Trade-off value between growth and transport efficiency (Pareto related trait)
-- **Scaling distance from the front:** Pareto optimality value (Pareto related trait)
-- **Material cost (random):** Random total root length
-- **Wiring cost (random):** Random sum of the length from the hypocotyl to each root tip (Pareto related trait)
+- **Scaling distance to front:** Pareto optimality value (Pareto related trait)
+- **Total root length (random):** Random total root length
+- **Travel distance (random):** Random sum of the length from the hypocotyl to each root tip (Pareto related trait)
 - **Alpha (random):** Random trade-off value between growth and transport efficiency (Pareto related trait)
-- **Scaling distance from the front (random):** Random Pareto optimality value (Pareto related trait)
+- **Scaling distance to front (random):** Random Pareto optimality value (Pareto related trait)
+- **PR length:** Length of the primary root
+- **PR minimal length:** Euclidean distance from the hypocotyl to the primary root tip
+- **Basal zone length:** length from the hypocotyl to the insertion of the first lateral root along the primary root 
+- **Branched zone length:** length from the insertion of the first lateral root to the insertion of the last lateral root along the primary root 
+- **Apical zone length:** length from the last lateral root to the root tip along the primary root 
 - **Mean LR lengths:** Average length of all lateral roots
-- **Median LR lengths:** Median length of all lateral roots
-- **Mean LR angles:** Average lateral root set point angles
-- **Median LR angles:** Median lateral root set point angles
 - **Mean LR minimal distances:** Average Euclidean distance between each lateral root tip and its insertion on the primary root for all lateral roots
+- **Median LR lengths:** Median length of all lateral roots
 - **Median LR minimal distances:** Median Euclidean distance between each lateral root tip and its insertion on the primary root for all lateral roots
 - **Sum LR minimal distances:** Sum of the Euclidean distances between each lateral root tip and its insertion on the primary root for all lateral roots
-- **PR minimal length:** Euclidean distance from the hypocotyl to the primary root tip
-- **PR length:** Length of the primary root
+- **Mean LR angles:** Average lateral root set point angles
+- **Median LR angles:** Median lateral root set point angles
 - **LR count:** Number of lateral roots
+- **LR density:** Number of lateral roots divided by primary root length
+- **Branched zone density:** Number of lateral roots divided by Branched zone length
 - **LR lengths:** Length of each individual lateral root
 - **LR angles:** Lateral root set point angle of each individual lateral root
 - **LR minimal distance:** Euclidean distance between each lateral root tip and its insertion on the primary root for each lateral root
-- **LR density:** Number of lateral roots divided by primary root length, multiplied by 100
+
+- **Barycentre x displacement:** Euclidean length bet 
+- **Barycentre y displacement:** Euclidean length bet 
+
 - **Total minimal distance:** Sum of LR minimal distances plus PR minimal length
 - **Tortuosity (Material/Total Distance Ratio):** Total root length divided by total minimal distance
 
 
 
 ##### Keybinds
-* `Left-click`: place/select node. To pan, hold `Alt` or `Ctrl` and drag
+* `Left-click`: place/select node. 
 * `t`: toggle skeleton visibility (default: on)
 * `e`: next frame (GIFs only)
 * `q`: previous frame (GIFs only)
@@ -140,6 +154,7 @@ The RSA traits included in the CSV are
 * `g`: Save output file
 * `d`: Delete currently selected node(s)
 * `c`: Erase the current tree and ask for a new plant ID
+* `Ctrl`: Hold Ctrl to scroll through the image with the mouth
 * `Ctrl-Z`: Undo last action
 
 
@@ -183,14 +198,14 @@ Follow these steps to set up your development environment and start making contr
 ## Contributors
 
 - Kian Faizi
-- Matt Platre
+- Matthieu Platre
 - Elizabeth Berrigan
 
 ## Contact
 
 For any questions or further information, please contact:
 
-- **Matt Platre:** [mattplatre@gmail.com](mailto:mattplatre@gmail.com)
+- **Matthieu Platre:** [matthieuplatre@inrae.fr](mailto:matthieuplatre@inrae.fr)
 
 
 ## References
