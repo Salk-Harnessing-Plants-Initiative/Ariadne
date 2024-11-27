@@ -75,8 +75,9 @@ class TracerUI(tk.Frame):
         self.base = base
         self.base.geometry("1750x1600")
         self.base.title("Ariadne: Trace")
-        # Initialize scale factor
+        # Initialize scale factor and the flag for first image import
         self.scale_factor = 1
+        self.first_image_imported = False  # Flag to check first image import
 
         # master frame
         self.frame = tk.Frame(self.base)
@@ -205,6 +206,36 @@ class TracerUI(tk.Frame):
         self.frame.grid_rowconfigure(1, weight=1)
         self.frame.grid_columnconfigure(1, weight=1)
 
+    def ask_zoom_factor(self):
+        """Prompt user to select a zoom factor after importing the first image."""
+        def on_ok():
+            try:
+                # Retrieve the scale factor from the statusbar
+                zoom = self.scale_factor
+                print(f"Zoom factor selected: {zoom}")  # Debug print, remove if unnecessary
+                self.zoom_factor = zoom  # Store zoom factor
+                zoom_popup.destroy()
+            except ValueError:
+                print("Invalid input, zoom factor not updated.")
+
+        def on_cancel():
+            zoom_popup.destroy()
+
+        zoom_popup = tk.Toplevel(self.base)
+        zoom_popup.title("Choose Zoom")
+        zoom_popup.geometry("200x150")
+
+        label = tk.Label(zoom_popup, text="Choose the zoom factor")
+        label.pack(pady=10)
+
+        # OK and Cancel buttons
+        ok_button = tk.Button(zoom_popup, text="OK", command=on_ok)
+        ok_button.pack(side="left", padx=20)
+
+        cancel_button = tk.Button(zoom_popup, text="Cancel", command=on_cancel)
+        cancel_button.pack(side="right", padx=20)
+
+
     def click_info(self, event):
         """Show node metadata on right click (for debugging)."""
         for n in self.tree.nodes:  # check click proximity to existing points
@@ -249,7 +280,24 @@ class TracerUI(tk.Frame):
         )
         self.title_label.config(text=f"Tracing {self.path}")
         self.file = Image.open(self.path)
-        self.img = ImageTk.PhotoImage(self.file)
+
+        # Default image without scaling for the first image
+        if not self.first_image_imported:
+            self.img = ImageTk.PhotoImage(self.file)
+            self.ask_zoom_factor()  # Show zoom factor popup only for the first image
+            self.first_image_imported = True
+        else:
+            scaled_image = self.file.resize(
+                (
+                    int(self.file.width * self.zoom_factor),
+                    int(self.file.height * self.zoom_factor),
+                ),
+                Image.Resampling.LANCZOS,
+            )
+            self.img = ImageTk.PhotoImage(scaled_image)
+
+        self.frame_id = self.canvas.create_image(0, 0, image=self.img, anchor="nw")
+
 
         # create gif iterator for pagination
         self.iterframes = ImageSequence.Iterator(self.file)
@@ -261,7 +309,7 @@ class TracerUI(tk.Frame):
 
         self.history = deque(maxlen=6)  # gets updated on every add_node()
 
-        # enable buttons and add relevant keybinds
+        # Enable buttons and add relevant keybinds
         self.canvas.bind("<Button 1>", self.place_node)
 
         self.button_save.config(command=self.make_file, state="normal")
@@ -293,6 +341,10 @@ class TracerUI(tk.Frame):
 
         self.button_zoom_out.config(command=self.zoom_out, state="normal")
         self.canvas.bind("-", self.zoom_out)
+
+        # Prompt user to choose zoom factor after importing the first image
+        #if not hasattr(self, 'zoom_factor'):
+            #self.ask_zoom_factor()
 
 
     def change_frame(self, next_index):
@@ -442,17 +494,29 @@ class TracerUI(tk.Frame):
             if not self.prox_override:
                 self.override()
 
+
+
     def change_root(self, event=None):
-        """Clear current tree and prompt for a new plant ID."""
-        # Destroy all nodes and edges from the current tree
+        """Clear current tree, prompt for a new root, and reinitialize."""
+
+        # Destroy all nodes and edges from the canvas
         for node in self.tree.nodes:
             self.canvas.delete(node.shape_val)
         for edge in self.tree.edges:
             self.canvas.delete(edge)
+
+        # Clear the current tree data
         self.tree.clear_tree()
+
+        # Reset necessary states
+        self.history.clear()
+        self.tree.root_choice = None
+        self.highlight_choice = 0
+        self.day_indicator = ""
 
         # Prompt for a new plant ID assignment and create a new tree
         self.tree.popup(self.base)
+
 
 # Zoom function
     #zoom in
