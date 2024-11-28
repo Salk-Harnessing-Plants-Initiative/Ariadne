@@ -135,17 +135,15 @@ The RSA traits included in the CSV are
 - **LR lengths:** Length of each individual lateral root
 - **LR angles:** Lateral root set point angle of each individual lateral root
 - **LR minimal distance:** Euclidean distance between each lateral root tip and its insertion on the primary root for each lateral root
-
-- **Barycentre x displacement:** Euclidean length bet 
-- **Barycentre y displacement:** Euclidean length bet 
-
+- **Barycentre x displacement:** Vertical distance between the hypocotyl base to the barycenter of the convex hull
+- **Barycentre y displacement:** Horizontal distance between the hypocotyl base to the barycenter of the convex hull
 - **Total minimal distance:** Sum of LR minimal distances plus PR minimal length
 - **Tortuosity (Material/Total Distance Ratio):** Total root length divided by total minimal distance
 
 
-
 ##### Keybinds
 * `Left-click`: place/select node. 
+* `Ctrl`: Hold Ctrl to scroll through the image with the mouth
 * `t`: toggle skeleton visibility (default: on)
 * `e`: next frame (GIFs only)
 * `q`: previous frame (GIFs only)
@@ -154,7 +152,8 @@ The RSA traits included in the CSV are
 * `g`: Save output file
 * `d`: Delete currently selected node(s)
 * `c`: Erase the current tree and ask for a new plant ID
-* `Ctrl`: Hold Ctrl to scroll through the image with the mouth
+* `+`: Zoom in
+* `-`: Zoom out
 * `Ctrl-Z`: Undo last action
 
 
@@ -205,7 +204,7 @@ Follow these steps to set up your development environment and start making contr
 
 For any questions or further information, please contact:
 
-- **Matthieu Platre:** [matthieuplatre@inrae.fr](mailto:matthieuplatre@inrae.fr)
+- **Matthieu Platre:** [matthieu.platre@inrae.fr](mailto:matthieu.platre@inrae.fr)
 
 
 ## References
