@@ -35,6 +35,7 @@ class StartupUI:
         self.base = base
         self.base.geometry("350x200")
 
+
         # master frame
         self.frame = tk.Frame(self.base)
         self.frame.pack(side="top", fill="both", expand=True)
@@ -72,8 +73,11 @@ class TracerUI(tk.Frame):
     def __init__(self, base):
         super().__init__(base)
         self.base = base
-        self.base.geometry("750x600")
+        self.base.geometry("1750x1600")
         self.base.title("Ariadne: Trace")
+        # Initialize scale factor and the flag for first image import
+        self.scale_factor = 1
+        self.first_image_imported = False  # Flag to check first image import
 
         # master frame
         self.frame = tk.Frame(self.base)
@@ -115,7 +119,12 @@ class TracerUI(tk.Frame):
         self.button_change_root = tk.Button(
             self.menu, text="Change Root (c)", command=None, state="disabled"
         )
-
+        self.button_zoom_in = tk.Button(
+            self.menu, text="Zoom In (+)", command=None, state="disabled"
+        )
+        self.button_zoom_out = tk.Button(
+             self.menu, text="Zoom Out (-)", command=None, state="disabled"
+        )
         self.button_import.pack(fill="x", side="top")
         self.button_prev.pack(fill="x", side="top")
         self.button_next.pack(fill="x", side="top")
@@ -125,6 +134,8 @@ class TracerUI(tk.Frame):
         self.button_save.pack(fill="x", side="top")
         self.button_show.pack(fill="x", side="top")
         self.button_change_root.pack(fill="x", side="top")
+        self.button_zoom_in.pack(fill="x", side="top")
+        self.button_zoom_out.pack(fill="x", side="top")
 
         # image canvas
         self.canvas = tk.Canvas(self.frame, width=600, height=700, bg="gray")
@@ -152,7 +163,7 @@ class TracerUI(tk.Frame):
         self.canvas.configure(
             xscrollcommand=self.xsb.set,
             yscrollcommand=self.ysb.set,
-            scrollregion=(0, 0, 7000, 7000),
+            scrollregion=(0, 0, 12000, 12000),
         )
         self.canvas.curr_coords = (0, 0)  # for statusbar tracking
 
@@ -195,6 +206,36 @@ class TracerUI(tk.Frame):
         self.frame.grid_rowconfigure(1, weight=1)
         self.frame.grid_columnconfigure(1, weight=1)
 
+    def ask_zoom_factor(self):
+        """Prompt user to select a zoom factor after importing the first image."""
+        def on_ok():
+            try:
+                # Retrieve the scale factor from the statusbar
+                zoom = self.scale_factor
+                print(f"Zoom factor selected: {zoom}")  # Debug print, remove if unnecessary
+                self.zoom_factor = zoom  # Store zoom factor
+                zoom_popup.destroy()
+            except ValueError:
+                print("Invalid input, zoom factor not updated.")
+
+        def on_cancel():
+            zoom_popup.destroy()
+
+        zoom_popup = tk.Toplevel(self.base)
+        zoom_popup.title("Choose Zoom")
+        zoom_popup.geometry("200x150")
+
+        label = tk.Label(zoom_popup, text="Choose the zoom factor")
+        label.pack(pady=10)
+
+        # OK and Cancel buttons
+        ok_button = tk.Button(zoom_popup, text="OK", command=on_ok)
+        ok_button.pack(side="left", padx=20)
+
+        cancel_button = tk.Button(zoom_popup, text="Cancel", command=on_cancel)
+        cancel_button.pack(side="right", padx=20)
+
+
     def click_info(self, event):
         """Show node metadata on right click (for debugging)."""
         for n in self.tree.nodes:  # check click proximity to existing points
@@ -229,7 +270,7 @@ class TracerUI(tk.Frame):
 
         # update statusbar contents
         self.statusbar.config(
-            text=f"{self.canvas.curr_coords}, {self.day_indicator}, {self.override_indicator}, {self.inserting_indicator}"
+            text=f"{self.canvas.curr_coords}, {self.day_indicator}, {self.override_indicator}, {self.inserting_indicator}, {self.scale_factor}"
         )
 
     def import_image(self):
@@ -239,7 +280,24 @@ class TracerUI(tk.Frame):
         )
         self.title_label.config(text=f"Tracing {self.path}")
         self.file = Image.open(self.path)
-        self.img = ImageTk.PhotoImage(self.file)
+
+        # Default image without scaling for the first image
+        if not self.first_image_imported:
+            self.img = ImageTk.PhotoImage(self.file)
+            self.ask_zoom_factor()  # Show zoom factor popup only for the first image
+            self.first_image_imported = True
+        else:
+            scaled_image = self.file.resize(
+                (
+                    int(self.file.width * self.zoom_factor),
+                    int(self.file.height * self.zoom_factor),
+                ),
+                Image.Resampling.LANCZOS,
+            )
+            self.img = ImageTk.PhotoImage(scaled_image)
+
+        self.frame_id = self.canvas.create_image(0, 0, image=self.img, anchor="nw")
+
 
         # create gif iterator for pagination
         self.iterframes = ImageSequence.Iterator(self.file)
@@ -251,7 +309,7 @@ class TracerUI(tk.Frame):
 
         self.history = deque(maxlen=6)  # gets updated on every add_node()
 
-        # enable buttons and add relevant keybinds
+        # Enable buttons and add relevant keybinds
         self.canvas.bind("<Button 1>", self.place_node)
 
         self.button_save.config(command=self.make_file, state="normal")
@@ -272,11 +330,22 @@ class TracerUI(tk.Frame):
         self.button_insert.config(command=self.insert, state="normal")
         self.canvas.bind("i", self.insert)
 
+        self.button_show.config(command=self.show_tree, state="normal")
+        self.canvas.bind("c", self.show_tree)
+
         self.button_change_root.config(command=self.change_root, state="normal")
         self.canvas.bind("c", self.change_root)
 
-        self.button_show.config(command=self.show_tree, state="normal")
-        self.canvas.bind("t", self.show_tree)
+        self.button_zoom_in.config(command=self.zoom_in, state="normal")
+        self.canvas.bind("+", self.zoom_in)
+
+        self.button_zoom_out.config(command=self.zoom_out, state="normal")
+        self.canvas.bind("-", self.zoom_out)
+
+        # Prompt user to choose zoom factor after importing the first image
+        #if not hasattr(self, 'zoom_factor'):
+            #self.ask_zoom_factor()
+
 
     def change_frame(self, next_index):
         """Move frames in the GIF."""
@@ -425,17 +494,72 @@ class TracerUI(tk.Frame):
             if not self.prox_override:
                 self.override()
 
+
+
     def change_root(self, event=None):
-        """Clear current tree and prompt for a new plant ID."""
-        # Destroy all nodes and edges from the current tree
+        """Clear current tree, prompt for a new root, and reinitialize."""
+
+        # Destroy all nodes and edges from the canvas
         for node in self.tree.nodes:
             self.canvas.delete(node.shape_val)
         for edge in self.tree.edges:
             self.canvas.delete(edge)
+
+        # Clear the current tree data
         self.tree.clear_tree()
+
+        # Reset necessary states
+        self.history.clear()
+        self.tree.root_choice = None
+        self.highlight_choice = 0
+        self.day_indicator = ""
 
         # Prompt for a new plant ID assignment and create a new tree
         self.tree.popup(self.base)
+
+
+# Zoom function
+    #zoom in
+    def zoom_in(self):
+        self.scale_factor *= 1.5  # Increase scale
+        self.update_image()
+        self.update_statusbar()   # Update the status bar with zoom info
+
+    # Zoom out
+    def zoom_out(self):
+        self.scale_factor /= 1.5  # Decrease scale
+        self.update_image()
+        self.update_statusbar()   # Update the status bar with zoom info
+
+    def update_image(self):
+        """Update the image on the canvas based on the scale factor."""
+        if self.img and self.file:
+            # Resize the image based on the scale factor
+            scaled_image = self.file.resize(
+                (
+                    int(self.file.width * self.scale_factor),
+                    int(self.file.height * self.scale_factor),
+                ),
+                Image.Resampling.LANCZOS,  # Use LANCZOS for high-quality downscaling
+            )
+            self.img = ImageTk.PhotoImage(scaled_image)
+
+            # Update the canvas with the new image
+            self.canvas.itemconfig(self.frame_id, image=self.img)
+
+            # Update the scroll region to match the new image size
+            self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
+        # Update the status bar with the current zoom level
+        self.update_statusbar()
+
+    def update_statusbar(self):
+        """Update the status bar text with scale factor and other information."""
+        self.statusbar.config(
+            text=f"{self.canvas.curr_coords}, {self.day_indicator}, "
+                 f"{self.override_indicator}, {self.inserting_indicator}, "
+                 f"Zoom Scale: {self.scale_factor}"
+        )
 
     def draw_edge(self, parent_node, child_node):
         """Draw an edge between 2 nodes, and add it to the tree."""
@@ -684,7 +808,6 @@ class TracerUI(tk.Frame):
             json.dump(s, h)
             print(f"wrote to output {output_name}")
 
-
 class Node:
     """An (x,y,0) point along a root."""
 
@@ -771,52 +894,17 @@ class Tree:
     def popup(self, base):
         """Popup menu for plant ID assignment."""
         top = tk.Toplevel(base)
-        top.geometry("350x500")
+        top.geometry("350x200")
 
-        label = tk.Label(top, text="Please select a plant ID:")
+        label = tk.Label(top, text="Please enter a plant ID:")
         label.pack(side="top", fill="both", expand=True)
 
         v = tk.StringVar()  # holds plant ID
 
-        a = tk.Radiobutton(top, text="A", variable=v, value="A", bg="white", fg="black")
-        a.pack()
-        a.select()  # default option for nicer aesthetics
-
-        tk.Radiobutton(
-            top, text="B", variable=v, value="B", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="C", variable=v, value="C", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="D", variable=v, value="D", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="E", variable=v, value="E", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="F", variable=v, value="F", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="G", variable=v, value="G", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="H", variable=v, value="H", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="I", variable=v, value="I", bg="white", fg="black"
-        ).pack()
-
-        tk.Radiobutton(
-            top, text="J", variable=v, value="J", bg="white", fg="black"
-        ).pack()
+        # Entry widget for typing the ID
+        entry = tk.Entry(top, textvariable=v, font=("Arial", 14))
+        entry.pack(pady=20)
+        entry.focus_set()  # focus on the entry for convenience
 
         def updater():
             top.destroy()
@@ -825,10 +913,11 @@ class Tree:
         ok = tk.Button(top, text="OK", command=updater)
         cancel = tk.Button(top, text="Cancel", command=top.destroy)
 
-        ok.pack(side="top", fill="both", expand=True)
-        cancel.pack(side="bottom", fill="both", expand=True)
+        ok.pack(side="left", padx=20, pady=10, expand=True)
+        cancel.pack(side="right", padx=20, pady=10, expand=True)
 
         base.wait_window(top)  # wait for a button to be pressed
+
 
     ##########################
     def insert_child(self, current_node, new):
@@ -993,10 +1082,10 @@ class AnalyzerUI(tk.Frame):
                 # make pareto plot and save
                 quantify.plot_all(
                     front,
-                    [results["material cost"], results["wiring cost"]],
+                    [results["Total root length"], results["Travel distance"]],
                     randoms,
-                    results["material (random)"],
-                    results["wiring (random)"],
+                    results["Total root length (random)"],
+                    results["Travel distance (random)"],
                     pareto_path,
                 )
 
