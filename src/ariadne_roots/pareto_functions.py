@@ -744,6 +744,21 @@ def pareto_front(G):
     return front, actual
 
 
+def pareto_front_3d_path_tortuosity(G):
+    """
+    Given a graph G, compute the Pareto front of optimal solutions for the 3D path tortuosity
+    
+    This allows to compare how G was connected and how G could have been connected had it
+    been trying to optimize wiring cost, conduction delay, and path tortuosity
+    
+    Args:
+        G (nx.Graph): The graph to compute the Pareto front for
+    Returns:
+        front (dict): A dictionary of edge_lengths, travel_distances_to_base, and path_coverages for each alpha, beta value on the front
+        actual (tuple): The actual total_root_length, total_travel_distance, and total_path_coverage of the original plant
+    """
+    
+
 def random_tree(G):
     """
     Given a graph G, compute 1000 random spanning trees as in Conn et al. 2017.
