@@ -277,7 +277,9 @@ def pareto_cost(total_root_length, total_travel_distance, alpha):
     return cost
 
 
-def pareto_cost_3d_path_tortuosity(total_root_length, total_travel_distance, total_path_coverage, alpha, beta):
+def pareto_cost_3d_path_tortuosity(
+    total_root_length, total_travel_distance, total_path_coverage, alpha, beta
+):
     """
     Computes the pareto cost.
 
@@ -290,21 +292,25 @@ def pareto_cost_3d_path_tortuosity(total_root_length, total_travel_distance, tot
     When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized
     When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized
 
-    total_root_length: the sum of the lengths of the edges in the root network 
+    total_root_length: the sum of the lengths of the edges in the root network
         (a.k.a. material cost, wiring cost)
     total_travel_distance: the sum of the lengths of the shortest paths from every
-        lateral root tip to the base node of the network. (a.k.a. the satellite cost, 
+        lateral root tip to the base node of the network. (a.k.a. the satellite cost,
         conduction delay)
-    total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per 
-        path is defined as the ratio of the actual path length to the shortest path 
-        length between the root and the root tip. The total root coverage is the sum of 
+    total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per
+        path is defined as the ratio of the actual path length to the shortest path
+        length between the root and the root tip. The total path coverage is the sum of
         the tortuosity of all the root paths.
     """
     assert 0 <= alpha <= 1
     assert 0 <= beta <= 1
 
     gamma = 1 - alpha - beta
-    cost = alpha * total_root_length + beta * total_travel_distance - gamma * total_path_coverage
+    cost = (
+        alpha * total_root_length
+        + beta * total_travel_distance
+        - gamma * total_path_coverage
+    )
 
     return cost
 
@@ -800,7 +806,9 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
             H.nodes[n2]["distance_to_base"] = (
                 node_dist(H, n2, u) + H.nodes[u]["distance_to_base"]
             )
-            H.nodes[n2]["straight_distance_to_base"] = H.nodes[n2]["distance_to_base"] / node_dist(H, n2, base_node)
+            H.nodes[n2]["straight_distance_to_base"] = H.nodes[n2][
+                "distance_to_base"
+            ] / node_dist(H, n2, base_node)
 
         added_nodes += 1
     return H
@@ -808,10 +816,23 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
 
 def pareto_front(G):
     """
-    Given a graph G, compute the Pareto front of optimal solutions
+    Given a graph G, compute the Pareto front of optimal solutions for the wiring cost and conduction delay
 
     This allows to compare how G was connected and how G could have been connected had it
-    been trying to optimize wiring cost and conduction delay
+    been trying to optimize wiring cost and conduction delay.
+
+    When alpha = 0, the algorithm computes the satellite tree in linear time. This is the tree
+    that connects the base node to all of the critical nodes in G.
+
+    When alpha != 0, the algorithm computes the Pareto-optimal tree connecting the base node to all
+    of the critical nodes in G. The algorithm attempts to optimize alpha * D + (1 - alpha) * W
+    where D is the conduction delay and W is the wiring cost.
+
+    Args:
+        G (nx.Graph): The graph to compute the Pareto front for
+    Returns:
+        front (dict): A dictionary of edge_lengths, travel_distances_to_base for each alpha value on the front
+        actual (tuple): The actual total_root_length, total_travel_distance of the original plant
     """
 
     critical_nodes = get_critical_nodes(G)
@@ -844,17 +865,17 @@ def pareto_front(G):
 def pareto_front_3d_path_tortuosity(G):
     """
     Given a graph G, compute the Pareto front of optimal solutions for the 3D path tortuosity
-    
+
     This allows to compare how G was connected and how G could have been connected had it
     been trying to optimize wiring cost, conduction delay, and path tortuosity
-    
+
     Args:
         G (nx.Graph): The graph to compute the Pareto front for
     Returns:
         front (dict): A dictionary of edge_lengths, travel_distances_to_base, and path_coverages for each alpha, beta value on the front
         actual (tuple): The actual total_root_length, total_travel_distance, and total_path_coverage of the original plant
     """
-    
+
 
 def random_tree(G):
     """
