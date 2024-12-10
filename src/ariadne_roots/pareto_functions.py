@@ -880,15 +880,57 @@ def pareto_front_3d_path_tortuosity(G):
     Args:
         G (nx.Graph): The graph to compute the Pareto front for
     Returns:
-        front (dict): A dictionary of edge_lengths, travel_distances_to_base, and path_coverages for each alpha, beta value on the front
-        actual (tuple): The actual total_root_length, total_travel_distance, and total_path_coverage of the original plant
+        front (dict): A dictionary of edge_lengths, travel_distances_to_base, and
+            path_coverages for (each alpha, beta) value on the front
+        actual (tuple): The actual total_root_length, total_travel_distance, and
+            total_path_coverage of the original plant
     """
+    critical_nodes = get_critical_nodes(G)
+
+    # test: compute the actual total_root_length, total_travel_distance, and
+    # total_path_coverage for the original plant
+    mactual, sactual, pactual = graph_costs_3d_path_tortuosity(
+        G, critical_nodes=critical_nodes
+    )
+    actual = (mactual, sactual, pactual)
+
+    # dictionary of edge_lengths, travel_distances_to_base, and path_coverages for each
+    # alpha, beta value on the front
+    front = {}
+
+    for alpha in DEFAULT_ALPHAS:
+        for beta in DEFAULT_BETAS:
+            H = None
+            # if alpha = 0 and beta = 1 compute the satellite tree in linear time
+            if alpha == 0 and beta == 1:
+                H = satellite_tree(G)
+            else:
+                H = pareto_steiner_fast(G, alpha)
+
+            # compute the wiring cost, conduction delay and path coverage
+            # only the original critical nodes contribute to conduction delay
+            total_root_length, total_travel_distance, total_path_coverage = (
+                graph_costs_3d_path_tortuosity(H, critical_nodes=critical_nodes)
+            )
+            front[(alpha, beta)] = [
+                total_root_length,
+                total_travel_distance,
+                total_path_coverage,
+            ]
+
+    return front, actual
 
 
 def random_tree(G):
     """
     Given a graph G, compute 1000 random spanning trees as in Conn et al. 2017.
     Only consider the critical nodes (and root node) of G.
+
+    Args:
+        G (nx.Graph): The graph to compute the random trees for
+    Returns:
+        costs (list): A list of (mactual, sactual) tuples for each random tree which
+            represent the wiring cost and conduction delay of the tree.
     """
     random.seed(a=None)
     random_trees = []  # list of 1000 random trees
