@@ -1,5 +1,6 @@
 # Ariadne 
-[![PyPI version](https://badge.fury.io/py/ariadne-roots.svg)](https://badge.fury.io/py/ariadne-roots)
+[![PyPI version](https://img.shields.io/pypi/v/ariadne-roots?include_prereleases)](https://pypi.org/project/ariadne-roots/)
+
 🌱 is a small software package for analyzing images of _Arabidopsis thaliana_ roots.
 
 📷 It features a GUI for semi-automated image segmentation
@@ -40,8 +41,10 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
 
 3. **Install `ariadne-roots` using pip:**
     ```sh
-    pip install ariadne-roots
+    pip install --pre ariadne-roots  # Use --pre to include pre-release versions
     ```
+    - Omit the `--pre` flag if you only want to install stable releases.
+
 
 ## Usage
 
