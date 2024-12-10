@@ -258,7 +258,7 @@ The GitHub Action workflow `.github/workflows/python-publish.yml` results in the
 
 To release a new package, follow these instructions:
 
-### Follow contributing instructions above
+**Follow contributing instructions above**
 
 1. **Make a new branch to record your changes**
     ```sh
@@ -269,7 +269,7 @@ To release a new package, follow these instructions:
 
 The `pyproject.toml` file contains the information for the pip package. Incrementally increase the "version" with each release.
 
-#### Semantic Versioning
+**Semantic Versioning**
 
 Semantic versioning (SemVer) is a versioning system that uses the format:
 `MAJOR.MINOR.PATCH`
