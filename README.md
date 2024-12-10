@@ -1,8 +1,6 @@
 # Ariadne
 
-[![Stable version](https://img.shields.io/pypi/v/ariadne-roots?label=stable "Stable version")](https://pypi.org/project/ariadne-roots/)
-
-[![Latest version](https://img.shields.io/pypi/v/ariadne-roots?include_prereleases=true&label=latest)](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases)
+[![Stable version](https://img.shields.io/pypi/v/ariadne-roots?label=stable "Stable version")](https://pypi.org/project/ariadne-roots/) [![Latest version](https://img.shields.io/pypi/v/ariadne-roots?include_prereleases=true&label=latest)](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases)
 
 
 🌱 is a small software package for analyzing images of _Arabidopsis thaliana_ roots.
