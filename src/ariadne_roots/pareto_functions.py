@@ -402,6 +402,12 @@ def pareto_steiner_fast(G, alpha):
 
     The algorithm uses a greedy approach: always take the edge that will reduce the
     pareto cost of the tree by the smallest amount
+
+    When alpha = 0, the cost is (1 - alpha) * W = W, so the algorithm will try to minimize
+    the wiring cost
+
+    When alpha = 1, the cost is alpha * D = D, so the algorithm will try to minimize the
+    conduction delay.
     """
     assert 0 <= alpha <= 1
 
@@ -601,17 +607,19 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
 
     When alpha = beta = 0, gamma = 1 => cost = -total_path_coverage will be minimized =>
         total_path_coverage will be maximized
-    When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized
-    When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized
+    When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized =>
+        Satellite tree will be constructed
+    When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized =>
+        Steiner tree will be constructed
 
-    total_root_length: the sum of the lengths of the edges in the root network 
+    total_root_length: the sum of the lengths of the edges in the root network
         (a.k.a. material cost, wiring cost)
     total_travel_distance: the sum of the lengths of the shortest paths from every
-        lateral root tip to the base node of the network. (a.k.a. the satellite cost, 
+        lateral root tip to the base node of the network. (a.k.a. the satellite cost,
         conduction delay)
-    total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per 
-        path is defined as the ratio of the actual path length to the shortest path 
-        length between the root and the root tip. The total root coverage is the sum of 
+    total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per
+        path is defined as the ratio of the actual path length to the shortest path
+        length between the base node and the root tip. The total root coverage is the sum of
         the tortuosity of all the root paths.
 
     The algorithm uses a greedy approach: always take the edge that will reduce the
