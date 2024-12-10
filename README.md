@@ -160,39 +160,173 @@ The RSA traits included in the CSV are
 ## Contributing
 Follow these steps to set up your development environment and start making contributions to the project.
 
-1. **Navigate to the desired directory:**
-    Change directories to where you would like the repository to be downloaded:
+1. **Navigate to the desired directory**
+
+    Change directories to where you would like the repository to be downloaded
     ```sh
     cd /path/on/computer/for/repos
     ```
 
-2. **Clone the repository:**
+2. **Clone the repository**
     ```sh
-    git clone https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne.git
+    git clone https//github.com/Salk-Harnessing-Plants-Initiative/Ariadne.git
     ```
 
-3. **Navigate to the root of the cloned repository:**
+3. **Navigate to the root of the cloned repository**
     ```sh
     cd Ariadne
     ```
 
-4. **Create a development environment:**
-    This will install the necessary dependencies and the `ariadne-roots` package in editable mode:
+4. **Create a development environment**
+
+    This will install the necessary dependencies and the `ariadne-roots` package in editable mode
     ```sh
     mamba env create -f environment.yaml
     ```
 
-5. **Activate the development environment:**
+5. **Activate the development environment**
     ```sh
     mamba activate ariadne_dev
     ```
 
-6. **Create a branch for your changes:**
-    Before making any changes, create a new branch:
+6. **Create a branch for your changes**
+
+    Before making any changes, create a new branch
     ```sh
     git checkout -b your-branch-name
     ```
 
+7. **Code**
+
+    Make your changes. Please make sure your code is readable and documented.
+
+    - The Google style is preferred.
+    - Use docstrings with args and returns defined for each function.
+    - Typing annotations are preferred.
+    - Use comments to explain steps of calculations and algorithms.
+    - Use consistent variable names.
+        - Please use full words and not letters as variable names so that variables are readable.
+
+
+8. **Commit often**
+
+    Commit your changes frequently with short, descriptive messages. This helps track progress and makes it easier to identify issues.
+
+    ```sh
+    git add <changed_files>
+    git commit -m "Short, descriptive commit message"
+    ```
+
+9. **Open a pull request**
+
+    Before you make any changes, you can write a descriptive plan of what you intend to do and why.
+    Once your changes are ready, push your branch to the remote repository. Provide a clear explanation of what you changed and why.
+
+    ```sh
+    git push origin your-branch-name
+    ```
+
+    - Go to the repository on GitHub.
+    - Click on **Compare & pull request**.
+    - Fill in the title and description of your pull request.
+    - Click **Create pull request**.
+
+10. **Test your changes**
+
+    Ensure your changes pass all tests and do not break existing functionality.
+
+11. **Request a review**
+
+    In the pull request, request a review from the appropriate team members. Notify them via GitHub.
+
+12. **Merge your changes to main**
+
+    After your code passes review, merge your changes to the `main` branch.
+
+    - Click **Merge pull request** on GitHub.
+    - Confirm the merge.
+
+13. **Delete your remote branch**
+
+    Once your changes are merged, delete your remote branch to keep the repository clean.
+
+
+
+## Releasing `ariadne-roots`
+
+The GitHub Action workflow `.github/workflows/python-publish.yml` results in the package, `ariadne-roots`, being released at [PyPI](https://pypi.org/project/ariadne-roots/).
+
+To release a new package, follow these instructions:
+
+**Follow contributing instructions above**
+
+1. **Make a new branch to record your changes**
+    ```sh
+    git checkout -b <your_name>/bump_version_to_<version>
+    ```
+
+2. **Modify version**
+
+    The `pyproject.toml` file contains the information for the pip package. Incrementally increase the "version" with each release.
+
+    **Semantic Versioning**
+
+    Semantic versioning (SemVer) is a versioning system that uses the format:
+    `MAJOR.MINOR.PATCH`
+
+    - **MAJOR:** Increase when you make incompatible API changes.
+    - **MINOR:** Increase when you add functionality in a backward-compatible manner.
+    - **PATCH:** Increase when you make backward-compatible bug fixes.
+
+    For example:
+
+    - If the current version is `1.2.3`:
+    - A breaking change would result in `2.0.0`.
+    - Adding a new feature would result in `1.3.0`.
+    - Fixing a bug would result in `1.2.4`.
+
+    Learn more about the rules of semantic versioning [here](https://semver.org).
+
+3. **Commit changes**
+
+    After making the required modifications, commit your changes:
+    ```sh
+    git add pyproject.toml
+    git commit -m "Bump version to <version>"
+    git push origin <your_name>/bump_version_to_<version>
+    ```
+
+4. **Open a pull request**
+
+    1. Go to the repository on GitHub.
+    2. You should see a banner prompting you to compare & create a pull request for your branch. Click it.
+    3. Fill in the pull request title and description. For example:
+        - **Title:** Bump version to `<version>`
+        - **Description:** "This PR updates the version to `<version>` for release."
+    4. Click **Create pull request**.
+
+5. **Request a review**
+
+    After creating the pull request, in the right-hand sidebar, click on **Reviewers** and select the appropriate reviewer(s). Notify the reviewer(s) via GitHub.
+
+6. **Merge your changes to `main` after review**
+
+    Once the reviewer approves your pull request, merge it into the `main` branch.
+
+7. **Release to trigger the workflow**
+
+    1. Go to the [release page](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases).
+    2. Draft a new release:
+        - Create a new tag with the version number you used in the repository.
+        - Have GitHub draft the release notes to include all the changes since the last release.
+        - Modify the release name to include `ariadne-roots`, so that it says `ariadne-roots v<version>` like the rest.
+    3. Please ask for your release to be reviewed before releasing.
+
+8. **Verify the release**
+
+    Check [PyPI](https://pypi.org/project/ariadne-roots/#history) and the GitHub Actions of our repository to make sure the pip package was created and published successfully.
+    - You should see the latest release with the correct version number at pypi.org.
+    - The Github Actions should have green checkmarks and not red X's associated with your release.
 
 ## Contributors
 
