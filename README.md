@@ -254,7 +254,7 @@ Follow these steps to set up your development environment and start making contr
 
 ## Releasing `ariadne-roots`
 
-The GitHub Action workflow `.github/workflows/python-publish.yml` results in the package, `ariadne-roots`, being released at [PyPI](https//pypi.org/project/ariadne-roots/).
+The GitHub Action workflow `.github/workflows/python-publish.yml` results in the package, `ariadne-roots`, being released at [PyPI](https://pypi.org/project/ariadne-roots/).
 
 To release a new package, follow these instructions:
 
@@ -265,7 +265,7 @@ To release a new package, follow these instructions:
     git checkout -b <your_name>/bump_version_to_<version>
     ```
 
-### Modify version
+2. **Modify version**
 
 The `pyproject.toml` file contains the information for the pip package. Incrementally increase the "version" with each release.
 
@@ -287,7 +287,7 @@ For example:
 
 Learn more about the rules of semantic versioning [here](https://semver.org).
 
-### Commit changes
+3. **Commit changes**
 
 After making the required modifications:
 ```sh
@@ -296,7 +296,7 @@ git commit -m "Bump version to <version>"
 git push origin <your_name>/bump_version_to_<version>
 ```
 
-### Open a pull request
+4. **Open a pull request**
 
 1. Go to the repository on GitHub.
 2. You should see a banner prompting you to compare & create a pull request for your branch. Click it.
@@ -305,24 +305,24 @@ git push origin <your_name>/bump_version_to_<version>
     - **Description:** "This PR updates the version to `<version>` for release."
 4. Click **Create pull request**.
 
-### Request a review
+5. **Request a review**
 
 After creating the pull request, in the right-hand sidebar, click on **Reviewers** and select the appropriate reviewer(s). Notify the reviewer(s) via GitHub.
 
-### Merge your changes to `main` after review
+6. **Merge your changes to `main` after review**
 
 Once the reviewer approves your pull request, merge it into the `main` branch.
 
-### Release to trigger the workflow
+7. **Release to trigger the workflow**
 
-1. Go to the [release page](https://github.com/Salk-Harnessing-Plants-Initiative).
+1. Go to the [release page](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases).
 2. Draft a new release:
     - Create a new tag with the version number you used in the repository.
     - Have GitHub draft the release notes to include all the changes since the last release.
     - Modify the release name to include `ariadne-roots`, so that it says `ariadne-roots v<version>` like the rest.
 3. Please ask for your release to be reviewed before releasing.
 
-### Verify the release
+8. **Verify the release**
 
 Check [PyPI](https://pypi.org/project/ariadne-roots/#history) and the GitHub Actions of our repository to make sure the pip package was created and published successfully.
     - You should see the latest release with the correct version number at pypi.org.
