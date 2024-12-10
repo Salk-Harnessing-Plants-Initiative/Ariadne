@@ -267,25 +267,25 @@ To release a new package, follow these instructions:
 
 2. **Modify version**
 
-The `pyproject.toml` file contains the information for the pip package. Incrementally increase the "version" with each release.
+    The `pyproject.toml` file contains the information for the pip package. Incrementally increase the "version" with each release.
 
-**Semantic Versioning**
+    **Semantic Versioning**
 
-Semantic versioning (SemVer) is a versioning system that uses the format:
-`MAJOR.MINOR.PATCH`
+    Semantic versioning (SemVer) is a versioning system that uses the format:
+    `MAJOR.MINOR.PATCH`
 
-- **MAJOR:** Increase when you make incompatible API changes.
-- **MINOR:** Increase when you add functionality in a backward-compatible manner.
-- **PATCH:** Increase when you make backward-compatible bug fixes.
+    - **MAJOR:** Increase when you make incompatible API changes.
+    - **MINOR:** Increase when you add functionality in a backward-compatible manner.
+    - **PATCH:** Increase when you make backward-compatible bug fixes.
 
-For example:
+    For example:
 
-- If the current version is `1.2.3`:
-  - A breaking change would result in `2.0.0`.
-  - Adding a new feature would result in `1.3.0`.
-  - Fixing a bug would result in `1.2.4`.
+    - If the current version is `1.2.3`:
+    - A breaking change would result in `2.0.0`.
+    - Adding a new feature would result in `1.3.0`.
+    - Fixing a bug would result in `1.2.4`.
 
-Learn more about the rules of semantic versioning [here](https://semver.org).
+    Learn more about the rules of semantic versioning [here](https://semver.org).
 
 3. **Commit changes**
 
