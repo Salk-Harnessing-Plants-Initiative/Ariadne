@@ -289,7 +289,7 @@ To release a new package, follow these instructions:
 
 3. **Commit changes**
 
-    After making the required modifications:
+    After making the required modifications, commit your changes:
     ```sh
     git add pyproject.toml
     git commit -m "Bump version to <version>"
