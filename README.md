@@ -325,8 +325,8 @@ To release a new package, follow these instructions:
 8. **Verify the release**
 
     Check [PyPI](https://pypi.org/project/ariadne-roots/#history) and the GitHub Actions of our repository to make sure the pip package was created and published successfully.
-        - You should see the latest release with the correct version number at pypi.org.
-        - The Github Actions should have green checkmarks and not red X's associated with your release.
+    - You should see the latest release with the correct version number at pypi.org.
+    - The Github Actions should have green checkmarks and not red X's associated with your release.
 
 ## Contributors
 
