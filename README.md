@@ -1,4 +1,5 @@
-# Ariadne
+# Ariadne 
+[![PyPI version](https://badge.fury.io/py/ariadne-roots.svg)](https://badge.fury.io/py/ariadne-roots)
 🌱 is a small software package for analyzing images of _Arabidopsis thaliana_ roots.
 
 📷 It features a GUI for semi-automated image segmentation
