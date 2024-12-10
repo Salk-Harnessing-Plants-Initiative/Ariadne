@@ -905,7 +905,7 @@ def pareto_front_3d_path_tortuosity(G):
             if alpha == 0 and beta == 1:
                 H = satellite_tree(G)
             else:
-                H = pareto_steiner_fast(G, alpha)
+                H = pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta)
 
             # compute the wiring cost, conduction delay and path coverage
             # only the original critical nodes contribute to conduction delay
