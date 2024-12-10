@@ -968,3 +968,52 @@ def random_tree(G):
         costs.append((mactual, sactual))
 
     return costs
+
+
+def random_tree_3d_path_tortuosity(G):
+    """
+    Given a graph G, compute 1000 random spanning trees as in Conn et al. 2017.
+    Only consider the critical nodes (and root node) of G.
+
+    Args:
+        G (nx.Graph): The graph to compute the random trees for
+    Returns:
+        costs (list): A list of (mactual, sactual, pactual) tuples for each random tree which
+            represent the wiring cost, conduction delay, and path coverage of the tree.
+    """
+    random.seed(a=None)
+    random_trees = []  # list of 1000 random trees
+    costs = []
+
+    for i in range(1000):  # 1000 random trees
+        # instantiate random tree
+        R = nx.Graph()
+        G_critical_nodes = get_critical_nodes(G)
+
+        while len(G_critical_nodes) > 0:
+            # randomly draw 1 node from G's critical nodes
+            index = random.randrange(len(G_critical_nodes))
+            g = G_critical_nodes[index]
+
+            if len(R.nodes) > 0:  # if R is not empty
+                # add the new point AND a random edge
+                r_index = random.randrange(len(R.nodes))  # get a random node from R
+                r = list(R.nodes)[r_index]
+                R.add_node(g, pos=G.nodes.data()[g]["pos"])
+                R.add_edge(r, g, weight=node_dist(R, r, g))
+
+            else:  # if R is empty
+                # add the new point
+                R.add_node(g, pos=G.nodes.data()[g]["pos"])
+
+            # remove added node from candidate list and repeat
+            del G_critical_nodes[index]
+
+        random_trees.append(R)
+
+    for R in random_trees:
+        # compute costs for each R, to compare with G
+        mactual, sactual, pactual = graph_costs_3d_path_tortuosity(R)
+        costs.append((mactual, sactual, pactual))
+
+    return costs
