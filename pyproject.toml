@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ariadne-roots"
-version = "0.0.3a0"
+version = "0.0.3"
 authors = [
   { name="Matthieu Platre", email="mattplatre@gmail.com" },
   { name="Kian Faizi", email="kian@caltech.edu" },
