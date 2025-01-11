@@ -1071,8 +1071,9 @@ class AnalyzerUI(tk.Frame):
                 graph = json_graph.adjacency_graph(data)
 
                 # perform analysis
-                results, front, randoms = quantify.analyze(graph)
+                results, front, randoms, results_3d, front_3d, randoms_3d = quantify.analyze(graph)
                 results["filename"] = graph_name_noext
+                results_3d["filename"] = graph_name_noext
 
                 # Open the CSV file and write the header only once
                 with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
