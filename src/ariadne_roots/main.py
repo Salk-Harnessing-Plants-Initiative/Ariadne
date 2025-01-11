@@ -1044,6 +1044,9 @@ class AnalyzerUI(tk.Frame):
         report_dest = (
             self.output_path / f"report_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
         )
+        report_3d_dest = (
+            self.output_path / f"report_3d_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
+        )
 
         # add current file count
         self.output_info = f"Current files: ({len(self.tree_paths)})"
