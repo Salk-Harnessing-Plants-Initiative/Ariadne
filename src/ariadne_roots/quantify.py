@@ -489,6 +489,53 @@ def pareto_calcs(H):
     return results, front, randoms
 
 
+def pareto_calcs_3d_path_tortuosity(H):
+    """Perform Pareto-related calculations using 3d Pareto Front with path tortuosity.
+    
+    Args:
+        H (nx.Graph): NetworkX graph representing the root system.
+        
+    Returns:
+        tuple: Tuple containing the results dictionary, the 3D Pareto front, and the random tree costs.
+    """
+    # Calculate the Pareto front using the 3D path tortuosity
+    front, actual = pareto_front_3d_path_tortuosity(H)
+    # Extract the actual tree values
+    # mactual is the total root length, sactual is the total travel distance, and pactual is the path tortuosity
+    mactual, sactual, pactual = actual
+
+    # Calculate the characteristic (alpha, beta) value and the scaling distance
+    plant_alpha_beta, plant_scaling = distance_from_front_3d(front, actual)
+    # Generate random trees
+    randoms = random_tree_3d_path_tortuosity(H)
+
+    # Calculate the mean total root length and mean total travel distance and mean path tortuosity of the random trees
+    mrand = np.mean([x[0] for x in randoms])
+    srand = np.mean([x[1] for x in randoms])
+    prand = np.mean([x[2] for x in randoms])
+
+    # Calculate the characteristic (alpha, beta) value and the scaling distance for the random trees
+    rand_alpha_beta, rand_scaling = distance_from_front_3d(front, (mrand, srand, prand))
+
+    # Assemble the results dictionary
+    results = {
+        "Total root length": mactual,
+        "Travel distance": sactual,
+        "Path tortuosity": pactual,
+        "alpha_beta": plant_alpha_beta,
+        "scaling distance to front": plant_scaling,
+        "Total root length (random)": mrand,
+        "Travel distance (random)": srand,
+        "Path tortuosity (random)": prand,
+        "alpha_beta (random)": rand_alpha_beta,
+        "scaling (random)": rand_scaling,
+    }
+
+    return results, front, randoms
+
+
+
+
 ### CONVEX HULL calculations
 
 
