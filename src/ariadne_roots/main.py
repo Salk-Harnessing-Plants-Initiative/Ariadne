@@ -1056,8 +1056,10 @@ class AnalyzerUI(tk.Frame):
             graph_name = json_file.split("/")[-1]
             graph_name_noext = graph_name[:-5]
             pareto_name = graph_name_noext + "_pareto.png"
+            pareto_3d_name = graph_name_noext + "_pareto_3d.png"
             # plot_name = graph_name_noext + '_tree.png'
             pareto_path = self.output_path / pareto_name
+            pareto_3d_path = self.output_path / pareto_3d_name
 
             # update current file count list
             self.output_info = self.output_info + "\n" + graph_name
