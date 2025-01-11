@@ -1085,6 +1085,15 @@ class AnalyzerUI(tk.Frame):
                     w = csv.DictWriter(csvfile, fieldnames=results.keys())
                     w.writerow(results)
 
+                with open(report_3d_dest, "a", encoding="utf-8", newline="") as csvfile:
+                    if i == 1:
+                        w = csv.DictWriter(csvfile, fieldnames=results_3d.keys())
+                        w.writeheader()
+                    
+                    w = csv.DictWriter(csvfile, fieldnames=results_3d.keys())
+                    w.writerow(results_3d)
+
+
                 # make pareto plot and save
                 quantify.plot_all(
                     front,
