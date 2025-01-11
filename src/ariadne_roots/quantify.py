@@ -353,6 +353,47 @@ def plot_all(front, actual, randoms, mrand, srand, dest):
     # plt.show()
 
 
+def plot_all_3d(front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path):
+    """Plot the 3D Pareto front with the actual plant and random tree costs.
+    
+    Args:
+        front_3d (dict): A dictionary of total root lengths, total distances to the base and
+            path_coverages for each (alpha, beta) value on the front 
+        actual_3d (tuple): The actual total_root_length, total_travel_distance, and
+            total_path_coverage of the original plant
+        randoms_3d (list): A list of random tree costs
+        mrand (float): The mean total root length of the random trees
+        srand (float): The mean total travel distance of the random trees
+        prand (float): The mean path coverage of the random trees
+        save_path (str): The file path to save the plot
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    ax.set_xlabel("Total root length", fontsize=15)
+    ax.set_ylabel("Travel distance", fontsize=15)
+    ax.set_zlabel("Path coverage", fontsize=15)
+
+    # Extract the x, y, and z values for the front
+    x_values = [x[0] for x in front_3d.values()]
+    y_values = [x[1] for x in front_3d.values()]
+    z_values = [x[2] for x in front_3d.values()]
+
+    # Plot the front_3d
+    ax.plot(x_values, y_values, z_values, marker="s", linestyle="-", markeredgecolor="black")
+
+    # Plot the actual plant
+    ax.plot([actual_3d[0]], [actual_3d[1]], [actual_3d[2]], marker="x", markersize=12)
+
+    # Plot the random trees
+    for i in randoms_3d:
+        ax.plot([i[0]], [i[1]], [i[2]], marker="+", color="green", markersize=4)
+
+    # Plot the random tree with the highest path coverage
+    ax.plot([mrand], [srand], [prand], marker="+", color="red", markersize=12)
+
+    plt.savefig(save_path, bbox_inches="tight", dpi=300)
+
+
 def distance_from_front(front, actual_tree):
     """
     Return the closest alpha for the actual tree, and its distance to the front.
