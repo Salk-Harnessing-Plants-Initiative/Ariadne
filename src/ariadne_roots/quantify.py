@@ -17,7 +17,7 @@ import math
 from queue import Queue
 from scipy.spatial import ConvexHull  # Import ConvexHull class
 
-from ariadne_roots.pareto_functions import pareto_front, random_tree
+from ariadne_roots.pareto_functions import pareto_front, random_tree, pareto_front_3d_path_tortuosity, random_tree_3d_path_tortuosity
 
 
 # parser = argparse.ArgumentParser(description='select file')
