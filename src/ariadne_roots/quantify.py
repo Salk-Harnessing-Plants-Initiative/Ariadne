@@ -759,6 +759,7 @@ def analyze(G):
     distance_root = calculate_distance(uppermost_node_pos, lowermost_node_pos)
 
     results, front, randoms = pareto_calcs(H)
+    results_3d, front_3d, randoms_3d = pareto_calcs_3d_path_tortuosity(H)
 
     # Calculate lateral root distances with lengths and first-to-last distances
     lateral_root_info = calc_len_LRs_with_distances(H)
@@ -850,7 +851,7 @@ def analyze(G):
     # Calculate the ratio of the material cost with the Total minimal Distance
     material_distance_ratio = Total_root_length / total_distance
 
-    results["Tortuosity"] = material_distance_ratio
+    results["Material Cost to Travel Distance Ratio"] = material_distance_ratio
 
     # Calculating convex hull area
     points = np.array([H.nodes[node]["pos"] for node in H.nodes()])
@@ -859,4 +860,4 @@ def analyze(G):
 
     results["Convex Hull Area"] = convex_hull_area
 
-    return results, front, randoms
+    return results, front, randoms, results_3d, front_3d, randoms_3d
