@@ -423,6 +423,40 @@ def distance_from_front(front, actual_tree):
     return characteristic_alpha, scaling_distance
 
 
+def distance_from_front_3d(front, actual_tree):
+    """Return the closest (alpha, beta) for the actual tree, and its distance to the 3D front.
+    
+    Args:
+        front (dict): A dictionary of edge_lengths, travel_distances_to_base, and
+            path_coverages for (each alpha, beta) value on the front 
+        actual (tuple): The actual total_root_length, total_travel_distance, and
+            total_path_coverage of the original plant
+    
+    Returns:
+        tuple: A tuple containing the characteristic (alpha, beta) value, and the scaling distance
+    """
+    # for each (alpha, beta) value, find distance to the actual tree
+    distances = {}
+
+    for alpha_beta in front.items():
+        alpha_beta_value = alpha_beta[0]
+        alpha_beta_tree = alpha_beta[1]
+
+        material_ratio = actual_tree[0] / alpha_beta_tree[0]
+        transport_ratio = actual_tree[1] / alpha_beta_tree[1]
+        path_coverage_ratio = actual_tree[2] / alpha_beta_tree[2]
+
+        distances[alpha_beta_value] = max(
+            material_ratio, transport_ratio, path_coverage_ratio
+        )
+
+    closest = min(distances.items(), key=lambda x: x[1])
+
+    characteristic_alpha_beta, scaling_distance = closest
+
+    return characteristic_alpha_beta, scaling_distance
+
+
 def pareto_calcs(H):
     """Perform Pareto-related calculations."""
     front, actual = pareto_front(H)
