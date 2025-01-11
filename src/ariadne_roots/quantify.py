@@ -355,15 +355,15 @@ def plot_all(front, actual, randoms, mrand, srand, dest):
     plt.plot(mrand, srand, marker="+", color="red", markersize=12)
 
     plt.savefig(dest, bbox_inches="tight", dpi=300)
-    # plt.show()
+    print(f"Plot saved to {dest}")
 
 
 def plot_all_3d(front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path):
     """Plot the 3D Pareto front with the actual plant and random tree costs.
-    
+
     Args:
         front_3d (dict): A dictionary of total root lengths, total distances to the base and
-            path_coverages for each (alpha, beta) value on the front 
+            path_coverages for each (alpha, beta) value on the front
         actual_3d (tuple): The actual total_root_length, total_travel_distance, and
             total_path_coverage of the original plant
         randoms_3d (list): A list of random tree costs
@@ -384,19 +384,23 @@ def plot_all_3d(front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path)
     z_values = [x[2] for x in front_3d.values()]
 
     # Plot the front_3d
-    ax.plot(x_values, y_values, z_values, marker="s", linestyle="-", markeredgecolor="black")
+    ax.plot(
+        x_values, y_values, z_values, marker="s", linestyle="-", markeredgecolor="black"
+    )
 
     # Plot the actual plant
     ax.plot([actual_3d[0]], [actual_3d[1]], [actual_3d[2]], marker="x", markersize=12)
 
-    # Plot the random trees
+    # Plot the random tree costs
     for i in randoms_3d:
         ax.plot([i[0]], [i[1]], [i[2]], marker="+", color="green", markersize=4)
 
-    # Plot the random tree with the highest path coverage
+    # Plot the 3d centroid of the random trees
     ax.plot([mrand], [srand], [prand], marker="+", color="red", markersize=12)
 
+    # Save the plot
     plt.savefig(save_path, bbox_inches="tight", dpi=300)
+    print(f"Plot saved to {save_path}")
 
 
 def distance_from_front(front, actual_tree):
