@@ -101,13 +101,13 @@ def graph_costs(G, critical_nodes=None):
     return total_root_length, total_travel_distance
 
 
-def graph_costs_3d_path_tortuosity(G, critical_nodes):
+def graph_costs_3d_path_tortuosity(G, critical_nodes=None):
     """Use BFS to compute the wiring cost, conduction delay and total path coverage of a graph G.
 
     Args:
         G (nx.Graph): The graph to compute the costs for
-        critical_nodes (list): The list of critical nodes to consider. Critical nodes are
-            necessary for path coverage calculation.
+        critical_nodes (list): The list of critical nodes to consider. If None, all
+            nodes are considered.
 
     Returns:
         total_root_length (float): The wiring cost of the graph. Wiring cost is the total length of
