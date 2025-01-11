@@ -1104,6 +1104,17 @@ class AnalyzerUI(tk.Frame):
                     pareto_path,
                 )
 
+                # make 3D pareto plot and save
+                quantify.plot_all_3d(
+                    front_3d,
+                    [results_3d["Total root length"], results_3d["Travel distance"], results_3d["Path tortuosity"]],
+                    randoms_3d,
+                    results_3d["Total root length (random)"],
+                    results_3d["Travel distance (random)"],
+                    results_3d["Path tortuosity"],
+                    pareto_3d_path,
+                )
+
                 print(f"Processed file {i}/{len(self.tree_paths)}")
                 i += 1
 
