@@ -434,13 +434,13 @@ def distance_from_front(front, actual_tree):
 
 def distance_from_front_3d(front, actual_tree):
     """Return the closest (alpha, beta) for the actual tree, and its distance to the 3D front.
-    
+
     Args:
         front (dict): A dictionary of edge_lengths, travel_distances_to_base, and
-            path_coverages for (each alpha, beta) value on the front 
+            path_coverages for (each alpha, beta) value on the front
         actual (tuple): The actual total_root_length, total_travel_distance, and
             total_path_coverage of the original plant
-    
+
     Returns:
         tuple: A tuple containing the characteristic (alpha, beta) value, and the scaling distance
     """
@@ -500,10 +500,10 @@ def pareto_calcs(H):
 
 def pareto_calcs_3d_path_tortuosity(H):
     """Perform Pareto-related calculations using 3d Pareto Front with path tortuosity.
-    
+
     Args:
         H (nx.Graph): NetworkX graph representing the root system.
-        
+
     Returns:
         tuple: Tuple containing the results dictionary, the 3D Pareto front, and the random tree costs.
     """
@@ -541,8 +541,6 @@ def pareto_calcs_3d_path_tortuosity(H):
     }
 
     return results, front, randoms
-
-
 
 
 ### CONVEX HULL calculations
