@@ -13,6 +13,7 @@ import numpy as np
 import copy
 import networkx as nx
 import math
+import logging
 
 from queue import Queue
 from scipy.spatial import ConvexHull  # Import ConvexHull class
@@ -28,6 +29,13 @@ from ariadne_roots.pareto_functions import (
 # parser = argparse.ArgumentParser(description='select file')
 # parser.add_argument('-i', '--input', help='Full path to input file', required=True)
 # args = parser.parse_args()
+
+# Set up logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler()],
+)
 
 
 def distance(p1, p2):
