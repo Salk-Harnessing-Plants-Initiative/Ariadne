@@ -382,32 +382,75 @@ def plot_all_3d(front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path)
     """
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    ax.set_xlabel("Total root length", fontsize=15)
-    ax.set_ylabel("Travel distance", fontsize=15)
-    ax.set_zlabel("Path coverage", fontsize=15)
 
-    # Extract the x, y, and z values for the front
+    # Set labels and title
+    ax.set_xlabel("Total Root Length", fontsize=12, labelpad=10)
+    ax.set_ylabel("Travel Distance", fontsize=12, labelpad=10)
+    ax.set_zlabel("Path Coverage", fontsize=12, labelpad=10)
+    ax.set_title("3D Pareto Front Visualization", fontsize=15, pad=20)
+
+    logging.debug(f"Front 3D: {front_3d}")
+
+    # Extract x, y, z values for the front
     x_values = [x[0] for x in front_3d.values()]
     y_values = [x[1] for x in front_3d.values()]
     z_values = [x[2] for x in front_3d.values()]
 
     # Plot the front_3d
     ax.plot(
-        x_values, y_values, z_values, marker="s", linestyle="-", markeredgecolor="black"
+        x_values,
+        y_values,
+        z_values,
+        marker="o",
+        linestyle="-",
+        color="blue",
+        label="Pareto Front",
     )
 
     # Plot the actual plant
-    ax.plot([actual_3d[0]], [actual_3d[1]], [actual_3d[2]], marker="x", markersize=12)
+    ax.scatter(
+        [actual_3d[0]],
+        [actual_3d[1]],
+        [actual_3d[2]],
+        color="orange",
+        marker="X",
+        s=100,
+        label="Actual Plant",
+    )
 
     # Plot the random tree costs
-    for i in randoms_3d:
-        ax.plot([i[0]], [i[1]], [i[2]], marker="+", color="green", markersize=4)
+    randoms_3d_array = np.array(randoms_3d)
+    ax.scatter(
+        randoms_3d_array[:, 0],
+        randoms_3d_array[:, 1],
+        randoms_3d_array[:, 2],
+        color="green",
+        marker="+",
+        s=50,
+        alpha=0.6,
+        label="Random Trees",
+    )
 
-    # Plot the 3d centroid of the random trees
-    ax.plot([mrand], [srand], [prand], marker="+", color="red", markersize=12)
+    # Plot the centroid of random trees
+    ax.scatter(
+        [mrand],
+        [srand],
+        [prand],
+        color="red",
+        marker="D",
+        s=80,
+        label="Random Trees Centroid",
+    )
 
-    # Save the plot
+    # Add legend
+    ax.legend(loc="best", fontsize=10)
+
+    # Enable grid and adjust scaling
+    ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+
+    # Save and show the plot
     plt.savefig(save_path, bbox_inches="tight", dpi=300)
+    plt.show()
     print(f"Plot saved to {save_path}")
 
 
