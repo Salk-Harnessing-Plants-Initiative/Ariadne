@@ -13,16 +13,30 @@ import numpy as np
 import copy
 import networkx as nx
 import math
+import logging
 
 from queue import Queue
 from scipy.spatial import ConvexHull  # Import ConvexHull class
 
-from ariadne_roots.pareto_functions import pareto_front, random_tree
+from ariadne_roots.pareto_functions import (
+    pareto_front,
+    random_tree,
+    pareto_front_3d_path_tortuosity,
+    random_tree_3d_path_tortuosity,
+    get_critical_nodes,
+)
 
 
 # parser = argparse.ArgumentParser(description='select file')
 # parser.add_argument('-i', '--input', help='Full path to input file', required=True)
 # args = parser.parse_args()
+
+# Set up logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler()],
+)
 
 
 def distance(p1, p2):
@@ -98,7 +112,12 @@ def make_graph(target):
                             print("Error: edge assignment failed")
 
                     for child_node in child_metadata:
-                        q.put((node_num, list(map(int, child_node.strip("[]").split(",")))))
+                        q.put(
+                            (
+                                node_num,
+                                list(map(int, child_node.strip("[]").split(","))),
+                            )
+                        )
 
                 node_num += 1
                 group_num += 1
@@ -151,7 +170,10 @@ def make_graph_alt(target):
                     children = info[1].split()
                     for child_node in children:
                         q.put(
-                            (node_num, list(map(int, child_node.strip("[]").split(","))))
+                            (
+                                node_num,
+                                list(map(int, child_node.strip("[]").split(","))),
+                            )
                         )  # converts each child object from list of strings to list of ints
                 else:  # terminal node (degree == 1)
                     coords = tuple(int(float(i)) for i in info[0].rstrip(";").split())[
@@ -173,6 +195,130 @@ def make_graph_alt(target):
                 node_num += 1
                 group_num += 1
     return G
+
+
+def plot_graph(
+    G,
+    node_size_factor=20,
+    node_base_size=2,
+    edge_width_factor=1.0,
+    base_node_color="#2E8B57",
+    secondary_node_color="#A0522D",
+    edge_color="#3D2B1F",
+    critical_node_color="#FF0000",
+    with_labels=False,
+    title="Root System Graph",
+    figsize=(10, 15),
+    show_grid=True,
+    save_path=None,
+):
+    """Plots a root-system graph using node positions from their attributes, with axes and optional grid.
+
+    Args:
+        G (networkx.DiGraph): The graph to be plotted. Must have node positions stored 
+            as attributes. Assumes the graph is directed.
+        node_size_factor (float, optional): Multiplier for node sizes based on degree. 
+            Defaults to 20.
+        node_base_size (int, optional): Base size for all nodes. 
+            Defaults to 2.
+        edge_width_factor (float, optional): Multiplier for edge widths. 
+            Defaults to 1.0.
+        base_node_color (str, optional): Color for the base node (node 0). 
+            Defaults to "#2E8B57".
+        secondary_node_color (str, optional): Color for all other nodes. 
+            Defaults to "#A0522D".
+        edge_color (str, optional): Color of the edges. Defaults to 
+            "#3D2B1F".
+        critical_node_color (str, optional): Color for nodes with degree == 1 (critical nodes). 
+            Defaults to "#FF0000".
+        with_labels (bool, optional): Whether to display labels on nodes. 
+            Defaults to False.
+        title (str, optional): Title for the plot. Defaults to "Root System Graph".
+        figsize (tuple, optional): Size of the plot figure (width, height). 
+            Defaults to (10, 15).
+        show_grid (bool, optional): Whether to display a grid. Defaults to True.
+        save_path (str, optional): The file path to save the plot. Defaults to None.
+
+    Raises:
+        ValueError: If any node is missing a "pos" attribute.
+
+    Returns:
+        Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]:
+            The matplotlib figure and axes objects for further customization.
+    """
+    # Extract positions from the nodes' "pos" attribute
+    try:
+        pos = nx.get_node_attributes(G, "pos")
+        if len(pos) != len(G.nodes()):
+            raise ValueError("Not all nodes have a 'pos' attribute.")
+    except KeyError:
+        raise ValueError("Nodes must have a 'pos' attribute for plotting.")
+
+    # Define the base node explicitly as node 0
+    base_node = 0
+    if base_node not in G.nodes():
+        raise ValueError("Node 0 (base node) is not present in the graph.")
+
+    # Node sizes
+    node_sizes = [
+        node_base_size + G.degree(n) * node_size_factor for n in G.nodes()
+    ]
+
+    # Assign node colors based on conditions
+    node_colors = []
+    for n in G.nodes():
+        if n == base_node:
+            node_colors.append(base_node_color)  # Base node
+        elif G.degree(n) == 1:
+            node_colors.append(critical_node_color)  # critical nodes
+        else:
+            node_colors.append(secondary_node_color)  # Other nodes
+
+    # Edge widths
+    edge_widths = [
+        edge_width_factor * G[u][v].get("weight", 1) for u, v in G.edges()
+    ]
+
+    # Create a matplotlib figure and axes
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Draw the graph on the given axes
+    nx.draw(
+        G,
+        pos,
+        ax,
+        with_labels=with_labels,
+        node_size=node_sizes,
+        node_color=node_colors,
+        edge_color=edge_color,
+        width=edge_widths,
+        arrows=True,  # Show direction since the graph is directed
+    )
+
+    # Invert the y-axis to match the coordinate system
+    ax.invert_yaxis()
+
+    # Add x and y axes to plot
+    ax.set_axis_on()
+    ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+
+    # Set grid and axis labels
+    if show_grid:
+        ax.grid(color="lightgray", linestyle="--", linewidth=0.5)
+    ax.set_aspect("equal", adjustable="datalim")
+    ax.set_xlabel("X Position", fontsize=12)
+    ax.set_ylabel("Y Position", fontsize=12)
+
+    # Add title
+    ax.set_title(title, fontsize=14)
+
+    # Save the plot if a save path is provided
+    if save_path:
+        plt.savefig(save_path, bbox_inches="tight", dpi=300, facecolor="w")
+        print(f"Plot saved to {save_path}")
+
+    return fig, ax
+
 
 
 def save_plot(path, name, title):
@@ -342,7 +488,95 @@ def plot_all(front, actual, randoms, mrand, srand, dest):
     plt.plot(mrand, srand, marker="+", color="red", markersize=12)
 
     plt.savefig(dest, bbox_inches="tight", dpi=300)
-    # plt.show()
+    print(f"Plot saved to {dest}")
+
+
+def plot_all_3d(front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path):
+    """Plot the 3D Pareto front with the actual plant and random tree costs.
+
+    Args:
+        front_3d (dict): A dictionary of total root lengths, total distances to the base and
+            path_coverages for each (alpha, beta) value on the front
+        actual_3d (tuple): The actual total_root_length, total_travel_distance, and
+            total_path_coverage of the original plant
+        randoms_3d (list): A list of random tree costs
+        mrand (float): The mean total root length of the random trees
+        srand (float): The mean total travel distance of the random trees
+        prand (float): The mean path coverage of the random trees
+        save_path (str): The file path to save the plot
+    """
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+
+    # Set labels and title
+    ax.set_xlabel("Total Root Length", fontsize=12, labelpad=10)
+    ax.set_ylabel("Travel Distance", fontsize=12, labelpad=10)
+    ax.set_zlabel("Path Coverage", fontsize=12, labelpad=10)
+    ax.set_title("3D Pareto Front Visualization", fontsize=15, pad=20)
+
+    logging.debug(f"Front 3D: {front_3d}")
+
+    # Extract x, y, z values for the front
+    x_values = [x[0] for x in front_3d.values()]
+    y_values = [x[1] for x in front_3d.values()]
+    z_values = [x[2] for x in front_3d.values()]
+
+    # Plot the front_3d
+    ax.plot(
+        x_values,
+        y_values,
+        z_values,
+        marker="o",
+        linestyle="-",
+        color="blue",
+        label="Pareto Front",
+    )
+
+    # Plot the actual plant
+    ax.scatter(
+        [actual_3d[0]],
+        [actual_3d[1]],
+        [actual_3d[2]],
+        color="orange",
+        marker="X",
+        s=100,
+        label="Actual Plant",
+    )
+
+    # Plot the random tree costs
+    randoms_3d_array = np.array(randoms_3d)
+    ax.scatter(
+        randoms_3d_array[:, 0],
+        randoms_3d_array[:, 1],
+        randoms_3d_array[:, 2],
+        color="green",
+        marker="+",
+        s=50,
+        alpha=0.6,
+        label="Random Trees",
+    )
+
+    # Plot the centroid of random trees
+    ax.scatter(
+        [mrand],
+        [srand],
+        [prand],
+        color="red",
+        marker="D",
+        s=80,
+        label="Random Trees Centroid",
+    )
+
+    # Add legend
+    ax.legend(loc="best", fontsize=10)
+
+    # Enable grid and adjust scaling
+    ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+
+    # Save and show the plot
+    plt.savefig(save_path, bbox_inches="tight", dpi=300)
+    plt.show()
+    print(f"Plot saved to {save_path}")
 
 
 def distance_from_front(front, actual_tree):
@@ -374,13 +608,47 @@ def distance_from_front(front, actual_tree):
     return characteristic_alpha, scaling_distance
 
 
+def distance_from_front_3d(front, actual_tree):
+    """Return the closest (alpha, beta) for the actual tree, and its distance to the 3D front.
+
+    Args:
+        front (dict): A dictionary of edge_lengths, travel_distances_to_base, and
+            path_coverages for (each alpha, beta) value on the front
+        actual (tuple): The actual total_root_length, total_travel_distance, and
+            total_path_coverage of the original plant
+
+    Returns:
+        tuple: A tuple containing the characteristic (alpha, beta) value, and the scaling distance
+    """
+    # for each (alpha, beta) value, find distance to the actual tree
+    distances = {}
+
+    for alpha_beta in front.items():
+        alpha_beta_value = alpha_beta[0]
+        alpha_beta_tree = alpha_beta[1]
+
+        material_ratio = actual_tree[0] / alpha_beta_tree[0]
+        transport_ratio = actual_tree[1] / alpha_beta_tree[1]
+        path_coverage_ratio = actual_tree[2] / alpha_beta_tree[2]
+
+        distances[alpha_beta_value] = max(
+            material_ratio, transport_ratio, path_coverage_ratio
+        )
+
+    closest = min(distances.items(), key=lambda x: x[1])
+
+    characteristic_alpha_beta, scaling_distance = closest
+
+    return characteristic_alpha_beta, scaling_distance
+
+
 def pareto_calcs(H):
     """Perform Pareto-related calculations."""
     front, actual = pareto_front(H)
     mactual, sactual = actual
 
     # for debug: show total_root_length, total_travel_distance
-    print(list(front.items())[0:5])
+    # print(list(front.items())[0:5])
 
     plant_alpha, plant_scaling = distance_from_front(front, actual)
     randoms = random_tree(H)
@@ -400,6 +668,51 @@ def pareto_calcs(H):
         "Total root length (random)": mrand,
         "Travel distance (random)": srand,
         "alpha (random)": rand_alpha,
+        "scaling (random)": rand_scaling,
+    }
+
+    return results, front, randoms
+
+
+def pareto_calcs_3d_path_tortuosity(H):
+    """Perform Pareto-related calculations using 3d Pareto Front with path tortuosity.
+
+    Args:
+        H (nx.Graph): NetworkX graph representing the root system.
+
+    Returns:
+        tuple: Tuple containing the results dictionary, the 3D Pareto front, and the random tree costs.
+    """
+    # Calculate the Pareto front using the 3D path tortuosity
+    front, actual = pareto_front_3d_path_tortuosity(H)
+    # Extract the actual tree values
+    # mactual is the total root length, sactual is the total travel distance, and pactual is the path tortuosity
+    mactual, sactual, pactual = actual
+
+    # Calculate the characteristic (alpha, beta) value and the scaling distance
+    plant_alpha_beta, plant_scaling = distance_from_front_3d(front, actual)
+    # Generate random trees
+    randoms = random_tree_3d_path_tortuosity(H)
+
+    # Calculate the mean total root length and mean total travel distance and mean path tortuosity of the random trees
+    mrand = np.mean([x[0] for x in randoms])
+    srand = np.mean([x[1] for x in randoms])
+    prand = np.mean([x[2] for x in randoms])
+
+    # Calculate the characteristic (alpha, beta) value and the scaling distance for the random trees
+    rand_alpha_beta, rand_scaling = distance_from_front_3d(front, (mrand, srand, prand))
+
+    # Assemble the results dictionary
+    results = {
+        "Total root length": mactual,
+        "Travel distance": sactual,
+        "Path tortuosity": pactual,
+        "alpha_beta": plant_alpha_beta,
+        "scaling distance to front": plant_scaling,
+        "Total root length (random)": mrand,
+        "Travel distance (random)": srand,
+        "Path tortuosity (random)": prand,
+        "alpha_beta (random)": rand_alpha_beta,
         "scaling (random)": rand_scaling,
     }
 
@@ -442,13 +755,14 @@ def calculate_convex_hull_area(G):
     return hull_area
 
 
-
 import networkx as nx
 import math
+
 
 def distance(pos1, pos2):
     """Calculate the Euclidean distance between two positions."""
     return math.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
+
 
 def calc_zones(G, root_node):
     """
@@ -610,7 +924,6 @@ def analyze(G):
     len_PR = calc_len_PR(H, root_node)
     # print('PR length is:', len_PR)
 
-
     # LR len/number
     LR_info = calc_len_LRs(H)
     num_LRs = len(LR_info)
@@ -623,13 +936,13 @@ def analyze(G):
     density_LRs = num_LRs / len_PR
     # print('LR density is:', num_LRs/len_PR)
 
-
     # Calculate the Euclidean distance between the uppermost node and the lowermost node of the primary root
     uppermost_node_pos = H.nodes[root_node]["pos"]
     lowermost_node_pos = find_lowermost_node_of_primary_root(H, root_node)
     distance_root = calculate_distance(uppermost_node_pos, lowermost_node_pos)
 
     results, front, randoms = pareto_calcs(H)
+    results_3d, front_3d, randoms_3d = pareto_calcs_3d_path_tortuosity(H)
 
     # Calculate lateral root distances with lengths and first-to-last distances
     lateral_root_info = calc_len_LRs_with_distances(H)
@@ -642,7 +955,7 @@ def analyze(G):
     # Convex Hull calculations
     points = np.array([H.nodes[node]["pos"] for node in H.nodes()])
     hull = ConvexHull(points)
-    
+
     # Barycenter (centroid) of the Convex Hull
     # Centroid formula: (mean x, mean y) of the vertices of the convex hull
     hull_points = points[hull.vertices]
@@ -655,8 +968,12 @@ def analyze(G):
     uppermost_node_pos = uppermost_node[1]
 
     # Build quadrilateral (barycenter and uppermost node form the quadrilateral)
-    barycenter_y_displacement = abs(barycenter_y - uppermost_node_pos[1])  # Displacement in y-direction
-    barycenter_x_displacement = abs(barycenter_x - uppermost_node_pos[0])  # Displacement in x-direction
+    barycenter_y_displacement = abs(
+        barycenter_y - uppermost_node_pos[1]
+    )  # Displacement in y-direction
+    barycenter_x_displacement = abs(
+        barycenter_x - uppermost_node_pos[0]
+    )  # Displacement in x-direction
 
     # Calculate Branched, Basal, and Apical Zones
     zone_lengths = calc_zones(H, root_node)
@@ -668,9 +985,11 @@ def analyze(G):
     if basal_zone_length == len_PR:
         basal_zone_length = 0
 
-    #Branched Zone density
+    # Branched Zone density
 
-    branched_zone_density = num_LRs / branched_zone_length if branched_zone_length != 0 else 0
+    branched_zone_density = (
+        num_LRs / branched_zone_length if branched_zone_length != 0 else 0
+    )
 
     # Calculate mean and median
     mean_LR_lengths = np.mean(lens_LRs)
@@ -687,9 +1006,9 @@ def analyze(G):
     # Add lateral root lengths and distances to the results dictionary
     results["PR length"] = len_PR
     results["PR_minimal_length"] = distance_root
-    results["Basal Zone length"]= basal_zone_length
+    results["Basal Zone length"] = basal_zone_length
     results["Branched Zone length"] = branched_zone_length
-    results["Apical Zone length"]= apical_zone_length
+    results["Apical Zone length"] = apical_zone_length
     results["Mean LR lengths"] = mean_LR_lengths
     results["Mean LR minimal lengths"] = mean_LR_distances
     results["Median LR lengths"] = median_LR_lengths
@@ -699,12 +1018,12 @@ def analyze(G):
     results["Median LR angles"] = median_LR_angles
     results["LR count"] = num_LRs
     results["LR density"] = density_LRs
-    results["Branched Zone density"]= branched_zone_density
+    results["Branched Zone density"] = branched_zone_density
     results["LR lengths"] = lens_LRs
     results["LR angles"] = angles_LRs
     results["LR minimal lengths"] = distances_LRs
-    results["Barycenter x displacement"]= barycenter_x_displacement
-    results["Barycenter y displacement"]= barycenter_y_displacement
+    results["Barycenter x displacement"] = barycenter_x_displacement
+    results["Barycenter y displacement"] = barycenter_y_displacement
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
     )
@@ -715,7 +1034,7 @@ def analyze(G):
     # Calculate the ratio of the material cost with the Total minimal Distance
     material_distance_ratio = Total_root_length / total_distance
 
-    results["Tortuosity"] = material_distance_ratio
+    results["Material Cost to Travel Distance Ratio"] = material_distance_ratio
 
     # Calculating convex hull area
     points = np.array([H.nodes[node]["pos"] for node in H.nodes()])
@@ -724,4 +1043,4 @@ def analyze(G):
 
     results["Convex Hull Area"] = convex_hull_area
 
-    return results, front, randoms
+    return results, front, randoms, results_3d, front_3d, randoms_3d
