@@ -23,6 +23,7 @@ from ariadne_roots.pareto_functions import (
     random_tree,
     pareto_front_3d_path_tortuosity,
     random_tree_3d_path_tortuosity,
+    get_critical_nodes,
 )
 
 
@@ -204,6 +205,7 @@ def plot_graph(
     base_node_color="#2E8B57",
     secondary_node_color="#A0522D",
     edge_color="#3D2B1F",
+    critical_node_color="#FF0000",
     with_labels=False,
     title="Root System Graph",
     figsize=(10, 15),
@@ -227,6 +229,8 @@ def plot_graph(
             Defaults to "#A0522D".
         edge_color (str, optional): Color of the edges. Defaults to 
             "#3D2B1F".
+        critical_node_color (str, optional): Color for nodes with degree == 1 (critical nodes). 
+            Defaults to "#FF0000".
         with_labels (bool, optional): Whether to display labels on nodes. 
             Defaults to False.
         title (str, optional): Title for the plot. Defaults to "Root System Graph".
@@ -245,7 +249,6 @@ def plot_graph(
     # Extract positions from the nodes' "pos" attribute
     try:
         pos = nx.get_node_attributes(G, "pos")
-        logging.debug(f"Node positions: {pos}")
         if len(pos) != len(G.nodes()):
             raise ValueError("Not all nodes have a 'pos' attribute.")
     except KeyError:
@@ -256,14 +259,20 @@ def plot_graph(
     if base_node not in G.nodes():
         raise ValueError("Node 0 (base node) is not present in the graph.")
 
-    # Node sizes and colors
+    # Node sizes
     node_sizes = [
         node_base_size + G.degree(n) * node_size_factor for n in G.nodes()
     ]
-    node_colors = [
-        base_node_color if n == base_node else secondary_node_color
-        for n in G.nodes()
-    ]
+
+    # Assign node colors based on conditions
+    node_colors = []
+    for n in G.nodes():
+        if n == base_node:
+            node_colors.append(base_node_color)  # Base node
+        elif G.degree(n) == 1:
+            node_colors.append(critical_node_color)  # critical nodes
+        else:
+            node_colors.append(secondary_node_color)  # Other nodes
 
     # Edge widths
     edge_widths = [
@@ -292,6 +301,7 @@ def plot_graph(
     # Add x and y axes to plot
     ax.set_axis_on()
     ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+
     # Set grid and axis labels
     if show_grid:
         ax.grid(color="lightgray", linestyle="--", linewidth=0.5)
