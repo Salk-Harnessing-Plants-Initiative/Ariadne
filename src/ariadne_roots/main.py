@@ -1073,7 +1073,7 @@ class AnalyzerUI(tk.Frame):
             graph_name_noext = graph_name[:-5]
             pareto_name = graph_name_noext + "_pareto.png"
             pareto_3d_name = graph_name_noext + "_pareto_3d.png"
-            # plot_name = graph_name_noext + '_tree.png'
+
             pareto_path = self.output_path / pareto_name
             pareto_3d_path = self.output_path / pareto_3d_name
 
@@ -1081,58 +1081,56 @@ class AnalyzerUI(tk.Frame):
             self.output_info = self.output_info + "\n" + graph_name
             self.output.config(text=self.output_info)
 
-            # load and process graph data
-            with open(json_file, mode="r") as h:
-                data = json.load(h)
-                graph = json_graph.adjacency_graph(data)
+            # load json file and convert to graph
+            graph = get_graph_from_json(json_file)
 
-                # perform analysis
-                results, front, randoms, results_3d, front_3d, randoms_3d = quantify.analyze(graph)
-                results["filename"] = graph_name_noext
-                results_3d["filename"] = graph_name_noext
+            # perform analysis
+            results, front, randoms, results_3d, front_3d, randoms_3d = quantify.analyze(graph)
+            results["filename"] = graph_name_noext
+            results_3d["filename"] = graph_name_noext
 
-                # Open the CSV file and write the header only once
-                with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
-                    if i == 1:  # Write header only for the first file
-                        w = csv.DictWriter(csvfile, fieldnames=results.keys())
-                        w.writeheader()
-
-                    # Write results to the CSV for each file
+            # Open the CSV file and write the header only once
+            with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
+                if i == 1:  # Write header only for the first file
                     w = csv.DictWriter(csvfile, fieldnames=results.keys())
-                    w.writerow(results)
+                    w.writeheader()
 
-                with open(report_3d_dest, "a", encoding="utf-8", newline="") as csvfile:
-                    if i == 1:
-                        w = csv.DictWriter(csvfile, fieldnames=results_3d.keys())
-                        w.writeheader()
-                    
+                # Write results to the CSV for each file
+                w = csv.DictWriter(csvfile, fieldnames=results.keys())
+                w.writerow(results)
+
+            with open(report_3d_dest, "a", encoding="utf-8", newline="") as csvfile:
+                if i == 1:
                     w = csv.DictWriter(csvfile, fieldnames=results_3d.keys())
-                    w.writerow(results_3d)
+                    w.writeheader()
+                
+                w = csv.DictWriter(csvfile, fieldnames=results_3d.keys())
+                w.writerow(results_3d)
 
 
-                # make pareto plot and save
-                quantify.plot_all(
-                    front,
-                    [results["Total root length"], results["Travel distance"]],
-                    randoms,
-                    results["Total root length (random)"],
-                    results["Travel distance (random)"],
-                    pareto_path,
-                )
+            # make pareto plot and save
+            quantify.plot_all(
+                front,
+                [results["Total root length"], results["Travel distance"]],
+                randoms,
+                results["Total root length (random)"],
+                results["Travel distance (random)"],
+                pareto_path,
+            )
 
-                # make 3D pareto plot and save
-                quantify.plot_all_3d(
-                    front_3d,
-                    [results_3d["Total root length"], results_3d["Travel distance"], results_3d["Path tortuosity"]],
-                    randoms_3d,
-                    results_3d["Total root length (random)"],
-                    results_3d["Travel distance (random)"],
-                    results_3d["Path tortuosity"],
-                    pareto_3d_path,
-                )
+            # make 3D pareto plot and save
+            quantify.plot_all_3d(
+                front_3d,
+                [results_3d["Total root length"], results_3d["Travel distance"], results_3d["Path tortuosity"]],
+                randoms_3d,
+                results_3d["Total root length (random)"],
+                results_3d["Travel distance (random)"],
+                results_3d["Path tortuosity"],
+                pareto_3d_path,
+            )
 
-                print(f"Processed file {i}/{len(self.tree_paths)}")
-                i += 1
+            print(f"Processed file {i}/{len(self.tree_paths)}")
+            i += 1
 
         # show confirmation message
         print("Finished.")
