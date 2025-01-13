@@ -196,6 +196,121 @@ def make_graph_alt(target):
     return G
 
 
+def plot_graph(
+    G,
+    node_size_factor=20,
+    node_base_size=2,
+    edge_width_factor=1.0,
+    base_node_color="#2E8B57",
+    secondary_node_color="#A0522D",
+    edge_color="#3D2B1F",
+    with_labels=False,
+    title="Root System Graph",
+    figsize=(10, 15),
+    show_grid=True,
+    save_path=None,
+):
+    """Plots a root-system graph using node positions from their attributes, with axes and optional grid.
+
+    Args:
+        G (networkx.DiGraph): The graph to be plotted. Must have node positions stored 
+            as attributes. Assumes the graph is directed.
+        node_size_factor (float, optional): Multiplier for node sizes based on degree. 
+            Defaults to 20.
+        node_base_size (int, optional): Base size for all nodes. 
+            Defaults to 2.
+        edge_width_factor (float, optional): Multiplier for edge widths. 
+            Defaults to 1.0.
+        base_node_color (str, optional): Color for the base node (node 0). 
+            Defaults to "#2E8B57".
+        secondary_node_color (str, optional): Color for all other nodes. 
+            Defaults to "#A0522D".
+        edge_color (str, optional): Color of the edges. Defaults to 
+            "#3D2B1F".
+        with_labels (bool, optional): Whether to display labels on nodes. 
+            Defaults to False.
+        title (str, optional): Title for the plot. Defaults to "Root System Graph".
+        figsize (tuple, optional): Size of the plot figure (width, height). 
+            Defaults to (10, 15).
+        show_grid (bool, optional): Whether to display a grid. Defaults to True.
+        save_path (str, optional): The file path to save the plot. Defaults to None.
+
+    Raises:
+        ValueError: If any node is missing a "pos" attribute.
+
+    Returns:
+        Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]:
+            The matplotlib figure and axes objects for further customization.
+    """
+    # Extract positions from the nodes' "pos" attribute
+    try:
+        pos = nx.get_node_attributes(G, "pos")
+        logging.debug(f"Node positions: {pos}")
+        if len(pos) != len(G.nodes()):
+            raise ValueError("Not all nodes have a 'pos' attribute.")
+    except KeyError:
+        raise ValueError("Nodes must have a 'pos' attribute for plotting.")
+
+    # Define the base node explicitly as node 0
+    base_node = 0
+    if base_node not in G.nodes():
+        raise ValueError("Node 0 (base node) is not present in the graph.")
+
+    # Node sizes and colors
+    node_sizes = [
+        node_base_size + G.degree(n) * node_size_factor for n in G.nodes()
+    ]
+    node_colors = [
+        base_node_color if n == base_node else secondary_node_color
+        for n in G.nodes()
+    ]
+
+    # Edge widths
+    edge_widths = [
+        edge_width_factor * G[u][v].get("weight", 1) for u, v in G.edges()
+    ]
+
+    # Create a matplotlib figure and axes
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Draw the graph on the given axes
+    nx.draw(
+        G,
+        pos,
+        ax,
+        with_labels=with_labels,
+        node_size=node_sizes,
+        node_color=node_colors,
+        edge_color=edge_color,
+        width=edge_widths,
+        arrows=True,  # Show direction since the graph is directed
+    )
+
+    # Invert the y-axis to match the coordinate system
+    ax.invert_yaxis()
+
+    # Add x and y axes to plot
+    ax.set_axis_on()
+    ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+    # Set grid and axis labels
+    if show_grid:
+        ax.grid(color="lightgray", linestyle="--", linewidth=0.5)
+    ax.set_aspect("equal", adjustable="datalim")
+    ax.set_xlabel("X Position", fontsize=12)
+    ax.set_ylabel("Y Position", fontsize=12)
+
+    # Add title
+    ax.set_title(title, fontsize=14)
+
+    # Save the plot if a save path is provided
+    if save_path:
+        plt.savefig(save_path, bbox_inches="tight", dpi=300, facecolor="w")
+        print(f"Plot saved to {save_path}")
+
+    return fig, ax
+
+
+
 def save_plot(path, name, title):
     """Plot a Pareto front and save to .jpg."""
 
@@ -523,7 +638,7 @@ def pareto_calcs(H):
     mactual, sactual = actual
 
     # for debug: show total_root_length, total_travel_distance
-    print(list(front.items())[0:5])
+    # print(list(front.items())[0:5])
 
     plant_alpha, plant_scaling = distance_from_front(front, actual)
     randoms = random_tree(H)
