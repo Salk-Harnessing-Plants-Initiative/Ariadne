@@ -994,6 +994,22 @@ class Tree:
                 q.put(n)
 
 
+# Helper functions
+def get_graph_from_json(json_file):
+    """Load a JSON file and convert it to a NetworkX graph.
+    
+    Args:
+        json_file (str): Path to the JSON file.
+        
+    Returns:
+        nx.Graph: A NetworkX graph object.
+    """
+    with open(json_file, mode="r") as h:
+        data = json.load(h)
+        graph = json_graph.adjacency_graph(data)
+
+    return graph
+
 class AnalyzerUI(tk.Frame):
     """Analysis mode interface."""
 
