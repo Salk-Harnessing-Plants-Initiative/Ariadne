@@ -981,7 +981,9 @@ class Tree:
             current_node = q.get()
             # arbitrarily, we assign LR indices left-to-right
             # sort by x-coordinate
-            current_node_children = sorted(current_node.children, key=lambda x: x.relcoords[0])
+            current_node_children = sorted(
+                current_node.children, key=lambda x: x.relcoords[0]
+            )
 
             for n in current_node_children:
                 if n.root_degree is None:  # only index nodes that haven't been already
