@@ -1,0 +1,42 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  tests:
+    name: Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-22.04", "windows-2022", "macos-14"]
+        include:
+          - env_file: environment.yaml
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@v3.0.3
+        with:
+          miniforge-version: latest
+          conda-solver: "libmamba"
+          environment-file: ${{ matrix.env_file }}
+          activate-environment: ariadne_dev
+      
+      - name: Print environment info
+        shell: bash -l {0}
+        run: |
+          which python
+          conda info
+          conda list
+          pip freeze
+
+      - name: Run tests
+        run: pytest tests/
