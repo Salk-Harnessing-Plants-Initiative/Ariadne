@@ -16,6 +16,7 @@ import csv
 import copy
 import networkx as nx
 import json
+import logging
 
 from pathlib import Path
 from queue import Queue
@@ -28,13 +29,19 @@ from tkinter import filedialog
 from ariadne_roots import quantify
 
 
+# Set up logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+
 class StartupUI:
     """Startup window interface."""
 
     def __init__(self, base):
         self.base = base
         self.base.geometry("350x200")
-
 
         # master frame
         self.frame = tk.Frame(self.base)
