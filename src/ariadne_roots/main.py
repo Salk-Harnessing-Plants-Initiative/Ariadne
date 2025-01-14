@@ -1085,6 +1085,16 @@ class AnalyzerUI(tk.Frame):
                     w = csv.DictWriter(csvfile, fieldnames=results.keys())
                     w.writerow(results)
 
+                # debug
+                logging.debug(f"Total root length: {results['Total root length']}")
+                logging.debug(f"Travel distance: {results['Travel distance']}")
+                logging.debug(
+                    f"Total root length (random): {results['Total root length (random)']}"
+                )
+                logging.debug(
+                    f"Travel distance (random): {results['Travel distance (random)']}"
+                )
+
                 # make pareto plot and save
                 quantify.plot_all(
                     front,
