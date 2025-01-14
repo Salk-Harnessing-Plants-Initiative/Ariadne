@@ -16,6 +16,7 @@ import csv
 import copy
 import networkx as nx
 import json
+import logging
 
 from pathlib import Path
 from queue import Queue
@@ -28,13 +29,19 @@ from tkinter import filedialog
 from ariadne_roots import quantify
 
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+
 class StartupUI:
     """Startup window interface."""
 
     def __init__(self, base):
         self.base = base
         self.base.geometry("350x200")
-
 
         # master frame
         self.frame = tk.Frame(self.base)
@@ -123,7 +130,7 @@ class TracerUI(tk.Frame):
             self.menu, text="Zoom In (+)", command=None, state="disabled"
         )
         self.button_zoom_out = tk.Button(
-             self.menu, text="Zoom Out (-)", command=None, state="disabled"
+            self.menu, text="Zoom Out (-)", command=None, state="disabled"
         )
         self.button_import.pack(fill="x", side="top")
         self.button_prev.pack(fill="x", side="top")
@@ -208,11 +215,14 @@ class TracerUI(tk.Frame):
 
     def ask_zoom_factor(self):
         """Prompt user to select a zoom factor after importing the first image."""
+
         def on_ok():
             try:
                 # Retrieve the scale factor from the statusbar
                 zoom = self.scale_factor
-                print(f"Zoom factor selected: {zoom}")  # Debug print, remove if unnecessary
+                print(
+                    f"Zoom factor selected: {zoom}"
+                )  # Debug print, remove if unnecessary
                 self.zoom_factor = zoom  # Store zoom factor
                 zoom_popup.destroy()
             except ValueError:
@@ -234,7 +244,6 @@ class TracerUI(tk.Frame):
 
         cancel_button = tk.Button(zoom_popup, text="Cancel", command=on_cancel)
         cancel_button.pack(side="right", padx=20)
-
 
     def click_info(self, event):
         """Show node metadata on right click (for debugging)."""
@@ -298,7 +307,6 @@ class TracerUI(tk.Frame):
 
         self.frame_id = self.canvas.create_image(0, 0, image=self.img, anchor="nw")
 
-
         # create gif iterator for pagination
         self.iterframes = ImageSequence.Iterator(self.file)
         self.frame_index = 0
@@ -343,9 +351,8 @@ class TracerUI(tk.Frame):
         self.canvas.bind("-", self.zoom_out)
 
         # Prompt user to choose zoom factor after importing the first image
-        #if not hasattr(self, 'zoom_factor'):
-            #self.ask_zoom_factor()
-
+        # if not hasattr(self, 'zoom_factor'):
+        # self.ask_zoom_factor()
 
     def change_frame(self, next_index):
         """Move frames in the GIF."""
@@ -494,8 +501,6 @@ class TracerUI(tk.Frame):
             if not self.prox_override:
                 self.override()
 
-
-
     def change_root(self, event=None):
         """Clear current tree, prompt for a new root, and reinitialize."""
 
@@ -517,19 +522,18 @@ class TracerUI(tk.Frame):
         # Prompt for a new plant ID assignment and create a new tree
         self.tree.popup(self.base)
 
-
-# Zoom function
-    #zoom in
+    # Zoom function
+    # zoom in
     def zoom_in(self):
         self.scale_factor *= 1.5  # Increase scale
         self.update_image()
-        self.update_statusbar()   # Update the status bar with zoom info
+        self.update_statusbar()  # Update the status bar with zoom info
 
     # Zoom out
     def zoom_out(self):
         self.scale_factor /= 1.5  # Decrease scale
         self.update_image()
-        self.update_statusbar()   # Update the status bar with zoom info
+        self.update_statusbar()  # Update the status bar with zoom info
 
     def update_image(self):
         """Update the image on the canvas based on the scale factor."""
@@ -557,8 +561,8 @@ class TracerUI(tk.Frame):
         """Update the status bar text with scale factor and other information."""
         self.statusbar.config(
             text=f"{self.canvas.curr_coords}, {self.day_indicator}, "
-                 f"{self.override_indicator}, {self.inserting_indicator}, "
-                 f"Zoom Scale: {self.scale_factor}"
+            f"{self.override_indicator}, {self.inserting_indicator}, "
+            f"Zoom Scale: {self.scale_factor}"
         )
 
     def draw_edge(self, parent_node, child_node):
@@ -808,6 +812,7 @@ class TracerUI(tk.Frame):
             json.dump(s, h)
             print(f"wrote to output {output_name}")
 
+
 class Node:
     """An (x,y,0) point along a root."""
 
@@ -918,7 +923,6 @@ class Tree:
 
         base.wait_window(top)  # wait for a button to be pressed
 
-
     ##########################
     def insert_child(self, current_node, new):
         """Assign child when using insertion mode."""
@@ -977,7 +981,9 @@ class Tree:
             current_node = q.get()
             # arbitrarily, we assign LR indices left-to-right
             # sort by x-coordinate
-            current_node_children = sorted(current_node.children, key=lambda x: x.relcoords[0])
+            current_node_children = sorted(
+                current_node.children, key=lambda x: x.relcoords[0]
+            )
 
             for n in current_node_children:
                 if n.root_degree is None:  # only index nodes that haven't been already
@@ -1078,6 +1084,16 @@ class AnalyzerUI(tk.Frame):
                     # Write results to the CSV for each file
                     w = csv.DictWriter(csvfile, fieldnames=results.keys())
                     w.writerow(results)
+
+                # debug
+                logging.debug(f"Total root length: {results['Total root length']}")
+                logging.debug(f"Travel distance: {results['Travel distance']}")
+                logging.debug(
+                    f"Total root length (random): {results['Total root length (random)']}"
+                )
+                logging.debug(
+                    f"Travel distance (random): {results['Travel distance (random)']}"
+                )
 
                 # make pareto plot and save
                 quantify.plot_all(
