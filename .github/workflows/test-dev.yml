@@ -39,4 +39,5 @@ jobs:
           pip freeze
 
       - name: Run tests
+        shell: bash -l {0}
         run: pytest tests/
