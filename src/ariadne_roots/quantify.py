@@ -267,10 +267,11 @@ def calc_len_LRs(H):
     idxs = {k: v for k, v in idxs.items() if v is not None}  # drop empty (PR) nodes
 
     num_LRs = max(idxs.values()) + 1
-
+    # CPL : Add a minimum LR_index. Main root is None
+    min_num_LRs = min(idxs.values())  # should be 1
     results = {}
 
-    for i in range(num_LRs):
+    for i in range(min_num_LRs, num_LRs):
         # gather nodes corresponding to the current LR index
         selected = []
 
@@ -528,10 +529,11 @@ def calc_len_LRs_with_distances(H):
     idxs = {k: v for k, v in idxs.items() if v is not None}  # drop empty (PR) nodes
 
     num_LRs = max(idxs.values()) + 1
+    min_num_LRs = min(idxs.values())  # should be 1
 
     results = {}
 
-    for i in range(num_LRs):
+    for i in range(min_num_LRs, num_LRs):
         # gather nodes corresponding to the current LR index
         selected = []
 
