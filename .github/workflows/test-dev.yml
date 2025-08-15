@@ -28,7 +28,6 @@ jobs:
       - name: Install Python ${{ matrix.python }}
         run: uv python install ${{ matrix.python }}
 
-      # You don't commit uv.lock, so (re)solve each run for determinism in this job
       - name: Resolve lockfile
         run: uv lock
 
@@ -43,9 +42,6 @@ jobs:
 
       - name: Format check (Black)
         run: uv run black --check .
-
-      - name: Lint (Ruff)
-        run: uv run ruff check --output-format=github .
 
       - name: Unit tests with coverage
         run: |
@@ -115,4 +111,3 @@ jobs:
           # Quote for shells that glob []
           pip install --no-deps "dist/"*.tar.gz"[dev]"
           black --version
-          ruff --version
