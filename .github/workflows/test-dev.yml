@@ -24,6 +24,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Python ${{ matrix.python }}
         run: uv python install ${{ matrix.python }}
