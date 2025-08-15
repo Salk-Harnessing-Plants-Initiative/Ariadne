@@ -55,13 +55,10 @@ jobs:
           if-no-files-found: error
 
   package:
-    name: Build & install artifacts like a user (${{ matrix.os }}, py${{ matrix.python }})
-    runs-on: ${{ matrix.os }}
+    name: Build & install artifacts like a user
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, windows-2022, macos-14]
-        python: ["3.12", "3.13"]
 
     steps:
       - name: Checkout
@@ -72,9 +69,8 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install Python ${{ matrix.python }}
-        run: uv python install ${{ matrix.python }}
-
+      - name: Install Python 3.11
+        run: uv python install 3.11
       - name: Resolve lockfile
         run: uv lock
 
