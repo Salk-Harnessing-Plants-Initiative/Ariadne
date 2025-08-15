@@ -98,7 +98,12 @@ def make_graph(target):
                             print("Error: edge assignment failed")
 
                     for child_node in child_metadata:
-                        q.put((node_num, list(map(int, child_node.strip("[]").split(",")))))
+                        q.put(
+                            (
+                                node_num,
+                                list(map(int, child_node.strip("[]").split(","))),
+                            )
+                        )
 
                 node_num += 1
                 group_num += 1
@@ -151,7 +156,10 @@ def make_graph_alt(target):
                     children = info[1].split()
                     for child_node in children:
                         q.put(
-                            (node_num, list(map(int, child_node.strip("[]").split(","))))
+                            (
+                                node_num,
+                                list(map(int, child_node.strip("[]").split(","))),
+                            )
                         )  # converts each child object from list of strings to list of ints
                 else:  # terminal node (degree == 1)
                     coords = tuple(int(float(i)) for i in info[0].rstrip(";").split())[
@@ -442,13 +450,14 @@ def calculate_convex_hull_area(G):
     return hull_area
 
 
-
 import networkx as nx
 import math
+
 
 def distance(pos1, pos2):
     """Calculate the Euclidean distance between two positions."""
     return math.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
+
 
 def calc_zones(G, root_node):
     """
@@ -610,7 +619,6 @@ def analyze(G):
     len_PR = calc_len_PR(H, root_node)
     # print('PR length is:', len_PR)
 
-
     # LR len/number
     LR_info = calc_len_LRs(H)
     num_LRs = len(LR_info)
@@ -622,7 +630,6 @@ def analyze(G):
     # primary LR density
     density_LRs = num_LRs / len_PR
     # print('LR density is:', num_LRs/len_PR)
-
 
     # Calculate the Euclidean distance between the uppermost node and the lowermost node of the primary root
     uppermost_node_pos = H.nodes[root_node]["pos"]
@@ -642,7 +649,7 @@ def analyze(G):
     # Convex Hull calculations
     points = np.array([H.nodes[node]["pos"] for node in H.nodes()])
     hull = ConvexHull(points)
-    
+
     # Barycenter (centroid) of the Convex Hull
     # Centroid formula: (mean x, mean y) of the vertices of the convex hull
     hull_points = points[hull.vertices]
@@ -655,8 +662,12 @@ def analyze(G):
     uppermost_node_pos = uppermost_node[1]
 
     # Build quadrilateral (barycenter and uppermost node form the quadrilateral)
-    barycenter_y_displacement = abs(barycenter_y - uppermost_node_pos[1])  # Displacement in y-direction
-    barycenter_x_displacement = abs(barycenter_x - uppermost_node_pos[0])  # Displacement in x-direction
+    barycenter_y_displacement = abs(
+        barycenter_y - uppermost_node_pos[1]
+    )  # Displacement in y-direction
+    barycenter_x_displacement = abs(
+        barycenter_x - uppermost_node_pos[0]
+    )  # Displacement in x-direction
 
     # Calculate Branched, Basal, and Apical Zones
     zone_lengths = calc_zones(H, root_node)
@@ -668,9 +679,11 @@ def analyze(G):
     if basal_zone_length == len_PR:
         basal_zone_length = 0
 
-    #Branched Zone density
+    # Branched Zone density
 
-    branched_zone_density = num_LRs / branched_zone_length if branched_zone_length != 0 else 0
+    branched_zone_density = (
+        num_LRs / branched_zone_length if branched_zone_length != 0 else 0
+    )
 
     # Calculate mean and median
     mean_LR_lengths = np.mean(lens_LRs)
@@ -687,9 +700,9 @@ def analyze(G):
     # Add lateral root lengths and distances to the results dictionary
     results["PR length"] = len_PR
     results["PR_minimal_length"] = distance_root
-    results["Basal Zone length"]= basal_zone_length
+    results["Basal Zone length"] = basal_zone_length
     results["Branched Zone length"] = branched_zone_length
-    results["Apical Zone length"]= apical_zone_length
+    results["Apical Zone length"] = apical_zone_length
     results["Mean LR lengths"] = mean_LR_lengths
     results["Mean LR minimal lengths"] = mean_LR_distances
     results["Median LR lengths"] = median_LR_lengths
@@ -699,12 +712,12 @@ def analyze(G):
     results["Median LR angles"] = median_LR_angles
     results["LR count"] = num_LRs
     results["LR density"] = density_LRs
-    results["Branched Zone density"]= branched_zone_density
+    results["Branched Zone density"] = branched_zone_density
     results["LR lengths"] = lens_LRs
     results["LR angles"] = angles_LRs
     results["LR minimal lengths"] = distances_LRs
-    results["Barycenter x displacement"]= barycenter_x_displacement
-    results["Barycenter y displacement"]= barycenter_y_displacement
+    results["Barycenter x displacement"] = barycenter_x_displacement
+    results["Barycenter y displacement"] = barycenter_y_displacement
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
     )
