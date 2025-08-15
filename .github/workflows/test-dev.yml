@@ -7,6 +7,10 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
+defaults:
+  run:
+    shell: bash -l {0}  # Enable conda environment
+
 jobs:
   tests:
     name: Tests (${{ matrix.os }})
