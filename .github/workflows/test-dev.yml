@@ -96,7 +96,7 @@ jobs:
           uv venv --seed .venv
           # cross-platform venv activation
           if [ -f ".venv/bin/activate" ]; then source .venv/bin/activate; else source .venv/Scripts/activate; fi
-          pip install --no-deps dist/*.whl
+          pip install dist/*.whl
           python -c "import ariadne_roots as m; print('import ok; version:', getattr(m,'__version__','?'))"
           # CLI entry point should be present
           ariadne-trace --help >/dev/null
@@ -108,5 +108,5 @@ jobs:
           uv venv --seed .venv2
           if [ -f ".venv2/bin/activate" ]; then source .venv2/bin/activate; else source .venv2/Scripts/activate; fi
           # Quote for shells that glob []
-          pip install --no-deps "dist/"*.tar.gz"[dev]"
+          pip install "dist/"*.tar.gz"[dev]"
           black --version
