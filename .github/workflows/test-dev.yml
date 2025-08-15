@@ -44,11 +44,8 @@ jobs:
         run: uv run black --check .
 
       - name: Unit tests with coverage
-        run: |
-          uv run pytest -q \
-            --cov=ariadne_roots \
-            --cov-report=xml \
-            --cov-report=term-missing
+        run: uv run pytest -q --cov=ariadne_roots --cov-report=xml --cov-report=term-missing
+
 
       - name: Upload coverage xml
         uses: actions/upload-artifact@v4
