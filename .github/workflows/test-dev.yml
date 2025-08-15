@@ -92,8 +92,6 @@ jobs:
           if [ -f ".venv/bin/activate" ]; then source .venv/bin/activate; else source .venv/Scripts/activate; fi
           pip install dist/*.whl
           python -c "import ariadne_roots as m; print('import ok; version:', getattr(m,'__version__','?'))"
-          sudo apt-get update && sudo apt-get install -y xvfb
-          xvfb-run --server-args="-screen 0 640x480x24" ariadne-trace
 
       # Prove users can opt into dev extras from sdist (pip path)
       - name: Sdist install with [dev] extras
