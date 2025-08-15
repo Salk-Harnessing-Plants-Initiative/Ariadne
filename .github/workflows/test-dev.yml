@@ -111,7 +111,7 @@ jobs:
           SDIST="${SDISTS[0]}"
 
           # Install sdist with dev extras (quote only the [dev] part)
-          pip install --no-deps "${SDIST}[dev]"
+          pip install "${SDIST}[dev]"
 
           black --version
           ruff --version
