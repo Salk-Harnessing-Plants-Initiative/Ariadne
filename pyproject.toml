@@ -15,35 +15,50 @@ readme = "README.md"
 requires-python = ">=3.8"
 keywords = ["ariadne", "plants", "roots", "phenotyping", "pareto"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Operating System :: OS Independent",
-    "Development Status :: 4 - Beta"
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Operating System :: OS Independent",
+  "Development Status :: 4 - Beta",
 ]
 dependencies = [
-    "pillow",
-    "networkx",
-    "numpy",
-    "scipy",
-    "matplotlib",
+  "pillow",
+  "networkx",
+  "numpy",
+  "scipy",
+  "matplotlib",
+]
+
+# ---- uv dev group for contributors/CI ----
+[dependency-groups]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "black",
+  "pydocstyle",
+  "toml",
+  "twine",
+  "build",
+  "ipython",
+  "ruff",
+]
+
+# ---- PyPI extras for end users who opt in ----
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "black",
+  "pydocstyle",
+  "toml",
+  "twine",
+  "build",
+  "ipython",
+  "ruff",
 ]
 
 [project.urls]
 Homepage = "https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne"
 Issues = "https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/issues"
-
-[project.optional-dependencies]
-dev = [
-    "pytest",
-    "pytest-cov",
-    "black",
-    "pydocstyle",
-    "toml",
-    "twine",
-    "build",
-    "ipython",
-    "ruff",
-]
 
 [project.scripts]
 ariadne-trace = "ariadne_roots.main:main"
@@ -52,9 +67,7 @@ ariadne-trace = "ariadne_roots.main:main"
 line-length = 88
 
 [tool.ruff.lint]
-select = [
-    "D",  # pydocstyle
-]
+select = ["D"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
