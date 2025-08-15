@@ -12,7 +12,7 @@ authors = [
 ]
 description = "Ariadne root tracing GUI and trait calculator."
 readme = "README.md"
-license = { text = "GPL-3.0-or-later" }
+license = GPL-3.0-or-later
 requires-python = ">=3.8"
 keywords = ["ariadne", "plants", "roots", "phenotyping", "pareto"]
 classifiers = [
