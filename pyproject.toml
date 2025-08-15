@@ -34,10 +34,27 @@ Issues = "https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/issues"
 
 [project.optional-dependencies]
 dev = [
+    "pytest",
+    "pytest-cov",
+    "black",
+    "pydocstyle",
     "toml",
     "twine",
-    "build"
+    "build",
+    "ipython",
+    "ruff",
 ]
 
 [project.scripts]
 ariadne-trace = "ariadne_roots.main:main"
+
+[tool.black]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "D",  # pydocstyle
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
