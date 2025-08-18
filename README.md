@@ -319,7 +319,7 @@ Examples:
   - Use `uv sync` when you need to *install/update dependencies*.
   - Use `uv run` whenever you *want to execute something inside that environment*.
 
-You could also `source .venv/bin/activate` (or `.\.venv\Scripts\bat\activate` on Windows) and then run `pytest`, `black`, etc. directly. But `uv run` is cross-platform and doesn’t require activation, which makes it ideal for CI and scripts.
+You could also `source .venv/bin/activate` (or `.\.venv\Scripts\activate` on Windows) and then run `pytest`, `black`, etc. directly. But `uv run` is cross-platform and doesn’t require activation, which makes it ideal for CI and scripts.
 
 ---
 
