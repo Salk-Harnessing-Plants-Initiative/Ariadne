@@ -26,9 +26,76 @@
 
 ## Installation
 
-Ariadne is installed as a Python package called `ariadne-roots`. We recommend using a package manager and creating an isolated environment for `ariadne-roots` and its dependencies. Our recommended package manager is Mamba. Follow the instructions to install [Miniforge3](https://github.com/conda-forge/miniforge).
-
+Ariadne is installed as a Python package called `ariadne-roots`. We recommend using a package manager and creating an isolated environment for `ariadne-roots` and its dependencies.
 You can find the latest version of `ariadne-roots` on the [Releases](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases) page.
+
+
+## Installation (Users)
+
+We recommend installing Ariadne in an isolated environment using `uv`.  You can install it with [uv](https://docs.astral.sh/uv/) to keep your environment clean and reproducible.
+There are two main ways to install and run Ariadne:
+
+---
+
+### Option 1. Local Environment
+
+This creates a local `.venv` folder to hold Ariadne and its dependencies.
+
+```sh
+# Create a local environment with pip + setuptools pre-seeded
+uv venv --seed .venv
+
+# Activate it (Linux/macOS)
+source .venv/bin/activate
+
+# Activate it (Windows PowerShell)
+.venv\Scripts\activate
+
+# Install Ariadne
+uv pip install ariadne-roots
+```
+
+Then run the GUI:
+
+```sh
+ariadne-trace
+```
+
+---
+
+### Option 2. One-liner Install & Run (no manual environment necessary)
+
+You can also run Ariadne directly with `uvx`, which installs it into an isolated cache and exposes the CLI:
+
+```sh
+uvx ariadne-trace
+```
+
+This will launch the GUI without needing to set up or activate a venv manually.
+
+---
+
+
+## Usage
+
+### If installed in a local environment
+Activate the environment and run:
+
+```sh
+source .venv/bin/activate    # or .venv\Scripts\activate on Windows
+ariadne-trace
+```
+
+### If using the one-liner
+Simply run:
+
+```sh
+uvx ariadne-trace
+```
+
+### `conda` environment installation
+
+Follow the instructions to install [Miniforge3](https://github.com/conda-forge/miniforge).
 
 ### Step-by-Step Installation
 
