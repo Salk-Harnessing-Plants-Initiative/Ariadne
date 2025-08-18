@@ -184,26 +184,129 @@ Follow these steps to set up your development environment and start making contr
     cd Ariadne
     ```
 
-4. **Create a development environment**
+## 🛠️ For Developers
+
+### Requirements
+- [uv](https://github.com/astral-sh/uv) for dependency management
+- Python 3.11+
+
+### Setting Up a Development Environment
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne.git
+cd Ariadne
+```
+
+## 🛠️ Development with uv
+
+We use [uv](https://github.com/astral-sh/uv) for dependency management and tooling.
+- This workflow is tested in github actions using `.github\workflows\test-dev.yml`.
+
+There are two main commands you’ll use all the time:
+
+### 1. `uv sync`
+This sets up (or updates) your project environment.
+
+```bash
+uv sync
+```
+
+Alternatively, you can use `uv pip install` **if you are working in an isolated environment** and want to pip install in editable mode with dev dependencies. 
+
+```bash
+uv pip install -e ".[dev]"
+```
+
+- Creates `.venv` (if it doesn’t exist).
+- Installs your runtime dependencies plus the `dev` group (tests, linters, etc.) from `pyproject.toml`.
+- You usually only run this when first cloning the repo, or after editing `pyproject.toml`.
+
+---
+
+### 2. `uv run`
+This runs commands **inside the project environment** without needing to manually activate `.venv`.
+
+Examples:
+
+- Run the test suite with coverage:
+  ```bash
+  uv run pytest --cov=ariadne_roots --cov-report=term-missing
+  ```
+
+- Check code formatting:
+  ```bash
+  uv run black --check .
+  ```
+
+- Run the CLI:
+  ```bash
+  uv run ariadne-trace
+  ```
+
+---
+
+### Do I need both?
+- **Yes, but at different times:**
+  - Use `uv sync` when you need to *install/update dependencies*.
+  - Use `uv run` whenever you *want to execute something inside that environment*.
+
+You could also `source .venv/bin/activate` (or `.\.venv\Scripts\bat\activate` on Windows) and then run `pytest`, `black`, etc. directly. But `uv run` is cross-platform and doesn’t require activation, which makes it ideal for CI and scripts.
+
+---
+
+### 3. Building artifacts
+To build source and wheel distributions:
+
+```bash
+uv build
+```
+
+Artifacts will be created in the `dist/` directory.
+
+---
+
+### Alternative: install dev extras with pip
+If you’re not using `uv`, you can still install everything with pip:
+
+```bash
+pip install -e ".[dev]"
+```
+
+This installs runtime + dev dependencies into your current environment.
+
+---
+
+### Instructions for `conda` environment
+
+1. **Create a development environment**
 
     This will install the necessary dependencies and the `ariadne-roots` package in editable mode
     ```sh
-    mamba env create -f environment.yaml
+    mamba create --name ariadne_dev python=3.11 # python 3.11, 3.12, 3.13 are tested in the CI
     ```
 
-5. **Activate the development environment**
+2. **Activate the development environment**
     ```sh
     mamba activate ariadne_dev
     ```
 
-6. **Create a branch for your changes**
+3. **Install dev dependencies and source code in editable mode**
+    ```bash
+    pip install -e ".[dev]"
+    ```
+
+
+## Development Rules
+1. **Create a branch for your changes**
 
     Before making any changes, create a new branch
     ```sh
     git checkout -b your-branch-name
     ```
 
-7. **Code**
+2. **Code**
 
     Make your changes. Please make sure your code is readable and documented.
 
@@ -214,8 +317,7 @@ Follow these steps to set up your development environment and start making contr
     - Use consistent variable names.
         - Please use full words and not letters as variable names so that variables are readable.
 
-
-8. **Commit often**
+3. **Commit often**
 
     Commit your changes frequently with short, descriptive messages. This helps track progress and makes it easier to identify issues.
 
@@ -224,7 +326,7 @@ Follow these steps to set up your development environment and start making contr
     git commit -m "Short, descriptive commit message"
     ```
 
-9. **Open a pull request**
+4. **Open a pull request**
 
     Before you make any changes, you can write a descriptive plan of what you intend to do and why.
     Once your changes are ready, push your branch to the remote repository. Provide a clear explanation of what you changed and why.
@@ -238,22 +340,22 @@ Follow these steps to set up your development environment and start making contr
     - Fill in the title and description of your pull request.
     - Click **Create pull request**.
 
-10. **Test your changes**
+5. **Test your changes**
 
     Ensure your changes pass all tests and do not break existing functionality.
 
-11. **Request a review**
+6. **Request a review**
 
     In the pull request, request a review from the appropriate team members. Notify them via GitHub.
 
-12. **Merge your changes to main**
+7. **Merge your changes to main**
 
     After your code passes review, merge your changes to the `main` branch.
 
     - Click **Merge pull request** on GitHub.
     - Confirm the merge.
 
-13. **Delete your remote branch**
+8. **Delete your remote branch**
 
     Once your changes are merged, delete your remote branch to keep the repository clean.
 
