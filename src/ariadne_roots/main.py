@@ -1171,7 +1171,8 @@ class AnalyzerUI(tk.Frame):
                     "LR count",
                     "Branched Zone density",
                     "scaling distance to front",
-                    "Tortuosity"
+                    "Tortuosity",
+                    "scaling (random)"
                 }
 
                 # Create scaled results dictionary for the .csv file
@@ -1179,6 +1180,12 @@ class AnalyzerUI(tk.Frame):
                 for key, value in results.items():
                     if any(excl in key for excl in excluded_fields):
                         scaled_results[key] = value  # do not scale excluded fields
+                    elif key in ["LR lengths", "LR minimal lengths"]:  # Special handling for array fields
+                        # Scale each element in the array
+                        try:
+                            scaled_results[key] = [float(v) * self.length_scale_factor for v in value]
+                        except (ValueError, TypeError):
+                            scaled_results[key] = value
                     else:
                         try:
                             scaled_results[key] = float(value) * self.length_scale_factor

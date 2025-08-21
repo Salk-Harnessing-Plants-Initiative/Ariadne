@@ -314,8 +314,7 @@ def plot_all(front, actual, randoms, mrand, srand, dest, scale_factor, scale_uni
     #except ImportError:
         #scale_factor = 1.0
         #scale_unit = "px"
-    
-    print(f"[DEBUG] Using scale factor: {scale_factor:.8f} {scale_unit} when plotting")
+
     
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -337,18 +336,37 @@ def plot_all(front, actual, randoms, mrand, srand, dest, scale_factor, scale_uni
     scaled_srand = scale_data(srand)
     
     # Plot scaled data
-    plt.plot(scaled_front_x, scaled_front_y, marker="s", linestyle="-", markeredgecolor="black")
-    plt.plot(scaled_actual_x, scaled_actual_y, marker="x", markersize=12)
-    
     for i, (x, y) in enumerate(zip(scaled_randoms_x, scaled_randoms_y)):
-        plt.plot(x, y, marker="+", color="green", markersize=4)
-    
-    plt.plot(scaled_mrand, scaled_srand, marker="+", color="red", markersize=12)
+        plt.plot(x, y, marker="+", color="green", markersize=2.5, zorder=0.5, markeredgewidth=0.5)
+
+    plt.plot(scaled_front_x, scaled_front_y, marker="s", linestyle="-", markeredgecolor="black")
+    plt.plot(scaled_actual_x, scaled_actual_y, marker="x", markersize=12, zorder=3, markeredgewidth=1.5)    
+    plt.plot(scaled_mrand, scaled_srand, marker="+", color="red", markersize=12, zorder=3, markeredgewidth=1.5)
     
     ax.set_xlabel(f"Total length ({scale_unit})", fontsize=15)
     ax.set_ylabel(f"Travel distance ({scale_unit})", fontsize=15)
+
+    # Set limits to focus on the relevant area
+    front_x_min = min(scaled_front_x)
+    front_x_max = max(scaled_front_x)
+    front_y_min = min(scaled_front_y)
+    front_y_max = max(scaled_front_y)
     
+    # Create a bounding box that includes Pareto front and random centroid
+    x_min = min(front_x_min, scaled_mrand) * 0.95  # 5% buffer
+    x_max = max(front_x_max, scaled_mrand) * 1.05   # 5% buffer
+    y_min = min(front_y_min, scaled_srand) * 0.95   # 5% buffer  
+    y_max = max(front_y_max, scaled_srand) * 1.05   # 5% buffer
+    
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
+    
+    # Save as PNG (
     plt.savefig(dest, bbox_inches="tight", dpi=300)
+
+    # Also save as SVG
+    svg_dest = dest.with_suffix('.svg')
+    plt.savefig(svg_dest, bbox_inches="tight", format='svg')
     plt.close(fig)
 
 
@@ -735,7 +753,7 @@ def analyze(G):
     results["LR density"] = density_LRs
     results["Branched Zone density"]= branched_zone_density
     results["LR lengths"] = lens_LRs
-    results["LR angles"] = angles_LRs
+    results["LR angles"] = [angle.item() for angle in angles_LRs] if angles_LRs else []
     results["LR minimal lengths"] = distances_LRs
     results["Barycenter x displacement"]= barycenter_x_displacement
     results["Barycenter y displacement"]= barycenter_y_displacement
