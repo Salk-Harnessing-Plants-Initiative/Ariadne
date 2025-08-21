@@ -23,10 +23,12 @@ from collections import deque
 from PIL import Image, ImageTk, ImageSequence
 from datetime import datetime
 from networkx.readwrite import json_graph
-from tkinter import filedialog
+from tkinter import messagebox
 
-from ariadne_roots import quantify
+ 
 
+#from ariadne_roots import quantify
+import quantify
 
 class StartupUI:
     """Startup window interface."""
@@ -1002,6 +1004,10 @@ class AnalyzerUI(tk.Frame):
         self.base = base
         self.base.geometry("750x600")
         self.base.title("Ariadne: Analyze")
+    
+        # Initialize scale factors with defaults first
+        self.length_scale_factor = 1.0
+        self.length_scale_unit = "px"   
 
         # master frame
         self.frame = tk.Frame(self.base)
@@ -1024,8 +1030,95 @@ class AnalyzerUI(tk.Frame):
         self.output = tk.Label(self.right_frame, text=self.output_info)
         self.output.pack(side="top", fill="both", expand=True)
 
+        # Ask user for scale info at startup
+        self.ask_scale()
+
+    def ask_scale(self):
+        """Pop up window to set scale before analysis."""
+        # Create custom popup window
+        scale_win = tk.Toplevel(self.base)
+        scale_win.title("Set Scale")
+        scale_win.geometry("350x350")
+        scale_win.grab_set()  # make popup modal
+
+        # Labels + Entries
+        tk.Label(scale_win, text="1) Distance in pixels:").pack(pady=5)
+        pixels_entry = tk.Entry(scale_win)
+        pixels_entry.pack(pady=5)
+
+        tk.Label(scale_win, text="2) Distance in (real units):").pack(pady=5)
+        real_entry = tk.Entry(scale_win)
+        real_entry.pack(pady=5)
+
+        tk.Label(scale_win, text="3) Unit of length (e.g., mm, cm):").pack(pady=5)
+        unit_entry = tk.Entry(scale_win)
+        unit_entry.pack(pady=5)
+
+        # Label to show calculated scale
+        result_label = tk.Label(scale_win, text="Result: (waiting for input...)")
+        result_label.pack(pady=10)
+
+        def update_result(*args):
+            """Update live result when values change."""
+            try:
+                pixels = float(pixels_entry.get())
+                real_dist = float(real_entry.get())
+                if pixels > 0 and real_dist > 0:
+                    scale = real_dist / pixels
+                    result_label.config(text=f"Result: 1 pixel = {scale:.4f} {unit_entry.get().strip()}")
+                else:
+                    result_label.config(text="Result: invalid numbers")
+            except ValueError:
+                result_label.config(text="Result: waiting for valid input...")
+
+        # Bind events so that division updates live
+        pixels_entry.bind("<KeyRelease>", update_result)
+        real_entry.bind("<KeyRelease>", update_result)
+        unit_entry.bind("<KeyRelease>", update_result)
+
+        def submit_scale():
+            try:
+                pixels = float(pixels_entry.get())
+                real_dist = float(real_entry.get())
+                unit = unit_entry.get().strip()
+
+                if pixels <= 0 or real_dist <= 0 or unit == "":
+                    raise ValueError("Invalid values provided.")
+
+                # Store scale factors as instance variables (for immediate use)
+                self.length_scale_factor = real_dist / pixels
+                self.length_scale_unit = unit
+
+                # compute scale factor (real units per pixel)
+                import config
+                config.length_scale_factor = self.length_scale_factor
+                config.length_scale_unit = self.length_scale_unit
+                print(f"Scale factor: {config.length_scale_factor:.8f}")
+
+                messagebox.showinfo(
+                    "Scale set",
+                    f"1 pixel = {self.length_scale_factor:.4f} {self.length_scale_unit}"
+                )
+                scale_win.destroy()
+
+            except ValueError:
+                messagebox.showerror("Error", "Please enter valid numeric values for distances and a unit.")
+
+        submit_btn = tk.Button(scale_win, text="OK", command=submit_scale)
+        submit_btn.pack(pady=10)
+
+        # Center popup and block main window until closed
+        self.base.wait_window(scale_win)
+    
+    # IMPORTANT: import_file should be at the SAME INDENT LEVEL as ask_scale
     def import_file(self):
         """Load input files."""
+        # Store scale info in config before analysis
+        import config
+        config.length_scale_factor = self.length_scale_factor
+        config.length_scale_unit = self.length_scale_unit
+        
+        print(f"DEBUG: Scale set to {config.length_scale_factor} {config.length_scale_unit}")
         self.tree_paths = tk.filedialog.askopenfilenames(
             parent=self.base, initialdir="./", title="Select files to analyze:"
         )
@@ -1058,7 +1151,7 @@ class AnalyzerUI(tk.Frame):
 
             # update current file count list
             self.output_info = self.output_info + "\n" + graph_name
-            self.output.config(text=self.output_info)
+            self.output.config(text=self.output_info)  # Update the UI label
 
             # load and process graph data
             with open(json_file, mode="r") as h:
@@ -1069,24 +1162,57 @@ class AnalyzerUI(tk.Frame):
                 results, front, randoms = quantify.analyze(graph)
                 results["filename"] = graph_name_noext
 
-                # Open the CSV file and write the header only once
-                with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
-                    if i == 1:  # Write header only for the first file
-                        w = csv.DictWriter(csvfile, fieldnames=results.keys())
-                        w.writeheader()
+                # Fields to exclude from scaling
+                excluded_fields = {
+                    "LR density",
+                    "alpha",
+                    "Mean LR angles",
+                    "Median LR angles",
+                    "LR count",
+                    "Branched Zone density",
+                    "scaling distance to front",
+                    "Tortuosity"
+                }
 
-                    # Write results to the CSV for each file
-                    w = csv.DictWriter(csvfile, fieldnames=results.keys())
-                    w.writerow(results)
+                # Create scaled results dictionary for the .csv file
+                scaled_results = {}
+                for key, value in results.items():
+                    if any(excl in key for excl in excluded_fields):
+                        scaled_results[key] = value  # do not scale excluded fields
+                    else:
+                        try:
+                            scaled_results[key] = float(value) * self.length_scale_factor
+                        except (ValueError, TypeError):
+                            scaled_results[key] = value  # leave non-numeric as is
+
+                scaled_results["filename"] = results.get("filename", "")
+
+                # Now write scaled_results to CSV file instead of results
+                with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
+                    if i == 1:  # Write header only once
+                        w = csv.DictWriter(csvfile, fieldnames=scaled_results.keys())
+                        w.writeheader()
+                    else:
+                        w = csv.DictWriter(csvfile, fieldnames=scaled_results.keys())
+                    w.writerow(scaled_results)
 
                 # make pareto plot and save
+                import config
+                print(f"DEBUG: scale_factor = {config.length_scale_factor}")
+                scale_factor = config.length_scale_factor if config.length_scale_factor is not None else 1.0
+                scale_unit = config.length_scale_unit
+                print(f"Using scale_factor = {scale_factor}")
+                print(f"Using scale_unit = {scale_unit}")
+
                 quantify.plot_all(
                     front,
                     [results["Total root length"], results["Travel distance"]],
                     randoms,
                     results["Total root length (random)"],
                     results["Travel distance (random)"],
-                    pareto_path,
+                    pareto_path, 
+                    scale_factor, 
+                    scale_unit
                 )
 
                 print(f"Processed file {i}/{len(self.tree_paths)}")
