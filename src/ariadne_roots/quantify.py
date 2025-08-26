@@ -353,10 +353,10 @@ def plot_all(front, actual, randoms, mrand, srand, dest, scale_factor, scale_uni
     front_y_max = max(scaled_front_y)
     
     # Create a bounding box that includes Pareto front and random centroid
-    x_min = min(front_x_min, scaled_mrand) * 0.95  # 5% buffer
-    x_max = max(front_x_max, scaled_mrand) * 1.05   # 5% buffer
-    y_min = min(front_y_min, scaled_srand) * 0.95   # 5% buffer  
-    y_max = max(front_y_max, scaled_srand) * 1.05   # 5% buffer
+    x_min = min(front_x_min, scaled_mrand) * 0.80  # 20% buffer
+    x_max = max(front_x_max, scaled_mrand) * 1.2   # 20% buffer
+    y_min = min(front_y_min, scaled_srand) * 0.80  # 20% buffer  
+    y_max = max(front_y_max, scaled_srand) * 1.20  # 20% buffer
     
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)
