@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022, macos-14]
+        python: ["3.12", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Python ${{ matrix.python }}
+        run: uv python install ${{ matrix.python }}
+
+      - name: Resolve lockfile
+        run: uv lock
+
+      - name: Sync deps (runtime + dev group)
+        run: uv sync
+
+      - name: Environment info
+        run: |
+          uv --version
+          uv run python -c "import sys, platform; print(sys.version); print(platform.platform())"
+          uv tree
+
+      - name: Format check (Black)
+        run: uv run black --check .
+
+      - name: Unit tests with coverage
+        run: uv run pytest -q --cov=ariadne_roots --cov-report=xml --cov-report=term-missing
+
+
+      - name: Upload coverage xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.os }}-py${{ matrix.python }}
+          path: coverage.xml
+          if-no-files-found: error
+
+  package:
+    name: Build & install artifacts like a user
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python 3.11
+        run: uv python install 3.11
+      - name: Resolve lockfile
+        run: uv lock
+
+      - name: Build sdist & wheel
+        run: |
+          uv build
+          ls -la dist
+
+      - name: Twine check metadata
+        run: uvx twine check dist/*
+
+      # Install wheel into a fresh venv and smoke test import & CLI
+      - name: Wheel install (runtime only)
+        shell: bash
+        run: |
+          uv venv --seed .venv
+          # cross-platform venv activation
+          if [ -f ".venv/bin/activate" ]; then source .venv/bin/activate; else source .venv/Scripts/activate; fi
+          pip install dist/*.whl
+          python -c "import ariadne_roots as m; print('import ok; version:', getattr(m,'__version__','?'))"
+
+      # Prove users can opt into dev extras from sdist (pip path)
+      - name: Sdist install with [dev] extras
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv venv --seed .venv2
+          if [ -f ".venv2/bin/activate" ]; then source .venv2/bin/activate; else source .venv2/Scripts/activate; fi
+
+          # Expand the glob, error if none/multiple, then append [dev]
+          mapfile -t SDISTS < <(ls dist/*.tar.gz 2>/dev/null || true)
+          if [ ${#SDISTS[@]} -ne 1 ]; then
+            echo "Expected exactly one sdist in dist/*.tar.gz, found: ${#SDISTS[@]}"
+            ls -la dist || true
+            exit 1
+          fi
+          SDIST="${SDISTS[0]}"
+
+          # Install sdist with dev extras (quote only the [dev] part)
+          pip install "${SDIST}[dev]"
+
+          black --version
+          ruff --version

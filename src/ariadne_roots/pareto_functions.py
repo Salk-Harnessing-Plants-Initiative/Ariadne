@@ -180,7 +180,9 @@ def pareto_cost(total_root_length, total_travel_distance, alpha):
     return cost
 
 
-def pareto_cost_3d_path_tortuosity(total_root_length, total_travel_distance, total_path_coverage, alpha, beta):
+def pareto_cost_3d_path_tortuosity(
+    total_root_length, total_travel_distance, total_path_coverage, alpha, beta
+):
     """
     Computes the pareto cost.
 
@@ -193,21 +195,25 @@ def pareto_cost_3d_path_tortuosity(total_root_length, total_travel_distance, tot
     When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized
     When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized
 
-    total_root_length: the sum of the lengths of the edges in the root network 
+    total_root_length: the sum of the lengths of the edges in the root network
         (a.k.a. material cost, wiring cost)
     total_travel_distance: the sum of the lengths of the shortest paths from every
-        lateral root tip to the base node of the network. (a.k.a. the satellite cost, 
+        lateral root tip to the base node of the network. (a.k.a. the satellite cost,
         conduction delay)
-    total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per 
-        path is defined as the ratio of the actual path length to the shortest path 
-        length between the root and the root tip. The total root coverage is the sum of 
+    total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per
+        path is defined as the ratio of the actual path length to the shortest path
+        length between the root and the root tip. The total root coverage is the sum of
         the tortuosity of all the root paths.
     """
     assert 0 <= alpha <= 1
     assert 0 <= beta <= 1
 
     gamma = 1 - alpha - beta
-    cost = alpha * total_root_length + beta * total_travel_distance - gamma * total_path_coverage
+    cost = (
+        alpha * total_root_length
+        + beta * total_travel_distance
+        - gamma * total_path_coverage
+    )
 
     return cost
 
@@ -501,14 +507,14 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
     When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized
     When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized
 
-    total_root_length: the sum of the lengths of the edges in the root network 
+    total_root_length: the sum of the lengths of the edges in the root network
         (a.k.a. material cost, wiring cost)
     total_travel_distance: the sum of the lengths of the shortest paths from every
-        lateral root tip to the base node of the network. (a.k.a. the satellite cost, 
+        lateral root tip to the base node of the network. (a.k.a. the satellite cost,
         conduction delay)
-    total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per 
-        path is defined as the ratio of the actual path length to the shortest path 
-        length between the root and the root tip. The total root coverage is the sum of 
+    total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per
+        path is defined as the ratio of the actual path length to the shortest path
+        length between the root and the root tip. The total root coverage is the sum of
         the tortuosity of all the root paths.
 
     The algorithm uses a greedy approach: always take the edge that will reduce the
@@ -703,7 +709,9 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
             H.nodes[n2]["distance_to_base"] = (
                 node_dist(H, n2, u) + H.nodes[u]["distance_to_base"]
             )
-            H.nodes[n2]["straight_distance_to_base"] = H.nodes[n2]["distance_to_base"] / node_dist(H, n2, base_node)
+            H.nodes[n2]["straight_distance_to_base"] = H.nodes[n2][
+                "distance_to_base"
+            ] / node_dist(H, n2, base_node)
 
         added_nodes += 1
     return H
