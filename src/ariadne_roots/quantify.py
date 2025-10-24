@@ -13,11 +13,23 @@ import numpy as np
 import copy
 import networkx as nx
 import math
+import matplotlib.ticker as ticker
+
+
 
 from queue import Queue
 from scipy.spatial import ConvexHull  # Import ConvexHull class
-
 from ariadne_roots.pareto_functions import pareto_front, random_tree
+
+try:
+    import config
+except ImportError:
+    # Create a mock config if not available
+    class MockConfig:
+        length_scale_factor = 1.0
+        length_scale_unit = "px"
+    config = MockConfig()
+    print("Warning: config.py not found, using default scaling (1 px = 1.0 unit)")
 
 
 # parser = argparse.ArgumentParser(description='select file')
@@ -112,7 +124,7 @@ def make_graph(target):
     return G
 
 
-# G = make_graph('/Users/kianfaizi/projects/ariadne/color-final_plantA_day1.txt')
+
 
 
 def make_graph_alt(target):
@@ -182,35 +194,6 @@ def make_graph_alt(target):
                 group_num += 1
     return G
 
-
-def save_plot(path, name, title):
-    """Plot a Pareto front and save to .jpg."""
-
-    G = make_graph(path)
-    # check that graph is indeed a tree (acyclic, undirected, connected)
-    assert nx.is_tree(G)
-
-    edge_lengths, travel_distances_to_base, actual = pareto_front(G)
-    randoms = random_tree(G)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.set_title(title)
-    ax.set_xlabel("Total length", fontsize=15)
-    ax.set_ylabel("Travel distance", fontsize=15)
-
-    plt.plot(
-        edge_lengths,
-        travel_distances_to_base,
-        marker="s",
-        linestyle="-",
-        markeredgecolor="black",
-    )
-    plt.plot(actual[0], actual[1], marker="x", markersize=12)
-    for i in randoms:
-        plt.plot(i[0], i[1], marker="+", color="green", markersize=4)
-
-    plt.show()
 
 
 def calc_len_PR(G, root_node):
@@ -328,29 +311,71 @@ def calc_density_LRs(G):
     pass
     # add up to _n_ degrees
 
+    
+#Scaled plot (px)
 
-def plot_all(front, actual, randoms, mrand, srand, dest):
+def plot_all(front, actual, randoms, mrand, srand, dest, scale_factor, scale_unit):
+    #try:
+       # import config
+       # scale_factor = getattr(config, 'length_scale_factor', 1.0)
+        #scale_unit = getattr(config, 'length_scale_unit', 'px')
+    #except ImportError:
+        #scale_factor = 1.0
+        #scale_unit = "px"
+
+    
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    # ax.set_title(title)
-    ax.set_xlabel("Total length (px)", fontsize=15)
-    ax.set_ylabel("Travel distance (px)", fontsize=15)
+    
+    def scale_data(data):
+        return data * scale_factor
+    
+    # Scale all data
+    scaled_front_x = [scale_data(x[0]) for x in front.values()]
+    scaled_front_y = [scale_data(x[1]) for x in front.values()]
+    
+    scaled_actual_x = scale_data(actual[0])
+    scaled_actual_y = scale_data(actual[1])
+    
+    scaled_randoms_x = [scale_data(x[0]) for x in randoms]
+    scaled_randoms_y = [scale_data(x[1]) for x in randoms]
+    
+    scaled_mrand = scale_data(mrand)
+    scaled_srand = scale_data(srand)
+    
+    # Plot scaled data
+    for i, (x, y) in enumerate(zip(scaled_randoms_x, scaled_randoms_y)):
+        plt.plot(x, y, marker="+", color="green", markersize=2.5, zorder=0.5, markeredgewidth=0.5)
 
-    plt.plot(
-        [x[0] for x in front.values()],
-        [x[1] for x in front.values()],
-        marker="s",
-        linestyle="-",
-        markeredgecolor="black",
-    )
-    plt.plot(actual[0], actual[1], marker="x", markersize=12)
-    for i in randoms:
-        plt.plot(i[0], i[1], marker="+", color="green", markersize=4)
+    plt.plot(scaled_front_x, scaled_front_y, marker="s", linestyle="-", markeredgecolor="black")
+    plt.plot(scaled_actual_x, scaled_actual_y, marker="x", markersize=12, zorder=3, markeredgewidth=1.5)    
+    plt.plot(scaled_mrand, scaled_srand, marker="+", color="red", markersize=12, zorder=3, markeredgewidth=1.5)
+    
+    ax.set_xlabel(f"Total length ({scale_unit})", fontsize=15)
+    ax.set_ylabel(f"Travel distance ({scale_unit})", fontsize=15)
 
-    plt.plot(mrand, srand, marker="+", color="red", markersize=12)
-
+    # Set limits to focus on the relevant area
+    front_x_min = min(scaled_front_x)
+    front_x_max = max(scaled_front_x)
+    front_y_min = min(scaled_front_y)
+    front_y_max = max(scaled_front_y)
+    
+    # Create a bounding box that includes Pareto front and random centroid
+    x_min = min(front_x_min, scaled_mrand) * 0.80  # 20% buffer
+    x_max = max(front_x_max, scaled_mrand) * 1.2   # 20% buffer
+    y_min = min(front_y_min, scaled_srand) * 0.80  # 20% buffer  
+    y_max = max(front_y_max, scaled_srand) * 1.20  # 20% buffer
+    
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
+    
+    # Save as PNG (
     plt.savefig(dest, bbox_inches="tight", dpi=300)
-    # plt.show()
+
+    # Also save as SVG
+    svg_dest = dest.with_suffix('.svg')
+    plt.savefig(svg_dest, bbox_inches="tight", format='svg')
+    plt.close(fig)
 
 
 def distance_from_front(front, actual_tree):
@@ -386,6 +411,7 @@ def pareto_calcs(H):
     """Perform Pareto-related calculations."""
     front, actual = pareto_front(H)
     mactual, sactual = actual
+   
 
     # for debug: show total_root_length, total_travel_distance
     print(list(front.items())[0:5])
@@ -393,11 +419,13 @@ def pareto_calcs(H):
     plant_alpha, plant_scaling = distance_from_front(front, actual)
     randoms = random_tree(H)
 
+
     # centroid of randoms
     mrand = np.mean([x[0] for x in randoms])
     srand = np.mean([x[1] for x in randoms])
 
     rand_alpha, rand_scaling = distance_from_front(front, (mrand, srand))
+
 
     # assemble dict for export
     results = {
@@ -601,6 +629,15 @@ import numpy as np
 def analyze(G):
     """Report basic root metrics for a given graph."""
     # check that graph is indeed a tree (acyclic, undirected, connected)
+# Get scale factor from config
+    try:
+        import config
+        scale_factor = getattr(config, 'length_scale_factor', 1.0)
+        scale_unit = getattr(config, 'length_scale_unit', 'px')
+    except ImportError:
+        scale_factor = 1.0
+        scale_unit = "px"
+
     assert nx.is_tree(G)
 
     # independent deep copy of G, with LRs below threshold excluded
@@ -697,6 +734,21 @@ def analyze(G):
     # Calculate the total distance (sum of LR distances and PR minimal distance)
     total_distance = sum_LR_distances + distance_root
 
+     # Calculate the material cost (total root length)
+    
+    Total_root_length = len_PR + sum(lens_LRs)
+  
+
+    # Calculate the ratio of the material cost with the Total minimal Distance
+    material_distance_ratio = Total_root_length / total_distance
+
+     # Calculating convex hull area
+    points = np.array([H.nodes[node]["pos"] for node in H.nodes()])
+    hull = ConvexHull(points)
+    convex_hull_area = hull.volume  # Convex hull area in 2D is the same as its volume
+    
+
+
     # Add lateral root lengths and distances to the results dictionary
     results["PR length"] = len_PR
     results["PR_minimal_length"] = distance_root
@@ -714,8 +766,14 @@ def analyze(G):
     results["LR density"] = density_LRs
     results["Branched Zone density"] = branched_zone_density
     results["LR lengths"] = lens_LRs
-    results["LR angles"] = angles_LRs
+    results["LR angles"] = [angle.item() for angle in angles_LRs] if angles_LRs else []
     results["LR minimal lengths"] = distances_LRs
+    results["Barycenter x displacement"]= barycenter_x_displacement
+    results["Barycenter y displacement"]= barycenter_y_displacement
+    results["Total minimal Distance"] = total_distance  # Add the total distance to the results
+    results["Tortuosity"] = material_distance_ratio   
+    results["Convex Hull Area"] = convex_hull_area                                 
+    
     results["Barycenter x displacement"] = barycenter_x_displacement
     results["Barycenter y displacement"] = barycenter_y_displacement
     results["Total minimal Distance"] = (
@@ -725,16 +783,21 @@ def analyze(G):
     # Calculate the material cost (total root length)
     Total_root_length = len_PR + sum(lens_LRs)
 
-    # Calculate the ratio of the material cost with the Total minimal Distance
-    material_distance_ratio = Total_root_length / total_distance
+    scaled_results = {}
+    for key, value in results.items():
+        # Don't scale these fields
+        if any(excl in key for excl in ["LR density", "alpha", "Mean LR angles", 
+                                       "Median LR angles", "LR count", "Branched Zone density", 
+                                       "scaling distance to front", "Tortuosity", "scaling (random)"]):
+            scaled_results[key] = value
+        else:
+            try:
+                scaled_results[key] = float(value) 
+            except (ValueError, TypeError):
+                scaled_results[key] = value
+    
+    return scaled_results, front, randoms
 
-    results["Tortuosity"] = material_distance_ratio
 
-    # Calculating convex hull area
-    points = np.array([H.nodes[node]["pos"] for node in H.nodes()])
-    hull = ConvexHull(points)
-    convex_hull_area = hull.volume  # Convex hull area in 2D is the same as its volume
 
-    results["Convex Hull Area"] = convex_hull_area
 
-    return results, front, randoms
