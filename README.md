@@ -33,6 +33,18 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
 ## Installation (Users)
 
 We recommend installing Ariadne in an isolated environment using `uv`.  You can install it with [uv](https://docs.astral.sh/uv/) to keep your environment clean and reproducible.
+
+### Prerequisites
+
+The GUI requires **tkinter**, which is part of Python's standard library but may need separate installation:
+
+- **macOS (Homebrew)**: `brew install python-tk@3.12` (replace version as needed)
+- **Ubuntu/Debian**: `sudo apt-get install python3-tk`
+- **Windows**: tkinter is typically included with standard Python installations
+- **conda/mamba**: tkinter is included automatically
+
+To verify tkinter is available: `python -c "import tkinter"`
+
 There are two main ways to install and run Ariadne:
 
 ---

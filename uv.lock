@@ -101,7 +101,7 @@ requires-dist = [
     { name = "toml", marker = "extra == 'dev'" },
     { name = "twine", marker = "extra == 'dev'" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["gui", "dev"]
 
 [package.metadata.requires-dev]
 dev = [

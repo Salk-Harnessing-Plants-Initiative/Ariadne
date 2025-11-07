@@ -1,6 +1,151 @@
 import pytest
 import json
 import numpy as np
+import networkx as nx
+
+
+# ========== Helper Functions ==========
+
+
+def create_simple_graph(nodes_data, edges_data):
+    """Helper function to create a NetworkX graph from node and edge data.
+
+    Args:
+        nodes_data: List of tuples (node_id, x, y, lr_index, root_deg)
+        edges_data: List of tuples (node1, node2, weight)
+
+    Returns:
+        nx.Graph: NetworkX graph with pos, LR_index, and root_deg attributes
+    """
+    G = nx.Graph()
+
+    # Add nodes with attributes
+    for node_id, x, y, lr_index, root_deg in nodes_data:
+        G.add_node(node_id, pos=(x, y), LR_index=lr_index, root_deg=root_deg)
+
+    # Add edges with weights
+    for node1, node2, weight in edges_data:
+        G.add_edge(node1, node2, weight=weight)
+
+    return G
+
+
+def get_expected_lr_lengths(graph, analyze_func=None):
+    """Extract expected lateral root lengths from a graph.
+
+    Args:
+        graph: NetworkX graph with LR_index attributes
+        analyze_func: Optional analyze function to compute results
+
+    Returns:
+        List of lateral root lengths
+    """
+    if analyze_func is not None:
+        results, _, _ = analyze_func(graph)
+        return results.get('lr_lengths', [])
+    return []
+
+
+# ========== Minimal Synthetic Fixtures ==========
+
+
+@pytest.fixture
+def simple_linear_graph():
+    """Minimal 3-node linear graph: 0 -- 1 -- 2.
+
+    Expected behavior:
+    - Node 0 is root (critical node)
+    - Node 2 is tip (critical node, degree 1)
+    - Total wiring cost: 20.0 (10 + 10)
+    - Conduction delay (critical nodes): 20.0 (node 2 distance to base)
+    """
+    nodes = [
+        (0, 0, 0, None, 0),    # Root node at origin
+        (1, 10, 0, None, 0),   # Middle node
+        (2, 20, 0, None, 0),   # Tip node
+    ]
+    edges = [
+        (0, 1, 10.0),
+        (1, 2, 10.0),
+    ]
+    return create_simple_graph(nodes, edges)
+
+
+@pytest.fixture
+def simple_branching_graph():
+    """Minimal 4-node branching graph: 0 -- 1 -- 2
+                                            \\-- 3
+
+    Expected behavior:
+    - Node 0 is root (critical node)
+    - Nodes 2, 3 are tips (critical nodes, degree 1)
+    - Total wiring cost: 30.0 (10 + 10 + 10)
+    - Conduction delay (critical nodes): 40.0 (node 2: 20, node 3: 20)
+    """
+    nodes = [
+        (0, 0, 0, None, 0),     # Root node at origin
+        (1, 10, 0, None, 0),    # Branch point
+        (2, 20, 0, None, 0),    # Tip 1
+        (3, 10, 10, None, 0),   # Tip 2
+    ]
+    edges = [
+        (0, 1, 10.0),
+        (1, 2, 10.0),
+        (1, 3, 10.0),
+    ]
+    return create_simple_graph(nodes, edges)
+
+
+@pytest.fixture
+def simple_lateral_root_graph():
+    """5-node graph with one lateral root: PR nodes 0-2, LR nodes 3-4.
+
+    Structure:
+        0 (PR) -- 1 (PR) -- 2 (PR)
+                  |
+                  3 (LR) -- 4 (LR)
+
+    Expected behavior:
+    - Primary root: nodes 0, 1, 2 (LR_index=None)
+    - Lateral root: nodes 3, 4 (LR_index=0)
+    - One lateral root with length ~14.14 (10 + sqrt(2)*3 ≈ 10 + 4.24)
+    """
+    nodes = [
+        (0, 0, 0, None, 0),      # Primary root base
+        (1, 10, 0, None, 0),     # Primary root
+        (2, 20, 0, None, 0),     # Primary root tip
+        (3, 10, 10, 0, 1),       # Lateral root node 1
+        (4, 13, 13, 0, 1),       # Lateral root tip
+    ]
+    edges = [
+        (0, 1, 10.0),
+        (1, 2, 10.0),
+        (1, 3, 10.0),            # LR attachment
+        (3, 4, 4.242640687119285),  # sqrt((13-10)^2 + (13-10)^2)
+    ]
+    return create_simple_graph(nodes, edges)
+
+
+@pytest.fixture
+def edge_case_single_node():
+    """Edge case: single node graph (just root)."""
+    nodes = [(0, 0, 0, None, 0)]
+    edges = []
+    return create_simple_graph(nodes, edges)
+
+
+@pytest.fixture
+def edge_case_disconnected():
+    """Edge case: disconnected graph (should raise assertion or return inf costs)."""
+    nodes = [
+        (0, 0, 0, None, 0),
+        (1, 10, 0, None, 0),  # Not connected to node 0
+    ]
+    edges = []
+    return create_simple_graph(nodes, edges)
+
+
+# ========== Real Dataset Fixtures ==========
 
 
 @pytest.fixture
