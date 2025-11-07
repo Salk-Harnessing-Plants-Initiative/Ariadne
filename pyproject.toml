@@ -101,7 +101,7 @@ omit = [
 precision = 2
 show_missing = true
 skip_covered = false
-fail_under = 70.0  # Target for core modules (pareto_functions.py, quantify.py)
+fail_under = 90.0  # Target for core modules (pareto_functions.py, quantify.py)
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
@@ -111,4 +111,12 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
+    # Legacy text file parsers (not used in current JSON workflow)
+    "def make_graph\\(",
+    "def make_graph_alt\\(",
+    # GUI/plotting functions (tested manually, not in automated tests)
+    "def save_plot\\(",
+    "def plot_all\\(",
+    # Stub function
+    "def calc_density_LRs\\(",
 ]

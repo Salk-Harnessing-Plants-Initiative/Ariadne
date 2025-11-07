@@ -32,6 +32,7 @@ from ariadne_roots.pareto_functions import (
     delta_point,
     steiner_points,
     pareto_steiner_fast,
+    pareto_steiner_fast_3d_path_tortuosity,
     pareto_front,
     random_tree,
 )
@@ -513,6 +514,101 @@ def test_delta_point_zero():
     slope = [3, 4]
     p2 = delta_point(p1, slope, 0.0)
     assert p2 == [5, 10]
+
+
+# ========== Test pareto_steiner_fast_3d_path_tortuosity() ==========
+
+
+def test_pareto_steiner_3d_simple(simple_branching_graph):
+    """Test 3D Pareto Steiner tree construction on simple branching graph."""
+    # Add edge weights
+    for u, v in simple_branching_graph.edges():
+        if 'weight' not in simple_branching_graph[u][v]:
+            dist = node_dist(simple_branching_graph, u, v)
+            simple_branching_graph[u][v]['weight'] = dist
+
+    # Build Steiner tree with balanced parameters
+    steiner = pareto_steiner_fast_3d_path_tortuosity(simple_branching_graph, alpha=0.5, beta=0.5)
+
+    # Verify tree was constructed
+    assert steiner.number_of_nodes() > 0
+    assert steiner.has_node(0)  # Base node should be present
+
+    # Verify all critical nodes are connected
+    critical = get_critical_nodes(simple_branching_graph)
+    for node in critical:
+        assert steiner.has_node(node), f"Critical node {node} should be in Steiner tree"
+
+
+def test_pareto_steiner_3d_alpha_extremes(simple_lateral_root_graph):
+    """Test 3D Pareto Steiner tree with extreme alpha values."""
+    # Add edge weights
+    for u, v in simple_lateral_root_graph.edges():
+        if 'weight' not in simple_lateral_root_graph[u][v]:
+            dist = node_dist(simple_lateral_root_graph, u, v)
+            simple_lateral_root_graph[u][v]['weight'] = dist
+
+    # Alpha = 0 (minimize travel distance only)
+    steiner_alpha0 = pareto_steiner_fast_3d_path_tortuosity(simple_lateral_root_graph, alpha=0.0, beta=1.0)
+    assert steiner_alpha0.has_node(0)
+
+    # Alpha = 1 (minimize root length only)
+    steiner_alpha1 = pareto_steiner_fast_3d_path_tortuosity(simple_lateral_root_graph, alpha=1.0, beta=0.0)
+    assert steiner_alpha1.has_node(0)
+
+
+def test_pareto_steiner_3d_beta_extremes(simple_lateral_root_graph):
+    """Test 3D Pareto Steiner tree with extreme beta values."""
+    # Add edge weights
+    for u, v in simple_lateral_root_graph.edges():
+        if 'weight' not in simple_lateral_root_graph[u][v]:
+            dist = node_dist(simple_lateral_root_graph, u, v)
+            simple_lateral_root_graph[u][v]['weight'] = dist
+
+    # Beta = 0 (no travel distance consideration)
+    steiner_beta0 = pareto_steiner_fast_3d_path_tortuosity(simple_lateral_root_graph, alpha=0.5, beta=0.0)
+    assert steiner_beta0.has_node(0)
+
+    # Beta = 1 (maximize travel distance consideration)
+    steiner_beta1 = pareto_steiner_fast_3d_path_tortuosity(simple_lateral_root_graph, alpha=0.0, beta=1.0)
+    assert steiner_beta1.has_node(0)
+
+
+def test_pareto_steiner_3d_node_attributes(simple_branching_graph):
+    """Test that 3D Pareto Steiner tree has proper node attributes."""
+    # Add edge weights
+    for u, v in simple_branching_graph.edges():
+        if 'weight' not in simple_branching_graph[u][v]:
+            dist = node_dist(simple_branching_graph, u, v)
+            simple_branching_graph[u][v]['weight'] = dist
+
+    steiner = pareto_steiner_fast_3d_path_tortuosity(simple_branching_graph, alpha=0.5, beta=0.5)
+
+    # Base node should have distance_to_base = 0
+    assert steiner.nodes[0]["distance_to_base"] == 0
+    assert steiner.nodes[0]["straight_distance_to_base"] == 0
+    assert "pos" in steiner.nodes[0]
+
+    # All nodes should have required attributes
+    for node in steiner.nodes():
+        assert "pos" in steiner.nodes[node]
+        assert "distance_to_base" in steiner.nodes[node]
+
+
+def test_pareto_steiner_3d_edges_have_weights(simple_lateral_root_graph):
+    """Test that 3D Pareto Steiner tree edges have weight attributes."""
+    # Add edge weights to input graph
+    for u, v in simple_lateral_root_graph.edges():
+        if 'weight' not in simple_lateral_root_graph[u][v]:
+            dist = node_dist(simple_lateral_root_graph, u, v)
+            simple_lateral_root_graph[u][v]['weight'] = dist
+
+    steiner = pareto_steiner_fast_3d_path_tortuosity(simple_lateral_root_graph, alpha=0.5, beta=0.5)
+
+    # All edges should have weights
+    for u, v in steiner.edges():
+        assert "weight" in steiner[u][v]
+        assert steiner[u][v]["weight"] > 0
 
 
 # ========== Integration Tests ==========
