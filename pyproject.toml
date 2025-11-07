@@ -66,8 +66,31 @@ ariadne-trace = "ariadne_roots.main:main"
 [tool.black]
 line-length = 88
 
+[tool.ruff]
+extend-exclude = ["*.ipynb"]
+line-length = 88
+
 [tool.ruff.lint]
-select = ["D"]
+select = ["D", "E", "F", "W"]
+ignore = [
+    "D100",  # Missing docstring in public module (not always needed)
+    "D104",  # Missing docstring in public package (not always needed)
+    "D107",  # Missing docstring in __init__ (often self-explanatory)
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.coverage.run]
+source = ["ariadne_roots"]
+branch = true
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+fail_under = 80.0
