@@ -370,13 +370,11 @@ def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
 
 
 def distance_from_front(front, actual_tree):
-    """
-    Return the closest alpha for the actual tree, and its distance to the front.
+    """Return the closest alpha for the actual tree, and its distance to the front.
 
     actual_tree is just (mactual, sactual)
     front is a dict of form {alpha : [total_root_length, total_travel_distance]}
     """
-
     # for each alpha value, find distance to the actual tree
     distances = {}
 
@@ -433,10 +431,6 @@ def pareto_calcs(H):
 ### CONVEX HULL calculations
 
 
-from scipy.spatial import ConvexHull
-import numpy as np
-import networkx as nx
-import math
 
 
 def distance(p1, p2):
@@ -444,8 +438,6 @@ def distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
-from scipy.spatial import ConvexHull
-import numpy as np
 
 
 def calculate_convex_hull_area(G):
@@ -466,8 +458,6 @@ def calculate_convex_hull_area(G):
     return hull_area
 
 
-import networkx as nx
-import math
 
 
 def distance(pos1, pos2):
@@ -476,8 +466,7 @@ def distance(pos1, pos2):
 
 
 def calc_zones(G, root_node):
-    """
-    Calculate the Branched Zone, Basal Zone, and Apical Zone lengths along the primary root.
+    """Calculate the Branched Zone, Basal Zone, and Apical Zone lengths along the primary root.
     """
     # Perform BFS to find nodes along the primary root
     bfs_paths = dict(nx.bfs_successors(G, root_node))
@@ -611,7 +600,6 @@ def calculate_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
-import numpy as np
 
 
 def analyze(G):

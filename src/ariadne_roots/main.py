@@ -1,11 +1,10 @@
-"""
-ARIADNE
+"""ARIADNE
 
 A GUI for segmenting root images from Arabidopsis seedlings grown on agar plates.
 
 @kfaizi on GitHub
 
-TODO:
+Todo:
 if imported file is not a GIF, block next/prev buttons
 try:except for dialog errors?
 easier selection of nearby points
@@ -24,7 +23,6 @@ from collections import deque
 from PIL import Image, ImageTk, ImageSequence
 from datetime import datetime
 from networkx.readwrite import json_graph
-from tkinter import filedialog
 
 from ariadne_roots import quantify
 
@@ -503,7 +501,6 @@ class TracerUI(tk.Frame):
 
     def change_root(self, event=None):
         """Clear current tree, prompt for a new root, and reinitialize."""
-
         # Destroy all nodes and edges from the canvas
         for node in self.tree.nodes:
             self.canvas.delete(node.shape_val)

@@ -1,5 +1,4 @@
 import pytest
-import json
 import numpy as np
 import networkx as nx
 
@@ -42,7 +41,7 @@ def get_expected_lr_lengths(graph, analyze_func=None):
     """
     if analyze_func is not None:
         results, _, _ = analyze_func(graph)
-        return results.get('lr_lengths', [])
+        return results.get("lr_lengths", [])
     return []
 
 
@@ -60,9 +59,9 @@ def simple_linear_graph():
     - Conduction delay (critical nodes): 20.0 (node 2 distance to base)
     """
     nodes = [
-        (0, 0, 0, None, 0),    # Root node at origin
-        (1, 10, 0, None, 0),   # Middle node
-        (2, 20, 0, None, 0),   # Tip node
+        (0, 0, 0, None, 0),  # Root node at origin
+        (1, 10, 0, None, 0),  # Middle node
+        (2, 20, 0, None, 0),  # Tip node
     ]
     edges = [
         (0, 1, 10.0),
@@ -83,10 +82,10 @@ def simple_branching_graph():
     - Conduction delay (critical nodes): 40.0 (node 2: 20, node 3: 20)
     """
     nodes = [
-        (0, 0, 0, None, 0),     # Root node at origin
-        (1, 10, 0, None, 0),    # Branch point
-        (2, 20, 0, None, 0),    # Tip 1
-        (3, 10, 10, None, 0),   # Tip 2
+        (0, 0, 0, None, 0),  # Root node at origin
+        (1, 10, 0, None, 0),  # Branch point
+        (2, 20, 0, None, 0),  # Tip 1
+        (3, 10, 10, None, 0),  # Tip 2
     ]
     edges = [
         (0, 1, 10.0),
@@ -111,16 +110,16 @@ def simple_lateral_root_graph():
     - One lateral root with length ~14.14 (10 + sqrt(2)*3 ≈ 10 + 4.24)
     """
     nodes = [
-        (0, 0, 0, None, 0),      # Primary root base
-        (1, 10, 0, None, 0),     # Primary root
-        (2, 20, 0, None, 0),     # Primary root tip
-        (3, 10, 10, 0, 1),       # Lateral root node 1
-        (4, 13, 13, 0, 1),       # Lateral root tip
+        (0, 0, 0, None, 0),  # Primary root base
+        (1, 10, 0, None, 0),  # Primary root
+        (2, 20, 0, None, 0),  # Primary root tip
+        (3, 10, 10, 0, 1),  # Lateral root node 1
+        (4, 13, 13, 0, 1),  # Lateral root tip
     ]
     edges = [
         (0, 1, 10.0),
         (1, 2, 10.0),
-        (1, 3, 10.0),            # LR attachment
+        (1, 3, 10.0),  # LR attachment
         (3, 4, 4.242640687119285),  # sqrt((13-10)^2 + (13-10)^2)
     ]
     return create_simple_graph(nodes, edges)

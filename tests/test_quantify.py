@@ -84,8 +84,8 @@ def test_calc_root_len_simple_linear(simple_linear_graph):
     assert math.isclose(length, 20.0, rel_tol=1e-8)
 
     # Verify edge weights were added
-    assert 'weight' in simple_linear_graph[0][1]
-    assert math.isclose(simple_linear_graph[0][1]['weight'], 10.0, rel_tol=1e-8)
+    assert "weight" in simple_linear_graph[0][1]
+    assert math.isclose(simple_linear_graph[0][1]["weight"], 10.0, rel_tol=1e-8)
 
 
 def test_calc_root_len_partial_path(simple_lateral_root_graph):
@@ -127,7 +127,9 @@ def test_calc_len_PR_linear_no_lateral_roots(simple_linear_graph):
 # ========== Test calc_len_LRs() ==========
 
 
-@pytest.mark.skip(reason="calc_len_LRs requires specific DiGraph structure from analyze()")
+@pytest.mark.skip(
+    reason="calc_len_LRs requires specific DiGraph structure from analyze()"
+)
 def test_calc_len_LRs_simple(simple_lateral_root_graph):
     """Test lateral root length and angle calculation.
 
@@ -158,14 +160,14 @@ def test_calc_zones_with_lateral_roots(simple_lateral_root_graph):
     """Test zone calculation with lateral roots present."""
     zones = calc_zones(simple_lateral_root_graph, root_node=0)
 
-    assert 'branched_zone_length' in zones
-    assert 'basal_zone_length' in zones
-    assert 'apical_zone_length' in zones
+    assert "branched_zone_length" in zones
+    assert "basal_zone_length" in zones
+    assert "apical_zone_length" in zones
 
     # All zones should be non-negative
-    assert zones['branched_zone_length'] >= 0
-    assert zones['basal_zone_length'] >= 0
-    assert zones['apical_zone_length'] >= 0
+    assert zones["branched_zone_length"] >= 0
+    assert zones["basal_zone_length"] >= 0
+    assert zones["apical_zone_length"] >= 0
 
 
 def test_calc_zones_no_lateral_roots(simple_linear_graph):
@@ -174,10 +176,10 @@ def test_calc_zones_no_lateral_roots(simple_linear_graph):
 
     # With no LR insertions, basal zone should be entire PR
     # Branched and apical should be 0
-    assert zones['branched_zone_length'] == 0
-    assert zones['apical_zone_length'] == 0
+    assert zones["branched_zone_length"] == 0
+    assert zones["apical_zone_length"] == 0
     # Basal zone should be close to total length
-    assert zones['basal_zone_length'] >= 0
+    assert zones["basal_zone_length"] >= 0
 
 
 # ========== Test calculate_convex_hull_area() ==========
@@ -228,9 +230,9 @@ def test_distance_from_front_on_front():
     """Test distance when actual tree is on the Pareto front."""
     # Create a simple front
     front = {
-        0.0: [100, 10],   # Alpha 0: high wiring, low delay
-        0.5: [50, 50],    # Alpha 0.5: balanced
-        1.0: [10, 100],   # Alpha 1: low wiring, high delay
+        0.0: [100, 10],  # Alpha 0: high wiring, low delay
+        0.5: [50, 50],  # Alpha 0.5: balanced
+        1.0: [10, 100],  # Alpha 1: low wiring, high delay
     }
 
     # Actual tree exactly on the front at alpha=0.5
@@ -284,28 +286,29 @@ def test_pareto_calcs_simple(simple_lateral_root_graph):
     """Test Pareto calculations on simple graph."""
     # Add edge weights
     for u, v in simple_lateral_root_graph.edges():
-        if 'weight' not in simple_lateral_root_graph[u][v]:
+        if "weight" not in simple_lateral_root_graph[u][v]:
             from ariadne_roots.pareto_functions import node_dist
+
             dist = node_dist(simple_lateral_root_graph, u, v)
-            simple_lateral_root_graph[u][v]['weight'] = dist
+            simple_lateral_root_graph[u][v]["weight"] = dist
 
     results, front, randoms = pareto_calcs(simple_lateral_root_graph)
 
     # Check that results dictionary has expected keys
-    assert 'Total root length' in results
-    assert 'Travel distance' in results
-    assert 'alpha' in results
-    assert 'scaling distance to front' in results
-    assert 'Total root length (random)' in results
-    assert 'Travel distance (random)' in results
-    assert 'alpha (random)' in results
-    assert 'scaling (random)' in results
+    assert "Total root length" in results
+    assert "Travel distance" in results
+    assert "alpha" in results
+    assert "scaling distance to front" in results
+    assert "Total root length (random)" in results
+    assert "Travel distance (random)" in results
+    assert "alpha (random)" in results
+    assert "scaling (random)" in results
 
     # Values should be positive
-    assert results['Total root length'] > 0
-    assert results['Travel distance'] > 0
-    assert 0 <= results['alpha'] <= 1
-    assert results['scaling distance to front'] > 0
+    assert results["Total root length"] > 0
+    assert results["Travel distance"] > 0
+    assert 0 <= results["alpha"] <= 1
+    assert results["scaling distance to front"] > 0
 
     # Front should be a dictionary with alpha values
     assert isinstance(front, dict)
@@ -351,7 +354,7 @@ def test_find_lowermost_node_simple(simple_linear_graph):
     """Test finding lowermost node in linear graph."""
     # Create a vertical graph with edges
     G = nx.Graph()
-    G.add_node(0, pos=(0, 0))   # Top
+    G.add_node(0, pos=(0, 0))  # Top
     G.add_node(1, pos=(0, 10))  # Middle
     G.add_node(2, pos=(0, 20))  # Bottom (lowermost)
 
@@ -368,10 +371,10 @@ def test_find_lowermost_node_simple(simple_linear_graph):
 def test_find_lowermost_node_branching():
     """Test finding lowermost node in branching graph."""
     G = nx.Graph()
-    G.add_node(0, pos=(0, 0))    # Root
+    G.add_node(0, pos=(0, 0))  # Root
     G.add_node(1, pos=(0, 10))
     G.add_node(2, pos=(-5, 20))  # Left branch
-    G.add_node(3, pos=(5, 25))   # Right branch (lowermost)
+    G.add_node(3, pos=(5, 25))  # Right branch (lowermost)
 
     G.add_edge(0, 1)
     G.add_edge(1, 2)
@@ -414,11 +417,11 @@ def test_calc_zones_single_lateral_root():
     zones = calc_zones(G, root_node=0)
 
     # Should have some branched zone where LR is attached
-    assert zones['branched_zone_length'] >= 0
+    assert zones["branched_zone_length"] >= 0
     # Should have basal zone before first LR
-    assert zones['basal_zone_length'] >= 0
+    assert zones["basal_zone_length"] >= 0
     # Should have apical zone after last LR
-    assert zones['apical_zone_length'] >= 0
+    assert zones["apical_zone_length"] >= 0
 
 
 # ========== Integration Test (existing) ==========
