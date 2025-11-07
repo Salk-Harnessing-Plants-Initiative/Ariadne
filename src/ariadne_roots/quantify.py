@@ -431,13 +431,9 @@ def pareto_calcs(H):
 ### CONVEX HULL calculations
 
 
-
-
 def distance(p1, p2):
     """Compute 2D Euclidian distance between two (x,y) points."""
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
-
-
 
 
 def calculate_convex_hull_area(G):
@@ -458,16 +454,13 @@ def calculate_convex_hull_area(G):
     return hull_area
 
 
-
-
 def distance(pos1, pos2):
     """Calculate the Euclidean distance between two positions."""
     return math.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
 
 
 def calc_zones(G, root_node):
-    """Calculate the Branched Zone, Basal Zone, and Apical Zone lengths along the primary root.
-    """
+    """Calculate the Branched Zone, Basal Zone, and Apical Zone lengths along the primary root."""
     # Perform BFS to find nodes along the primary root
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
@@ -598,8 +591,6 @@ def find_lowermost_node_of_primary_root(G, root_node):
 def calculate_distance(p1, p2):
     """Compute 2D Euclidean distance between two (x,y) points."""
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
-
-
 
 
 def analyze(G):

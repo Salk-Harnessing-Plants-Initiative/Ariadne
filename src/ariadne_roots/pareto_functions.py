@@ -212,8 +212,7 @@ def pareto_cost_3d_path_tortuosity(
 
 
 def point_dist(p1, p2):
-    """Euclidean distance between two different points (of any dimension)
-    """
+    """Euclidean distance between two different points (of any dimension)"""
     assert len(p1) == len(p2)
     sq_dist = 0
     for i in range(len(p1)):
