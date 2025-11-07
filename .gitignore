@@ -164,3 +164,14 @@ cython_debug/
 # VS Code
 #  This ignores the .vscode/ folder which might contain user-specific settings and tasks.json files
 .vscode/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temporary analysis files
+*.ipynb
+*.png
+*.csv
+report_*.csv
