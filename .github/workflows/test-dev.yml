@@ -59,10 +59,10 @@ jobs:
 
       - name: Lint check (Ruff)
         run: uv run ruff check .
-        continue-on-error: true  # Don't fail CI yet, just report issues
+        continue-on-error: true  # main.py (GUI, excluded from coverage) has 121 linting issues - will be addressed in future PR
 
       - name: Unit tests with coverage
-        run: uv run pytest -q --cov=ariadne_roots --cov-report=xml --cov-report=term-missing --cov-fail-under=80
+        run: uv run pytest -q --cov=ariadne_roots --cov-report=xml --cov-report=term-missing --cov-fail-under=90
 
 
       - name: Upload coverage xml

@@ -353,7 +353,6 @@ def test_steiner_points_spacing():
 
 def test_satellite_tree_structure(simple_branching_graph):
     """Test satellite tree construction."""
-    critical = get_critical_nodes(simple_branching_graph)
     sat_tree = satellite_tree(simple_branching_graph)
 
     # Satellite tree connects all critical nodes directly to base (node 0)
