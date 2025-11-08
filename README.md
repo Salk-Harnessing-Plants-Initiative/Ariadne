@@ -33,6 +33,18 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
 ## Installation (Users)
 
 We recommend installing Ariadne in an isolated environment using `uv`.  You can install it with [uv](https://docs.astral.sh/uv/) to keep your environment clean and reproducible.
+
+### Prerequisites
+
+The GUI requires **tkinter**, which is part of Python's standard library but may need separate installation:
+
+- **macOS (Homebrew)**: `brew install python-tk@3.12` (replace version as needed)
+- **Ubuntu/Debian**: `sudo apt-get install python3-tk`
+- **Windows**: tkinter is typically included with standard Python installations
+- **conda/mamba**: tkinter is included automatically
+
+To verify tkinter is available: `python -c "import tkinter"`
+
 There are two main ways to install and run Ariadne:
 
 ---
@@ -269,57 +281,67 @@ cd Ariadne
 ## 🛠️ Development with uv
 
 We use [uv](https://github.com/astral-sh/uv) for dependency management and tooling.
-- This workflow is tested in github actions using `.github\workflows\test-dev.yml`.
+- This workflow is tested in GitHub Actions using `.github/workflows/test-dev.yml`.
+- Python version is pinned to 3.12 in `.python-version` (CI tests 3.12 and 3.13).
+- Dependencies are locked in `uv.lock` for reproducible builds.
 
-There are two main commands you’ll use all the time:
+### Quick Start
 
-### 1. `uv sync`
-This sets up (or updates) your project environment.
+After cloning the repository, set up your development environment:
 
 ```bash
 uv sync
 ```
 
-Alternatively, you can use `uv pip install` **if you are working in an isolated environment** and want to pip install in editable mode with dev dependencies. 
+This command:
+- Reads `.python-version` to use Python 3.12 automatically
+- Creates `.venv` (if it doesn't exist)
+- Installs dependencies from the committed `uv.lock` file (reproducible!)
+- Installs runtime dependencies plus the `dev` group (tests, linters, etc.)
+
+**Important:** Always use `uv sync` (not `uv pip install`) to ensure you get the exact dependency versions from the lockfile.
+
+---
+
+### Running Commands
+
+Use `uv run` to execute commands **inside the project environment** without manually activating `.venv`:
 
 ```bash
-uv pip install -e ".[dev]"
+# Run tests with coverage
+uv run pytest --cov=ariadne_roots --cov-report=term-missing
+
+# Check code formatting
+uv run black --check .
+
+# Run linting
+uv run ruff check .
+
+# Run the CLI
+uv run ariadne-trace
 ```
 
-- Creates `.venv` (if it doesn’t exist).
-- Installs your runtime dependencies plus the `dev` group (tests, linters, etc.) from `pyproject.toml`.
-- You usually only run this when first cloning the repo, or after editing `pyproject.toml`.
+**Cross-platform:** `uv run` works on Linux, macOS, and Windows without needing venv activation.
 
 ---
 
-### 2. `uv run`
-This runs commands **inside the project environment** without needing to manually activate `.venv`.
+### Updating Dependencies
 
-Examples:
+To update dependencies, modify `pyproject.toml` then regenerate the lockfile:
 
-- Run the test suite with coverage:
-  ```bash
-  uv run pytest --cov=ariadne_roots --cov-report=term-missing
-  ```
+```bash
+# Update lockfile after changing dependencies
+uv lock
 
-- Check code formatting:
-  ```bash
-  uv run black --check .
-  ```
+# Sync environment with new lockfile
+uv sync
 
-- Run the CLI:
-  ```bash
-  uv run ariadne-trace
-  ```
+# Commit both files
+git add pyproject.toml uv.lock
+git commit -m "Update dependencies"
+```
 
----
-
-### Do I need both?
-- **Yes, but at different times:**
-  - Use `uv sync` when you need to *install/update dependencies*.
-  - Use `uv run` whenever you *want to execute something inside that environment*.
-
-You could also `source .venv/bin/activate` (or `.\.venv\Scripts\activate` on Windows) and then run `pytest`, `black`, etc. directly. But `uv run` is cross-platform and doesn’t require activation, which makes it ideal for CI and scripts.
+**CI Integration:** Our CI uses `uv sync --frozen` to ensure the lockfile isn't modified during builds, catching any uncommitted dependency changes.
 
 ---
 

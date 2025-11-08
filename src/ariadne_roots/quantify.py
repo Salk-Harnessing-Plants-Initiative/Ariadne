@@ -30,8 +30,11 @@ def distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
-def make_graph(target):
-    """Construct graph from file and check for errors."""
+def make_graph(target):  # pragma: no cover
+    """Construct graph from file and check for errors.
+
+    Legacy function for text file format. Not used in current JSON workflow.
+    """
     G = nx.Graph()
     with open(target, "r") as f:  # parse input file
         q = Queue()
@@ -115,8 +118,11 @@ def make_graph(target):
 # G = make_graph('/Users/kianfaizi/projects/ariadne/color-final_plantA_day1.txt')
 
 
-def make_graph_alt(target):
-    """Construct a broken graph (without problematic edges)."""
+def make_graph_alt(target):  # pragma: no cover
+    """Construct a broken graph (without problematic edges).
+
+    Legacy function for text file format. Not used in current JSON workflow.
+    """
     G = nx.Graph()
     with open(target, "r") as f:  # parse input file
         q = Queue()
@@ -183,9 +189,11 @@ def make_graph_alt(target):
     return G
 
 
-def save_plot(path, name, title):
-    """Plot a Pareto front and save to .jpg."""
+def save_plot(path, name, title):  # pragma: no cover
+    """Plot a Pareto front and save to .jpg.
 
+    GUI function for manual visualization. Not tested in automated test suite.
+    """
     G = make_graph(path)
     # check that graph is indeed a tree (acyclic, undirected, connected)
     assert nx.is_tree(G)
@@ -324,12 +332,20 @@ def calc_len_LRs(H):
     # add LR_index awareness: all, 1 deg, 2 deg, n deg
 
 
-def calc_density_LRs(G):
+def calc_density_LRs(G):  # pragma: no cover
+    """Calculate lateral root density.
+
+    Stub function - not yet implemented.
+    """
     pass
     # add up to _n_ degrees
 
 
-def plot_all(front, actual, randoms, mrand, srand, dest):
+def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
+    """Plot Pareto front with actual and random trees.
+
+    GUI function for manual visualization. Not tested in automated test suite.
+    """
     fig = plt.figure()
     ax = fig.add_subplot(111)
     # ax.set_title(title)
@@ -354,13 +370,11 @@ def plot_all(front, actual, randoms, mrand, srand, dest):
 
 
 def distance_from_front(front, actual_tree):
-    """
-    Return the closest alpha for the actual tree, and its distance to the front.
+    """Return the closest alpha for the actual tree, and its distance to the front.
 
     actual_tree is just (mactual, sactual)
     front is a dict of form {alpha : [total_root_length, total_travel_distance]}
     """
-
     # for each alpha value, find distance to the actual tree
     distances = {}
 
@@ -417,19 +431,9 @@ def pareto_calcs(H):
 ### CONVEX HULL calculations
 
 
-from scipy.spatial import ConvexHull
-import numpy as np
-import networkx as nx
-import math
-
-
 def distance(p1, p2):
     """Compute 2D Euclidian distance between two (x,y) points."""
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
-
-
-from scipy.spatial import ConvexHull
-import numpy as np
 
 
 def calculate_convex_hull_area(G):
@@ -450,19 +454,13 @@ def calculate_convex_hull_area(G):
     return hull_area
 
 
-import networkx as nx
-import math
-
-
 def distance(pos1, pos2):
     """Calculate the Euclidean distance between two positions."""
     return math.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
 
 
 def calc_zones(G, root_node):
-    """
-    Calculate the Branched Zone, Basal Zone, and Apical Zone lengths along the primary root.
-    """
+    """Calculate the Branched Zone, Basal Zone, and Apical Zone lengths along the primary root."""
     # Perform BFS to find nodes along the primary root
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
@@ -593,9 +591,6 @@ def find_lowermost_node_of_primary_root(G, root_node):
 def calculate_distance(p1, p2):
     """Compute 2D Euclidean distance between two (x,y) points."""
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
-
-
-import numpy as np
 
 
 def analyze(G):

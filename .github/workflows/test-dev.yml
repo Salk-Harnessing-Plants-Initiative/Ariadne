@@ -6,6 +6,11 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
+# Cancel in-progress runs when a new commit is pushed to the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Test (${{ matrix.os }}, py${{ matrix.python }})
@@ -25,15 +30,23 @@ jobs:
         with:
           enable-cache: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Cache based on committed lockfile for reproducibility
+          cache-dependency-glob: "**/uv.lock"
 
       - name: Install Python ${{ matrix.python }}
         run: uv python install ${{ matrix.python }}
 
-      - name: Resolve lockfile
-        run: uv lock
-
+      # Use committed lockfile with --frozen to ensure reproducibility
+      # This prevents lockfile modification in CI and catches uncommitted changes
       - name: Sync deps (runtime + dev group)
-        run: uv sync
+        run: uv sync --frozen
+
+      - name: Verify lockfile unchanged
+        run: |
+          git diff --exit-code uv.lock || {
+            echo "ERROR: uv.lock was modified. Run 'uv lock' locally and commit the changes."
+            exit 1
+          }
 
       - name: Environment info
         run: |
@@ -44,8 +57,13 @@ jobs:
       - name: Format check (Black)
         run: uv run black --check .
 
+      - name: Lint check (Ruff)
+        run: uv run ruff check .
+        continue-on-error: true  # main.py (GUI, excluded from coverage) has 121 linting issues - will be addressed in future PR
+
       - name: Unit tests with coverage
         run: uv run pytest -q --cov=ariadne_roots --cov-report=xml --cov-report=term-missing
+        # Note: fail_under threshold (90%) is configured in pyproject.toml [tool.coverage.report]
 
 
       - name: Upload coverage xml
@@ -69,11 +87,10 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          cache-dependency-glob: "**/uv.lock"
 
-      - name: Install Python 3.11
-        run: uv python install 3.11
-      - name: Resolve lockfile
-        run: uv lock
+      - name: Install Python 3.12
+        run: uv python install 3.12
 
       - name: Build sdist & wheel
         run: |
@@ -83,35 +100,24 @@ jobs:
       - name: Twine check metadata
         run: uvx twine check dist/*
 
-      # Install wheel into a fresh venv and smoke test import & CLI
-      - name: Wheel install (runtime only)
-        shell: bash
+      # Test wheel installation using uv (the modern way users will install)
+      - name: Test wheel with uv
         run: |
-          uv venv --seed .venv
-          # cross-platform venv activation
-          if [ -f ".venv/bin/activate" ]; then source .venv/bin/activate; else source .venv/Scripts/activate; fi
-          pip install dist/*.whl
-          python -c "import ariadne_roots as m; print('import ok; version:', getattr(m,'__version__','?'))"
+          mkdir -p test-wheel-install && cd test-wheel-install
+          uv init --no-readme --no-workspace test-project
+          cd test-project
+          uv add ../../dist/*.whl
+          uv run python -c "import ariadne_roots as m; print('Wheel import OK, version:', getattr(m, '__version__', '?'))"
 
-      # Prove users can opt into dev extras from sdist (pip path)
-      - name: Sdist install with [dev] extras
-        shell: bash
+      # Test sdist with dev extras using uv
+      - name: Test sdist with dev extras
         run: |
-          set -euo pipefail
-          uv venv --seed .venv2
-          if [ -f ".venv2/bin/activate" ]; then source .venv2/bin/activate; else source .venv2/Scripts/activate; fi
-
-          # Expand the glob, error if none/multiple, then append [dev]
-          mapfile -t SDISTS < <(ls dist/*.tar.gz 2>/dev/null || true)
-          if [ ${#SDISTS[@]} -ne 1 ]; then
-            echo "Expected exactly one sdist in dist/*.tar.gz, found: ${#SDISTS[@]}"
-            ls -la dist || true
-            exit 1
-          fi
-          SDIST="${SDISTS[0]}"
-
-          # Install sdist with dev extras (quote only the [dev] part)
-          pip install "${SDIST}[dev]"
-
-          black --version
-          ruff --version
+          mkdir -p test-sdist-install && cd test-sdist-install
+          uv init --no-readme --no-workspace test-dev
+          cd test-dev
+          # Find the sdist file
+          SDIST=$(ls ../../dist/*.tar.gz)
+          uv add "$SDIST" --extra dev
+          uv run black --version
+          uv run ruff --version
+          echo "Sdist with dev extras installed successfully"

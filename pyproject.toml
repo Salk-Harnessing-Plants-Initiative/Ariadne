@@ -44,6 +44,11 @@ dev = [
 
 # ---- PyPI extras for end users who opt in ----
 [project.optional-dependencies]
+# GUI extra - documents tkinter requirement
+# Note: tkinter must be installed separately as it's part of Python's stdlib
+# See README for platform-specific installation instructions
+gui = []
+
 dev = [
   "pytest",
   "pytest-cov",
@@ -66,8 +71,52 @@ ariadne-trace = "ariadne_roots.main:main"
 [tool.black]
 line-length = 88
 
+[tool.ruff]
+extend-exclude = ["*.ipynb"]
+line-length = 88
+
 [tool.ruff.lint]
-select = ["D"]
+select = ["D", "E", "F", "W"]
+ignore = [
+    "D100",  # Missing docstring in public module (not always needed)
+    "D104",  # Missing docstring in public package (not always needed)
+    "D107",  # Missing docstring in __init__ (often self-explanatory)
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.coverage.run]
+source = ["ariadne_roots"]
+branch = true
+omit = [
+    "*/ariadne_roots/main.py",  # GUI module - not suitable for automated testing
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+fail_under = 90.0  # Target for core modules (pareto_functions.py, quantify.py)
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    # Legacy text file parsers (not used in current JSON workflow)
+    "def make_graph\\(",
+    "def make_graph_alt\\(",
+    # GUI/plotting functions (tested manually, not in automated tests)
+    "def save_plot\\(",
+    "def plot_all\\(",
+    # Stub function
+    "def calc_density_LRs\\(",
+]
