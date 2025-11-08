@@ -244,3 +244,16 @@ def plantB_day11_lr_minimal_lengths():
         53.33854141237835,
     ]
     return expected_lr_minimal_lengths
+
+
+@pytest.fixture
+def issue26_root_json():
+    """Test data from issue #26 - reproduces UnboundLocalError bug.
+
+    This real Arabidopsis thaliana root system has lateral root indices
+    starting at 1 (not 0), which triggers the bug fixed in PR #27 where
+    calc_len_LRs() and calc_len_LRs_with_distances() would crash with
+    UnboundLocalError: local variable 'sub_top' referenced before assignment.
+    """
+    file_path = "tests/data/test_issue26_230629PN005_0.json"
+    return file_path

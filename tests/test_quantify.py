@@ -153,6 +153,41 @@ def test_calc_len_LRs_no_lateral_roots(simple_linear_graph):
         calc_len_LRs(G)
 
 
+def test_calc_len_LRs_nonzero_start_index(issue26_root_json):
+    """Test calc_len_LRs with non-zero starting LR index (issue #26).
+
+    This test reproduces issue #26 where calc_len_LRs() would crash with
+    UnboundLocalError when lateral root indices don't start at 0. The bug
+    occurred because the loop iterated from range(num_LRs) starting at 0,
+    but the minimum LR index is 1 (since None is used for the primary root).
+
+    PR #27 fixes this by calculating min_num_LRs and using
+    range(min_num_LRs, num_LRs) instead.
+    """
+    with open(issue26_root_json) as f:
+        data = json.load(f)
+        # Use tree_graph for tree-formatted JSON (has 'children' key)
+        graph = json_graph.tree_graph(data)
+
+    # tree_graph returns a DiGraph, so no need to convert
+    H = graph
+
+    # This should NOT raise UnboundLocalError with the fix from PR #27
+    results = calc_len_LRs(H)
+
+    # Verify we got valid results
+    assert isinstance(results, dict)
+    assert len(results) > 0  # Should have at least one lateral root
+
+    # Each result should have length and angle data
+    for lr_idx, data in results.items():
+        assert isinstance(data, list)
+        assert len(data) == 2  # [length, angle]
+        length, angle = data
+        assert length >= 0
+        assert 0 <= angle <= 180  # Angle should be in valid range
+
+
 # ========== Test calc_zones() ==========
 
 
@@ -345,6 +380,41 @@ def test_calc_len_LRs_with_distances_real_data(plantB_day11_json):
     except (AssertionError, KeyError):
         # Function requires specific graph structure, skip if fails
         pytest.skip("calc_len_LRs_with_distances requires specific graph structure")
+
+
+def test_calc_len_LRs_with_distances_nonzero_start_index(issue26_root_json):
+    """Test calc_len_LRs_with_distances with non-zero starting LR index (issue #26).
+
+    This test reproduces issue #26 where calc_len_LRs_with_distances() would
+    crash with UnboundLocalError when lateral root indices don't start at 0.
+    The bug occurred because the loop iterated from range(num_LRs) starting
+    at 0, but the minimum LR index is 1 (since None is used for primary root).
+
+    PR #27 fixes this by calculating min_num_LRs and using
+    range(min_num_LRs, num_LRs) instead.
+    """
+    with open(issue26_root_json) as f:
+        data = json.load(f)
+        # Use tree_graph for tree-formatted JSON (has 'children' key)
+        graph = json_graph.tree_graph(data)
+
+    # tree_graph returns a DiGraph, so no need to convert
+    H = graph
+
+    # This should NOT raise UnboundLocalError with the fix from PR #27
+    lr_info = calc_len_LRs_with_distances(H)
+
+    # Verify we got valid results
+    assert isinstance(lr_info, dict)
+    assert len(lr_info) > 0  # Should have at least one lateral root
+
+    # Each LR should have [length, first_to_last_distance]
+    for lr_idx, values in lr_info.items():
+        assert isinstance(values, list)
+        assert len(values) == 2  # [length, distance]
+        length, distance = values
+        assert length > 0  # All LRs should have positive length
+        assert distance >= 0  # Distance can be 0 for single-node LR
 
 
 # ========== Test find_lowermost_node_of_primary_root() ==========
