@@ -127,18 +127,39 @@ def test_calc_len_PR_linear_no_lateral_roots(simple_linear_graph):
 # ========== Test calc_len_LRs() ==========
 
 
-@pytest.mark.skip(
-    reason="calc_len_LRs requires specific DiGraph structure from analyze()"
-)
 def test_calc_len_LRs_simple(simple_lateral_root_graph):
-    """Test lateral root length and angle calculation.
+    """Test lateral root length and angle calculation with synthetic graph.
 
-    Note: calc_len_LRs expects a DiGraph created by analyze() with specific
-    edge orientations. Testing is covered by test_analyze() integration test.
+    This test uses a simple synthetic graph with one lateral root.
+    The graph must be converted to a proper tree structure where edges
+    point away from the root (required for predecessors() to work correctly).
     """
-    # This test is skipped because calc_len_LRs uses predecessors() which
-    # requires the graph to be a properly oriented tree (not just to_directed())
-    pass
+    # Create a directed graph with root at node 0
+    # NetworkX's bfs_tree creates a tree with edges pointing away from root
+    H = nx.bfs_tree(simple_lateral_root_graph, source=0)
+
+    # Copy node attributes from original graph
+    for node in H.nodes():
+        H.nodes[node].update(simple_lateral_root_graph.nodes[node])
+
+    # Run calc_len_LRs
+    results = calc_len_LRs(H)
+
+    # Should return results for LR index 1
+    assert isinstance(results, dict)
+    assert len(results) == 1  # One lateral root
+    assert 1 in results  # LR_index = 1
+
+    # Verify structure: [length, angle]
+    lr_data = results[1]
+    assert isinstance(lr_data, list)
+    assert len(lr_data) == 2
+
+    length, angle = lr_data
+    # Length should be approximately 10 + 4.24 = 14.24
+    assert 14.0 < length < 15.0
+    # Angle should be valid (0-180 degrees)
+    assert 0 <= angle <= 180
 
 
 def test_calc_len_LRs_no_lateral_roots(simple_linear_graph):
@@ -151,6 +172,41 @@ def test_calc_len_LRs_no_lateral_roots(simple_linear_graph):
     # So we expect this to raise an error or return empty dict
     with pytest.raises((ValueError, KeyError)):
         calc_len_LRs(G)
+
+
+def test_calc_len_LRs_nonzero_start_index(issue26_root_json):
+    """Test calc_len_LRs with non-zero starting LR index (issue #26).
+
+    This test reproduces issue #26 where calc_len_LRs() would crash with
+    UnboundLocalError when lateral root indices don't start at 0. The bug
+    occurred because the loop iterated from range(num_LRs) starting at 0,
+    but the minimum LR index is 1 (since None is used for the primary root).
+
+    PR #27 fixes this by calculating min_num_LRs and using
+    range(min_num_LRs, num_LRs) instead.
+    """
+    with open(issue26_root_json) as f:
+        data = json.load(f)
+        # Use tree_graph for tree-formatted JSON (has 'children' key)
+        graph = json_graph.tree_graph(data)
+
+    # tree_graph returns a DiGraph, so no need to convert
+    H = graph
+
+    # This should NOT raise UnboundLocalError with the fix from PR #27
+    results = calc_len_LRs(H)
+
+    # Verify we got valid results
+    assert isinstance(results, dict)
+    assert len(results) > 0  # Should have at least one lateral root
+
+    # Each result should have length and angle data
+    for lr_idx, data in results.items():
+        assert isinstance(data, list)
+        assert len(data) == 2  # [length, angle]
+        length, angle = data
+        assert length >= 0
+        assert 0 <= angle <= 180  # Angle should be in valid range
 
 
 # ========== Test calc_zones() ==========
@@ -345,6 +401,41 @@ def test_calc_len_LRs_with_distances_real_data(plantB_day11_json):
     except (AssertionError, KeyError):
         # Function requires specific graph structure, skip if fails
         pytest.skip("calc_len_LRs_with_distances requires specific graph structure")
+
+
+def test_calc_len_LRs_with_distances_nonzero_start_index(issue26_root_json):
+    """Test calc_len_LRs_with_distances with non-zero starting LR index (issue #26).
+
+    This test reproduces issue #26 where calc_len_LRs_with_distances() would
+    crash with UnboundLocalError when lateral root indices don't start at 0.
+    The bug occurred because the loop iterated from range(num_LRs) starting
+    at 0, but the minimum LR index is 1 (since None is used for primary root).
+
+    PR #27 fixes this by calculating min_num_LRs and using
+    range(min_num_LRs, num_LRs) instead.
+    """
+    with open(issue26_root_json) as f:
+        data = json.load(f)
+        # Use tree_graph for tree-formatted JSON (has 'children' key)
+        graph = json_graph.tree_graph(data)
+
+    # tree_graph returns a DiGraph, so no need to convert
+    H = graph
+
+    # This should NOT raise UnboundLocalError with the fix from PR #27
+    lr_info = calc_len_LRs_with_distances(H)
+
+    # Verify we got valid results
+    assert isinstance(lr_info, dict)
+    assert len(lr_info) > 0  # Should have at least one lateral root
+
+    # Each LR should have [length, first_to_last_distance]
+    for lr_idx, values in lr_info.items():
+        assert isinstance(values, list)
+        assert len(values) == 2  # [length, distance]
+        length, distance = values
+        assert length > 0  # All LRs should have positive length
+        assert distance >= 0  # Distance can be 0 for single-node LR
 
 
 # ========== Test find_lowermost_node_of_primary_root() ==========
