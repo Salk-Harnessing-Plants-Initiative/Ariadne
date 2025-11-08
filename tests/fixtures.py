@@ -106,15 +106,18 @@ def simple_lateral_root_graph():
 
     Expected behavior:
     - Primary root: nodes 0, 1, 2 (LR_index=None)
-    - Lateral root: nodes 3, 4 (LR_index=0)
+    - Lateral root: nodes 3, 4 (LR_index=1)
     - One lateral root with length ~14.14 (10 + sqrt(2)*3 ≈ 10 + 4.24)
+
+    Note: LR_index starts at 1 (not 0), since None is used for primary root.
+    This matches real root data structure and the fix in PR #27.
     """
     nodes = [
         (0, 0, 0, None, 0),  # Primary root base
         (1, 10, 0, None, 0),  # Primary root
         (2, 20, 0, None, 0),  # Primary root tip
-        (3, 10, 10, 0, 1),  # Lateral root node 1
-        (4, 13, 13, 0, 1),  # Lateral root tip
+        (3, 10, 10, 1, 1),  # Lateral root node 1 (LR_index=1, not 0)
+        (4, 13, 13, 1, 1),  # Lateral root tip (LR_index=1)
     ]
     edges = [
         (0, 1, 10.0),

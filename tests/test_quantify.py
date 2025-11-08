@@ -127,18 +127,39 @@ def test_calc_len_PR_linear_no_lateral_roots(simple_linear_graph):
 # ========== Test calc_len_LRs() ==========
 
 
-@pytest.mark.skip(
-    reason="calc_len_LRs requires specific DiGraph structure from analyze()"
-)
 def test_calc_len_LRs_simple(simple_lateral_root_graph):
-    """Test lateral root length and angle calculation.
+    """Test lateral root length and angle calculation with synthetic graph.
 
-    Note: calc_len_LRs expects a DiGraph created by analyze() with specific
-    edge orientations. Testing is covered by test_analyze() integration test.
+    This test uses a simple synthetic graph with one lateral root.
+    The graph must be converted to a proper tree structure where edges
+    point away from the root (required for predecessors() to work correctly).
     """
-    # This test is skipped because calc_len_LRs uses predecessors() which
-    # requires the graph to be a properly oriented tree (not just to_directed())
-    pass
+    # Create a directed graph with root at node 0
+    # NetworkX's bfs_tree creates a tree with edges pointing away from root
+    H = nx.bfs_tree(simple_lateral_root_graph, source=0)
+
+    # Copy node attributes from original graph
+    for node in H.nodes():
+        H.nodes[node].update(simple_lateral_root_graph.nodes[node])
+
+    # Run calc_len_LRs
+    results = calc_len_LRs(H)
+
+    # Should return results for LR index 1
+    assert isinstance(results, dict)
+    assert len(results) == 1  # One lateral root
+    assert 1 in results  # LR_index = 1
+
+    # Verify structure: [length, angle]
+    lr_data = results[1]
+    assert isinstance(lr_data, list)
+    assert len(lr_data) == 2
+
+    length, angle = lr_data
+    # Length should be approximately 10 + 4.24 = 14.24
+    assert 14.0 < length < 15.0
+    # Angle should be valid (0-180 degrees)
+    assert 0 <= angle <= 180
 
 
 def test_calc_len_LRs_no_lateral_roots(simple_linear_graph):
