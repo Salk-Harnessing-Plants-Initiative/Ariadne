@@ -345,6 +345,27 @@ git commit -m "Update dependencies"
 
 ---
 
+### Security & Dependency Scanning
+
+We maintain secure dependencies through regular vulnerability scanning. To check for known vulnerabilities:
+
+```bash
+# Scan current dependencies for security issues
+uvx pip-audit
+```
+
+**Best Practices:**
+- Run `uvx pip-audit` before each release
+- Check the lockfile regularly for outdated dependencies with known vulnerabilities
+- Review [GitHub Security Advisories](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/security/advisories) for this repository
+
+**Automated Monitoring:**
+Consider enabling GitHub Dependabot to receive automated pull requests for dependency updates and security patches.
+
+**Current Status:** No known vulnerabilities (last checked: November 2025)
+
+---
+
 ### 3. Building artifacts
 To build source and wheel distributions:
 
