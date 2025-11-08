@@ -48,6 +48,31 @@ Added Claude Code development workflow commands adapted from cosmos-azul and tai
 
 ---
 
+## improve-ci-workflow-best-practices (November 2025)
+**Status**: ✅ Completed - Merged in PR #30
+
+Modernized CI/CD pipeline with uv best practices, lockfile-based workflow, and comprehensive security documentation.
+
+- **Proposal**: [proposal.md](improve-ci-workflow-best-practices/proposal.md)
+- **Design**: [design.md](improve-ci-workflow-best-practices/design.md)
+- **Tasks**: [tasks.md](improve-ci-workflow-best-practices/tasks.md)
+- **Spec**: [spec.md](improve-ci-workflow-best-practices/specs/ci-cd/spec.md)
+- **Related PR**: #30
+
+**Key Deliverables**:
+- Lockfile-based workflow with `uv sync --frozen` for reproducible builds
+- Python version pinning via `.python-version` file (3.12)
+- Improved caching with `cache-dependency-glob: "**/uv.lock"`
+- Concurrency groups to cancel outdated CI runs
+- Lockfile validation step to catch uncommitted changes
+- Comprehensive package installation testing (wheel + sdist with dev extras)
+- Security documentation with `pip-audit` guidance
+- Updated developer documentation emphasizing uv workflow
+
+**Timeline**: Implemented alongside test coverage work in PR #30 (37 of 38 tasks complete, 1 optional)
+
+---
+
 ## Archive Management
 
 When archiving a new OpenSpec change:
