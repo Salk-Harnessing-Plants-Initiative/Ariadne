@@ -73,6 +73,34 @@ Modernized CI/CD pipeline with uv best practices, lockfile-based workflow, and c
 
 ---
 
+## add-pr27-edge-case-tests (November 2025)
+**Status**: ✅ Completed - Merged in PR #32
+
+Added comprehensive edge case tests for the UnboundLocalError bug fix (issue #26), ensuring 100% coverage on the diff and fixing previously skipped tests.
+
+- **Proposal**: [proposal.md](add-pr27-edge-case-tests/proposal.md)
+- **Tasks**: [tasks.md](add-pr27-edge-case-tests/tasks.md)
+- **Spec**: [spec.md](add-pr27-edge-case-tests/specs/root-analysis/spec.md)
+- **Related PR**: #32 (supersedes #27)
+- **Related Issue**: #26
+
+**Key Deliverables**:
+- Added `issue26_root_json` fixture with real Arabidopsis root data (5559-line tree-formatted JSON)
+- Added `test_calc_len_LRs_nonzero_start_index()` to test LR indices starting at 1
+- Added `test_calc_len_LRs_with_distances_nonzero_start_index()` for the same edge case
+- Fixed and unskipped `test_calc_len_LRs_simple()` using proper LR_index convention and `nx.bfs_tree()`
+- Updated `.gitignore` to exclude `coverage.json`
+- 100% coverage on PR #27 diff lines (4 executable lines)
+- Test suite: 81 passed (previously 80 passed, 1 skipped)
+- Overall coverage: 98.31% (maintained above 98% threshold)
+
+**Bug Fix Context**:
+Original fix by @pradal addressed `UnboundLocalError` when lateral root indices don't start at 0. The fix calculates `min_num_LRs = min(idxs.values())` and uses `range(min_num_LRs, num_LRs)` instead of `range(num_LRs)` in both `calc_len_LRs()` and `calc_len_LRs_with_distances()`.
+
+**Timeline**: 1 day (including investigation of LR_index conventions and test fixture debugging)
+
+---
+
 ## Archive Management
 
 When archiving a new OpenSpec change:
