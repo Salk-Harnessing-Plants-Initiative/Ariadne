@@ -25,7 +25,7 @@ from PIL import Image, ImageTk, ImageSequence
 from datetime import datetime
 from networkx.readwrite import json_graph
 
-from ariadne_roots import quantify, config
+from ariadne_roots import quantify, config, scaling
 
 
 # Set up logging
@@ -1160,42 +1160,10 @@ class AnalyzerUI(tk.Frame):
                 results, front, randoms = quantify.analyze(graph)
                 results["filename"] = graph_name_noext
 
-                # Fields to exclude from scaling (dimensionless or already scaled)
-                excluded_fields = {
-                    "LR density",
-                    "alpha",
-                    "Mean LR angles",
-                    "Median LR angles",
-                    "LR count",
-                    "Branched Zone density",
-                    "scaling distance to front",
-                    "Tortuosity",
-                    "scaling (random)",
-                }
-
-                # Create scaled results dictionary for the CSV file
-                scaled_results = {}
-                for key, value in results.items():
-                    if any(excl in key for excl in excluded_fields):
-                        # Do not scale excluded fields
-                        scaled_results[key] = value
-                    elif key in ["LR lengths", "LR minimal lengths"]:
-                        # Special handling for array fields - scale each element
-                        try:
-                            scaled_results[key] = [
-                                float(v) * self.length_scale_factor for v in value
-                            ]
-                        except (ValueError, TypeError):
-                            scaled_results[key] = value
-                    else:
-                        # Scale all other numeric fields
-                        try:
-                            scaled_results[key] = float(value) * self.length_scale_factor
-                        except (ValueError, TypeError):
-                            # Leave non-numeric values as-is
-                            scaled_results[key] = value
-
-                scaled_results["filename"] = results.get("filename", "")
+                # Apply scaling transformation to results
+                scaled_results = scaling.apply_scaling_transformation(
+                    results, self.length_scale_factor
+                )
 
                 # Write scaled results to CSV
                 with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
