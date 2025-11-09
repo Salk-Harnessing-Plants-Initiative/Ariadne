@@ -6,4 +6,4 @@ the AnalyzerUI dialog and applied during analysis output.
 """
 
 length_scale_factor = 1.0  # Default: 1 pixel = 1.0 unit
-length_scale_unit = "px"   # Default unit
+length_scale_unit = "px"  # Default unit
