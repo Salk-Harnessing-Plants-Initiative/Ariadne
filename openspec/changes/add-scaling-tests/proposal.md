@@ -55,6 +55,6 @@ Extract and test the core scaling transformation:
 
 1. All new tests pass
 2. Coverage of scaling transformation logic: 100%
-3. Overall project coverage remains e98%
+3. Overall project coverage remains ≥98%
 4. No false positives (tests actually verify behavior)
 5. Tests are fast (no GUI rendering, no file I/O where possible)

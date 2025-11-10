@@ -416,10 +416,17 @@ def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
     front_y_max = max(scaled_front_y)
 
     # Create a bounding box that includes Pareto front and random centroid
-    x_min = min(front_x_min, scaled_mrand) * 0.80  # 20% buffer
-    x_max = max(front_x_max, scaled_mrand) * 1.2  # 20% buffer
-    y_min = min(front_y_min, scaled_srand) * 0.80  # 20% buffer
-    y_max = max(front_y_max, scaled_srand) * 1.20  # 20% buffer
+    # Use absolute value to handle negative coordinates correctly
+    base_x_min = min(front_x_min, scaled_mrand)
+    base_x_max = max(front_x_max, scaled_mrand)
+    base_y_min = min(front_y_min, scaled_srand)
+    base_y_max = max(front_y_max, scaled_srand)
+
+    # Add 20% buffer that works for negative, positive, and zero values
+    x_min = base_x_min - abs(base_x_min) * 0.20
+    x_max = base_x_max + abs(base_x_max) * 0.20
+    y_min = base_y_min - abs(base_y_min) * 0.20
+    y_max = base_y_max + abs(base_y_max) * 0.20
 
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)

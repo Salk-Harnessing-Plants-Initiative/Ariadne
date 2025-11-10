@@ -192,3 +192,44 @@ class TestScalingTransformation:
 
         # Should preserve invalid array unchanged
         assert scaled["LR lengths"] == ["invalid", "data", None]
+
+    def test_substring_matching_excludes_related_fields(self):
+        """Verify substring matching excludes fields containing patterns."""
+        results = {
+            "LR density": 0.5,
+            "Branched Zone density": 0.3,
+            "alpha": 1.2,
+            "Mean LR angles": 45.0,
+            "Total root length": 100.0,
+        }
+
+        scaled = apply_scaling_transformation(results, 2.0)
+
+        # Fields containing excluded patterns should NOT be scaled
+        assert scaled["LR density"] == 0.5
+        assert scaled["Branched Zone density"] == 0.3
+        assert scaled["alpha"] == 1.2
+        assert scaled["Mean LR angles"] == 45.0
+
+        # Other fields should be scaled
+        assert scaled["Total root length"] == 200.0
+
+    def test_lr_angles_field_not_scaled(self):
+        """Verify LR angles field is excluded (angles are dimensionless).
+
+        This tests that substring matching correctly excludes "LR angles"
+        because it contains "angles" pattern from "Mean LR angles" exclusion.
+        """
+        results = {
+            "LR angles": [30.0, 45.0, 60.0],
+            "LR lengths": [10.0, 20.0, 30.0],  # Should be scaled
+            "Total root length": 100.0,
+        }
+
+        scaled = apply_scaling_transformation(results, 2.0)
+
+        # Angles are dimensionless - should NOT be scaled (due to "angles" pattern)
+        assert scaled["LR angles"] == [30.0, 45.0, 60.0]
+        # Lengths should be scaled
+        assert scaled["LR lengths"] == [20.0, 40.0, 60.0]
+        assert scaled["Total root length"] == 200.0
