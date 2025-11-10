@@ -233,7 +233,7 @@ Follow the instructions to install [Miniforge3](https://github.com/conda-forge/m
 
 ### Results
 
-- In the "location_3" folder, you will find:
+- In the output folder you selected, you will find:
     - A Pareto optimality plot for each root (PNG format)
     - A timestamped CSV file (e.g., `report_20241110_153045.csv`) storing all RSA traits for each root
 

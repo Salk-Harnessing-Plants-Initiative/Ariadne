@@ -1109,8 +1109,27 @@ class AnalyzerUI(tk.Frame):
                     "Please enter valid numeric values for distances and a unit.",
                 )
 
-        submit_btn = tk.Button(scale_win, text="OK", command=submit_scale)
-        submit_btn.pack(pady=10)
+        def cancel_scale():
+            """Cancel and use default scaling (1.0 px)."""
+            # Set defaults
+            self.length_scale_factor = 1.0
+            self.length_scale_unit = "px"
+
+            # Store in config module
+            config.length_scale_factor = 1.0
+            config.length_scale_unit = "px"
+
+            scale_win.destroy()
+
+        # Button frame for OK and Cancel
+        button_frame = tk.Frame(scale_win)
+        button_frame.pack(pady=10)
+
+        submit_btn = tk.Button(button_frame, text="OK", command=submit_scale, width=10)
+        submit_btn.pack(side=tk.LEFT, padx=5)
+
+        cancel_btn = tk.Button(button_frame, text="Cancel", command=cancel_scale, width=10)
+        cancel_btn.pack(side=tk.LEFT, padx=5)
 
         # Center popup and block main window until closed
         self.base.wait_window(scale_win)
@@ -1217,13 +1236,13 @@ class AnalyzerUI(tk.Frame):
                     f"Travel distance (random): {results['Travel distance (random)']}"
                 )
 
-                # make pareto plot and save
+                # make pareto plot and save (using scaled results for consistency with CSV)
                 quantify.plot_all(
                     front,
-                    [results["Total root length"], results["Travel distance"]],
+                    [scaled_results["Total root length"], scaled_results["Travel distance"]],
                     randoms,
-                    results["Total root length (random)"],
-                    results["Travel distance (random)"],
+                    scaled_results["Total root length (random)"],
+                    scaled_results["Travel distance (random)"],
                     pareto_path,
                 )
 
