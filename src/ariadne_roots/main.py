@@ -1128,7 +1128,9 @@ class AnalyzerUI(tk.Frame):
         submit_btn = tk.Button(button_frame, text="OK", command=submit_scale, width=10)
         submit_btn.pack(side=tk.LEFT, padx=5)
 
-        cancel_btn = tk.Button(button_frame, text="Cancel", command=cancel_scale, width=10)
+        cancel_btn = tk.Button(
+            button_frame, text="Cancel", command=cancel_scale, width=10
+        )
         cancel_btn.pack(side=tk.LEFT, padx=5)
 
         # Center popup and block main window until closed
@@ -1239,7 +1241,10 @@ class AnalyzerUI(tk.Frame):
                 # make pareto plot and save (using scaled results for consistency with CSV)
                 quantify.plot_all(
                     front,
-                    [scaled_results["Total root length"], scaled_results["Travel distance"]],
+                    [
+                        scaled_results["Total root length"],
+                        scaled_results["Travel distance"],
+                    ],
                     randoms,
                     scaled_results["Total root length (random)"],
                     scaled_results["Travel distance (random)"],
