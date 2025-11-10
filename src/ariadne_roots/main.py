@@ -11,7 +11,7 @@ easier selection of nearby points
 """
 
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import filedialog, messagebox
 import csv
 import copy
 import networkx as nx
@@ -283,7 +283,7 @@ class TracerUI(tk.Frame):
 
     def import_image(self):
         """Query user for an input file and load it onto the canvas."""
-        self.path = tk.filedialog.askopenfilename(
+        self.path = filedialog.askopenfilename(
             parent=self.base, initialdir="./", title="Select an image file:"
         )
         self.title_label.config(text=f"Tracing {self.path}")
@@ -1117,7 +1117,7 @@ class AnalyzerUI(tk.Frame):
 
     def import_file(self):
         """Load input files."""
-        self.tree_paths = tk.filedialog.askopenfilenames(
+        self.tree_paths = filedialog.askopenfilenames(
             parent=self.base, initialdir="./", title="Select files to analyze:"
         )
 
@@ -1125,8 +1125,8 @@ class AnalyzerUI(tk.Frame):
             return
         else:
             self.output_path = Path(
-                tk.filedialog.askdirectory(
-                    parent=self.base, initialdir="./", title="Select an output folder:"
+                filedialog.askdirectory(
+                    parent=self.base, initialdir="./", title="Select output folder for analysis results (CSV & plots):"
                 )
             )
 
@@ -1154,6 +1154,19 @@ class AnalyzerUI(tk.Frame):
             # load and process graph data
             with open(json_file, mode="r") as h:
                 data = json.load(h)
+
+                # Validate JSON format - must be networkx adjacency format
+                if not isinstance(data, dict) or "nodes" not in data or "adjacency" not in data:
+                    error_msg = (
+                        f"Invalid JSON format in {graph_name}\n\n"
+                        "Expected networkx adjacency format with 'nodes' and 'adjacency' keys.\n"
+                        "This file appears to be in a different format (possibly a tree/node format).\n\n"
+                        "Only JSON files exported from the Ariadne tracer can be analyzed.\n"
+                        "Test fixture files (test_*.json) are for unit testing only."
+                    )
+                    messagebox.showerror("Invalid File Format", error_msg)
+                    return
+
                 graph = json_graph.adjacency_graph(data)
 
                 # perform analysis
