@@ -1128,7 +1128,7 @@ class AnalyzerUI(tk.Frame):
         messagebox.showinfo(
             "Select Output Folder",
             f"Selected {len(self.tree_paths)} file(s) for analysis.\n\n"
-            "Next: Choose where to save the results (CSV report and plots)."
+            "Next: Choose where to save the results (CSV report and plots).",
         )
 
         # Get output folder
@@ -1136,12 +1136,14 @@ class AnalyzerUI(tk.Frame):
             parent=self.base,
             initialdir="./",
             title="Select output folder for analysis results (CSV & plots):",
-            mustexist=True
+            mustexist=True,
         )
 
         # Check if user cancelled
         if not output_folder:
-            messagebox.showwarning("Cancelled", "No output folder selected. Analysis cancelled.")
+            messagebox.showwarning(
+                "Cancelled", "No output folder selected. Analysis cancelled."
+            )
             return
 
         self.output_path = Path(output_folder)
@@ -1172,7 +1174,11 @@ class AnalyzerUI(tk.Frame):
                 data = json.load(h)
 
                 # Validate JSON format - must be networkx adjacency format
-                if not isinstance(data, dict) or "nodes" not in data or "adjacency" not in data:
+                if (
+                    not isinstance(data, dict)
+                    or "nodes" not in data
+                    or "adjacency" not in data
+                ):
                     error_msg = (
                         f"Invalid JSON format in {graph_name}\n\n"
                         "Expected networkx adjacency format with 'nodes' and 'adjacency' keys.\n"
@@ -1196,11 +1202,9 @@ class AnalyzerUI(tk.Frame):
 
                 # Write scaled results to CSV
                 with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
+                    w = csv.DictWriter(csvfile, fieldnames=scaled_results.keys())
                     if i == 1:  # Write header only for the first file
-                        w = csv.DictWriter(csvfile, fieldnames=scaled_results.keys())
                         w.writeheader()
-                    else:
-                        w = csv.DictWriter(csvfile, fieldnames=scaled_results.keys())
                     w.writerow(scaled_results)
 
                 # debug

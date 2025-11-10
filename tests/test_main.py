@@ -1,7 +1,5 @@
 """Tests for main GUI module (mock-based for testable logic)."""
 
-import pytest
-from unittest.mock import Mock, patch, mock_open, MagicMock
 from ariadne_roots import scaling
 
 

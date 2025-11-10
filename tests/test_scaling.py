@@ -1,6 +1,5 @@
 """Tests for the scaling module."""
 
-import pytest
 from ariadne_roots.scaling import apply_scaling_transformation
 
 
