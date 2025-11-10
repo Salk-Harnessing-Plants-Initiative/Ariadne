@@ -172,26 +172,38 @@ Follow the instructions to install [Miniforge3](https://github.com/conda-forge/m
 ### Analyze with Ariadne
 
 1. **Organize your files:**
-    - Gather all the .json files stored at the location where Ariadne has been installed into a new folder named “OUTPUT_JSON” (referred to as “location_1” later on).
-    - Create a folder named “RESULTS” (referred to as “location_2”).
-    - Create a new folder named “Output”.
+    - Gather all the .json files stored at the location where Ariadne has been installed into a new folder named "OUTPUT_JSON" (referred to as "location_1" later on).
+    - Create a folder named "RESULTS" (referred to as "location_2").
+    - Create a new folder named "Output".
 2. **Prepare for analysis:**
     - Close Ariadne but keep the terminal open.
     - Follow the instructions in step 2 above to set up the terminal.
 3. **Run the analysis:**
-    - Click on “Analyze” in Ariadne.
+    - Click on "Analyze" in Ariadne.
 
     <img src="assets/Welcome.png" width="400" height="250">
 
-    - Select the .json files to analyze from “location_1”.
-    - Then select “location_2” for the output.
-    - The software will analyze all the selected .json files.
+    - **Set scaling parameters** (optional):
+        - A dialog will appear asking you to configure measurement units
+        - Enter the conversion factor (e.g., if 1 pixel = 2.5 mm, enter `1` for pixels and `2.5` for distance)
+        - Select or enter the unit name (e.g., "mm", "cm", "µm")
+        - Click "OK" to continue, or "Cancel" to use default (pixels)
+    - **Select input files**:
+        - Choose the .json files to analyze from "location_1"
+        - An info dialog will confirm the number of files selected
+    - **Select output folder**:
+        - Choose "location_2" for the output
+        - The software will analyze all selected files and save results
+    - **Completion**:
+        - A dialog will show where the results were saved (CSV report and Pareto plots)
 
 ### Results
 
-- In the “location_3” folder, you will find:
-    - A graph for each root showing the Pareto optimality.
-    - A .csv file storing all the RSA traits for each root.
+- In the "location_3" folder, you will find:
+    - A Pareto optimality plot for each root (PNG format)
+    - A timestamped CSV file (e.g., `report_20241110_153045.csv`) storing all RSA traits for each root
+
+**Note on Units:** If you configured scaling during analysis, all length measurements in the CSV and plots will be in your specified units (e.g., mm, cm). Otherwise, measurements are in pixels.
 
 The RSA traits included in the CSV are
 
