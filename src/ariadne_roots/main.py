@@ -1229,6 +1229,18 @@ class AnalyzerUI(tk.Frame):
         # show confirmation message
         print("Finished.")
 
+        # Show completion dialog with output locations
+        completion_msg = (
+            f"Analysis Complete!\n\n"
+            f"Processed {len(self.tree_paths)} file(s)\n\n"
+            f"Output folder: {self.output_path}\n\n"
+            f"Generated files:\n"
+            f"  • CSV report: {report_dest.name}\n"
+            f"  • Pareto plots: {len(self.tree_paths)} PNG file(s)\n\n"
+            f"You can now open the output folder to view results."
+        )
+        messagebox.showinfo("Analysis Complete", completion_msg)
+
     def clear(self):
         """Clean up a previously imported file."""
         # take care of self.path, self.results, buttons, etc
