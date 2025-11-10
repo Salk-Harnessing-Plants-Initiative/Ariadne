@@ -36,16 +36,19 @@ We recommend installing Ariadne in an isolated environment using `uv`.  You can 
 
 ### Prerequisites
 
-The GUI requires **tkinter**, which is part of Python's standard library but may need separate installation:
+The GUI requires **tkinter**, which is part of Python's standard library:
 
-- **macOS (Homebrew)**: `brew install python-tk@3.12` (replace version as needed)
-- **Ubuntu/Debian**: `sudo apt-get install python3-tk`
-- **Windows**: tkinter is typically included with standard Python installations
+- **uv (recommended)**: tkinter is included automatically with uv's managed Python installations
+- **macOS (system Python via Homebrew)**: `brew install python-tk@3.12` (only if not using uv)
+- **Ubuntu/Debian (system Python)**: `sudo apt-get install python3-tk` (only if not using uv)
+- **Windows (system Python)**: tkinter is typically included with standard Python installations
 - **conda/mamba**: tkinter is included automatically
 
 To verify tkinter is available: `python -c "import tkinter"`
 
-There are two main ways to install and run Ariadne:
+**Note:** If you use `uv` to manage Python (recommended), tkinter is already included and requires no separate installation.
+
+There are three main ways to install and run Ariadne:
 
 ---
 
@@ -87,10 +90,33 @@ This will launch the GUI without needing to set up or activate a venv manually.
 
 ---
 
+### Option 3. Project-Based Workflow (for developers/power users)
+
+This approach creates a dedicated project for using Ariadne with `uv init` and `uv add`:
+
+```sh
+# Create a new project directory
+uv init ariadne-project
+cd ariadne-project
+
+# Add Ariadne as a dependency (creates .venv automatically)
+uv add ariadne-roots
+
+# Run the GUI
+uv run ariadne-trace
+```
+
+This is ideal if you want to:
+- Keep Ariadne alongside other analysis tools in a project
+- Lock dependencies with `uv.lock` for reproducibility
+- Manage multiple environments for different analyses
+
+---
+
 
 ## Usage
 
-### If installed in a local environment
+### If installed in a local environment (Option 1)
 Activate the environment and run:
 
 ```sh
@@ -98,11 +124,19 @@ source .venv/bin/activate    # or .venv\Scripts\activate on Windows
 ariadne-trace
 ```
 
-### If using the one-liner
+### If using the one-liner (Option 2)
 Simply run:
 
 ```sh
 uvx ariadne-trace
+```
+
+### If using project-based workflow (Option 3)
+Run from your project directory:
+
+```sh
+cd ariadne-project
+uv run ariadne-trace
 ```
 
 ### `conda` environment installation
