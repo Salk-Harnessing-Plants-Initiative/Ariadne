@@ -1123,12 +1123,28 @@ class AnalyzerUI(tk.Frame):
 
         if len(self.tree_paths) == 0:  # no selection made
             return
-        else:
-            self.output_path = Path(
-                filedialog.askdirectory(
-                    parent=self.base, initialdir="./", title="Select output folder for analysis results (CSV & plots):"
-                )
-            )
+
+        # Inform user about next step
+        messagebox.showinfo(
+            "Select Output Folder",
+            f"Selected {len(self.tree_paths)} file(s) for analysis.\n\n"
+            "Next: Choose where to save the results (CSV report and plots)."
+        )
+
+        # Get output folder
+        output_folder = filedialog.askdirectory(
+            parent=self.base,
+            initialdir="./",
+            title="Select output folder for analysis results (CSV & plots):",
+            mustexist=True
+        )
+
+        # Check if user cancelled
+        if not output_folder:
+            messagebox.showwarning("Cancelled", "No output folder selected. Analysis cancelled.")
+            return
+
+        self.output_path = Path(output_folder)
 
         # create a csv to store analysis results
         timestamp = datetime.now()
