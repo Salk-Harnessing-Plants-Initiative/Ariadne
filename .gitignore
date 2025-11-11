@@ -171,8 +171,11 @@ cython_debug/
 .AppleDouble
 .LSOverride
 
-# Temporary analysis files
+# Temporary analysis files and generated outputs
 *.ipynb
 *.png
+*.svg
 *.csv
 report_*.csv
+*_pareto.png
+*_pareto.svg

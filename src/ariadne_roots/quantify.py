@@ -18,6 +18,7 @@ from queue import Queue
 from scipy.spatial import ConvexHull  # Import ConvexHull class
 
 from ariadne_roots.pareto_functions import pareto_front, random_tree
+from ariadne_roots import config
 
 
 # parser = argparse.ArgumentParser(description='select file')
@@ -342,32 +343,133 @@ def calc_density_LRs(G):  # pragma: no cover
     # add up to _n_ degrees
 
 
+def calculate_plot_buffer(base_min, base_max, buffer_percent=0.20, min_buffer=1.0):
+    """Calculate plot buffer for axis limits.
+
+    Computes appropriate buffer margins for plot axes based on data range,
+    handling edge cases like negative coordinates, zero values, and small ranges.
+
+    Args:
+        base_min: Minimum value in the data range
+        base_max: Maximum value in the data range
+        buffer_percent: Buffer size as fraction of range (default 0.20 = 20%)
+        min_buffer: Minimum buffer to prevent degenerate plots (default 1.0)
+
+    Returns:
+        Tuple of (min_limit, max_limit) for axis
+
+    Examples:
+        >>> calculate_plot_buffer(0, 10)  # Normal positive range
+        (-2.0, 12.0)
+
+        >>> calculate_plot_buffer(-10, 10)  # Range crossing zero
+        (-14.0, 14.0)
+
+        >>> calculate_plot_buffer(0, 0)  # Degenerate range (all zeros)
+        (-1.0, 1.0)
+
+        >>> calculate_plot_buffer(-5, -3)  # Negative range
+        (-5.4, -2.6)
+    """
+    data_range = abs(base_max - base_min)
+    buffer = max(data_range * buffer_percent, min_buffer)
+    return (base_min - buffer, base_max + buffer)
+
+
 def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
-    """Plot Pareto front with actual and random trees.
+    """Plot Pareto front with actual and random trees, with scaling and centering.
 
     GUI function for manual visualization. Not tested in automated test suite.
+    Applies user-configured scaling and centers view on Pareto front.
     """
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    # ax.set_title(title)
-    ax.set_xlabel("Total length (px)", fontsize=15)
-    ax.set_ylabel("Travel distance (px)", fontsize=15)
+
+    def scale_data(data):
+        """Scale data by user-configured factor."""
+        return data * config.length_scale_factor
+
+    # Scale all data
+    scaled_front_x = [scale_data(x[0]) for x in front.values()]
+    scaled_front_y = [scale_data(x[1]) for x in front.values()]
+
+    scaled_actual_x = scale_data(actual[0])
+    scaled_actual_y = scale_data(actual[1])
+
+    scaled_randoms_x = [scale_data(x[0]) for x in randoms]
+    scaled_randoms_y = [scale_data(x[1]) for x in randoms]
+
+    scaled_mrand = scale_data(mrand)
+    scaled_srand = scale_data(srand)
+
+    # Plot scaled data
+    for x, y in zip(scaled_randoms_x, scaled_randoms_y):
+        plt.plot(
+            x,
+            y,
+            marker="+",
+            color="green",
+            markersize=2.5,
+            zorder=0.5,
+            markeredgewidth=0.5,
+        )
 
     plt.plot(
-        [x[0] for x in front.values()],
-        [x[1] for x in front.values()],
+        scaled_front_x,
+        scaled_front_y,
         marker="s",
         linestyle="-",
         markeredgecolor="black",
     )
-    plt.plot(actual[0], actual[1], marker="x", markersize=12)
-    for i in randoms:
-        plt.plot(i[0], i[1], marker="+", color="green", markersize=4)
+    plt.plot(
+        scaled_actual_x,
+        scaled_actual_y,
+        marker="x",
+        markersize=12,
+        zorder=3,
+        markeredgewidth=1.5,
+    )
+    plt.plot(
+        scaled_mrand,
+        scaled_srand,
+        marker="+",
+        color="red",
+        markersize=12,
+        zorder=3,
+        markeredgewidth=1.5,
+    )
 
-    plt.plot(mrand, srand, marker="+", color="red", markersize=12)
+    ax.set_xlabel(f"Total length ({config.length_scale_unit})", fontsize=15)
+    ax.set_ylabel(f"Travel distance ({config.length_scale_unit})", fontsize=15)
 
+    # Set limits to focus on the relevant area (Pareto front centered)
+    front_x_min = min(scaled_front_x)
+    front_x_max = max(scaled_front_x)
+    front_y_min = min(scaled_front_y)
+    front_y_max = max(scaled_front_y)
+
+    # Create a bounding box that includes Pareto front and random centroid
+    # Use absolute value to handle negative coordinates correctly
+    base_x_min = min(front_x_min, scaled_mrand)
+    base_x_max = max(front_x_max, scaled_mrand)
+    base_y_min = min(front_y_min, scaled_srand)
+    base_y_max = max(front_y_max, scaled_srand)
+
+    # Calculate axis limits with 20% buffer
+    x_min, x_max = calculate_plot_buffer(base_x_min, base_x_max)
+    y_min, y_max = calculate_plot_buffer(base_y_min, base_y_max)
+
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
+
+    # Save as PNG
     plt.savefig(dest, bbox_inches="tight", dpi=300)
-    # plt.show()
+
+    # Also save as SVG for better quality
+    svg_dest = dest.with_suffix(".svg")
+    plt.savefig(svg_dest, bbox_inches="tight", format="svg")
+
+    plt.close(fig)
 
 
 def distance_from_front(front, actual_tree):

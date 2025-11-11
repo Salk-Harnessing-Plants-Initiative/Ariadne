@@ -36,16 +36,19 @@ We recommend installing Ariadne in an isolated environment using `uv`.  You can 
 
 ### Prerequisites
 
-The GUI requires **tkinter**, which is part of Python's standard library but may need separate installation:
+The GUI requires **tkinter**, which is part of Python's standard library:
 
-- **macOS (Homebrew)**: `brew install python-tk@3.12` (replace version as needed)
-- **Ubuntu/Debian**: `sudo apt-get install python3-tk`
-- **Windows**: tkinter is typically included with standard Python installations
+- **uv (recommended)**: tkinter is included automatically with uv's managed Python installations
+- **macOS (system Python via Homebrew)**: `brew install python-tk@3.12` (only if not using uv)
+- **Ubuntu/Debian (system Python)**: `sudo apt-get install python3-tk` (only if not using uv)
+- **Windows (system Python)**: tkinter is typically included with standard Python installations
 - **conda/mamba**: tkinter is included automatically
 
 To verify tkinter is available: `python -c "import tkinter"`
 
-There are two main ways to install and run Ariadne:
+**Note:** If you use `uv` to manage Python (recommended), tkinter is already included and requires no separate installation.
+
+There are three main ways to install and run Ariadne:
 
 ---
 
@@ -87,10 +90,33 @@ This will launch the GUI without needing to set up or activate a venv manually.
 
 ---
 
+### Option 3. Project-Based Workflow (for developers/power users)
+
+This approach creates a dedicated project for using Ariadne with `uv init` and `uv add`:
+
+```sh
+# Create a new project directory
+uv init ariadne-project
+cd ariadne-project
+
+# Add Ariadne as a dependency (creates .venv automatically)
+uv add ariadne-roots
+
+# Run the GUI
+uv run ariadne-trace
+```
+
+This is ideal if you want to:
+- Keep Ariadne alongside other analysis tools in a project
+- Lock dependencies with `uv.lock` for reproducibility
+- Manage multiple environments for different analyses
+
+---
+
 
 ## Usage
 
-### If installed in a local environment
+### If installed in a local environment (Option 1)
 Activate the environment and run:
 
 ```sh
@@ -98,11 +124,19 @@ source .venv/bin/activate    # or .venv\Scripts\activate on Windows
 ariadne-trace
 ```
 
-### If using the one-liner
+### If using the one-liner (Option 2)
 Simply run:
 
 ```sh
 uvx ariadne-trace
+```
+
+### If using project-based workflow (Option 3)
+Run from your project directory:
+
+```sh
+cd ariadne-project
+uv run ariadne-trace
 ```
 
 ### `conda` environment installation
@@ -172,26 +206,38 @@ Follow the instructions to install [Miniforge3](https://github.com/conda-forge/m
 ### Analyze with Ariadne
 
 1. **Organize your files:**
-    - Gather all the .json files stored at the location where Ariadne has been installed into a new folder named “OUTPUT_JSON” (referred to as “location_1” later on).
-    - Create a folder named “RESULTS” (referred to as “location_2”).
-    - Create a new folder named “Output”.
+    - Gather all the .json files stored at the location where Ariadne has been installed into a new folder named "OUTPUT_JSON" (referred to as "location_1" later on).
+    - Create a folder named "RESULTS" (referred to as "location_2").
+    - Create a new folder named "Output".
 2. **Prepare for analysis:**
     - Close Ariadne but keep the terminal open.
     - Follow the instructions in step 2 above to set up the terminal.
 3. **Run the analysis:**
-    - Click on “Analyze” in Ariadne.
+    - Click on "Analyze" in Ariadne.
 
     <img src="assets/Welcome.png" width="400" height="250">
 
-    - Select the .json files to analyze from “location_1”.
-    - Then select “location_2” for the output.
-    - The software will analyze all the selected .json files.
+    - **Set scaling parameters** (optional):
+        - A dialog will appear asking you to configure measurement units
+        - Enter the conversion factor (e.g., if 1 pixel = 2.5 mm, enter `1` for pixels and `2.5` for distance)
+        - Select or enter the unit name (e.g., "mm", "cm", "µm")
+        - Click "OK" to continue, or "Cancel" to use default (pixels)
+    - **Select input files**:
+        - Choose the .json files to analyze from "location_1"
+        - An info dialog will confirm the number of files selected
+    - **Select output folder**:
+        - Choose "location_2" for the output
+        - The software will analyze all selected files and save results
+    - **Completion**:
+        - A dialog will show where the results were saved (CSV report and Pareto plots)
 
 ### Results
 
-- In the “location_3” folder, you will find:
-    - A graph for each root showing the Pareto optimality.
-    - A .csv file storing all the RSA traits for each root.
+- In the output folder you selected, you will find:
+    - A Pareto optimality plot for each root (PNG format)
+    - A timestamped CSV file (e.g., `report_20241110_153045.csv`) storing all RSA traits for each root
+
+**Note on Units:** If you configured scaling during analysis, all length measurements in the CSV and plots will be in your specified units (e.g., mm, cm). Otherwise, measurements are in pixels.
 
 The RSA traits included in the CSV are
 

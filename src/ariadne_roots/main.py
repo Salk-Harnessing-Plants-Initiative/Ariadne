@@ -11,6 +11,7 @@ easier selection of nearby points
 """
 
 import tkinter as tk
+from tkinter import filedialog, messagebox
 import csv
 import copy
 import networkx as nx
@@ -24,7 +25,7 @@ from PIL import Image, ImageTk, ImageSequence
 from datetime import datetime
 from networkx.readwrite import json_graph
 
-from ariadne_roots import quantify
+from ariadne_roots import quantify, config, scaling
 
 
 # Set up logging
@@ -282,7 +283,7 @@ class TracerUI(tk.Frame):
 
     def import_image(self):
         """Query user for an input file and load it onto the canvas."""
-        self.path = tk.filedialog.askopenfilename(
+        self.path = filedialog.askopenfilename(
             parent=self.base, initialdir="./", title="Select an image file:"
         )
         self.title_label.config(text=f"Tracing {self.path}")
@@ -1006,6 +1007,10 @@ class AnalyzerUI(tk.Frame):
         self.base.geometry("750x600")
         self.base.title("Ariadne: Analyze")
 
+        # Initialize scale factors with defaults first
+        self.length_scale_factor = 1.0
+        self.length_scale_unit = "px"
+
         # master frame
         self.frame = tk.Frame(self.base)
         self.frame.pack(side="top", fill="both", expand=True)
@@ -1027,20 +1032,142 @@ class AnalyzerUI(tk.Frame):
         self.output = tk.Label(self.right_frame, text=self.output_info)
         self.output.pack(side="top", fill="both", expand=True)
 
+        # Ask user for scale info at startup
+        self.ask_scale()
+
+    def ask_scale(self):
+        """Pop up window to set scale before analysis."""
+        # Create custom popup window
+        scale_win = tk.Toplevel(self.base)
+        scale_win.title("Set Scale")
+        scale_win.geometry("350x350")
+        scale_win.grab_set()  # make popup modal
+
+        # Labels + Entries
+        tk.Label(scale_win, text="1) Distance in pixels:").pack(pady=5)
+        pixels_entry = tk.Entry(scale_win)
+        pixels_entry.pack(pady=5)
+
+        tk.Label(scale_win, text="2) Distance in (real units):").pack(pady=5)
+        real_entry = tk.Entry(scale_win)
+        real_entry.pack(pady=5)
+
+        tk.Label(scale_win, text="3) Unit of length (e.g., mm, cm):").pack(pady=5)
+        unit_entry = tk.Entry(scale_win)
+        unit_entry.pack(pady=5)
+
+        # Label to show calculated scale
+        result_label = tk.Label(scale_win, text="Result: (waiting for input...)")
+        result_label.pack(pady=10)
+
+        def update_result(*args):
+            """Update live result when values change."""
+            try:
+                pixels = float(pixels_entry.get())
+                real_dist = float(real_entry.get())
+                if pixels > 0 and real_dist > 0:
+                    scale = real_dist / pixels
+                    result_label.config(
+                        text=f"Result: 1 pixel = {scale:.4f} {unit_entry.get().strip()}"
+                    )
+                else:
+                    result_label.config(text="Result: invalid numbers")
+            except ValueError:
+                result_label.config(text="Result: waiting for valid input...")
+
+        # Bind events so that division updates live
+        pixels_entry.bind("<KeyRelease>", update_result)
+        real_entry.bind("<KeyRelease>", update_result)
+        unit_entry.bind("<KeyRelease>", update_result)
+
+        def submit_scale():
+            try:
+                pixels = float(pixels_entry.get())
+                real_dist = float(real_entry.get())
+                unit = unit_entry.get().strip()
+
+                if pixels <= 0 or real_dist <= 0 or unit == "":
+                    raise ValueError("Invalid values provided.")
+
+                # Store scale factors as instance variables (for immediate use)
+                self.length_scale_factor = real_dist / pixels
+                self.length_scale_unit = unit
+
+                # Store in config module for analysis workflow
+                config.length_scale_factor = self.length_scale_factor
+                config.length_scale_unit = self.length_scale_unit
+
+                messagebox.showinfo(
+                    "Scale set",
+                    f"1 pixel = {self.length_scale_factor:.4f} {self.length_scale_unit}",
+                )
+                scale_win.destroy()
+
+            except ValueError:
+                messagebox.showerror(
+                    "Error",
+                    "Please enter positive numeric values for both distances and a non-empty unit.",
+                )
+
+        def cancel_scale():
+            """Cancel and use default scaling (1.0 px)."""
+            # Set defaults
+            self.length_scale_factor = 1.0
+            self.length_scale_unit = "px"
+
+            # Store in config module
+            config.length_scale_factor = 1.0
+            config.length_scale_unit = "px"
+
+            scale_win.destroy()
+
+        # Button frame for OK and Cancel
+        button_frame = tk.Frame(scale_win)
+        button_frame.pack(pady=10)
+
+        submit_btn = tk.Button(button_frame, text="OK", command=submit_scale, width=10)
+        submit_btn.pack(side=tk.LEFT, padx=5)
+
+        cancel_btn = tk.Button(
+            button_frame, text="Cancel", command=cancel_scale, width=10
+        )
+        cancel_btn.pack(side=tk.LEFT, padx=5)
+
+        # Center popup and block main window until closed
+        self.base.wait_window(scale_win)
+
     def import_file(self):
         """Load input files."""
-        self.tree_paths = tk.filedialog.askopenfilenames(
+        self.tree_paths = filedialog.askopenfilenames(
             parent=self.base, initialdir="./", title="Select files to analyze:"
         )
 
         if len(self.tree_paths) == 0:  # no selection made
             return
-        else:
-            self.output_path = Path(
-                tk.filedialog.askdirectory(
-                    parent=self.base, initialdir="./", title="Select an output folder:"
-                )
+
+        # Inform user about next step
+        messagebox.showinfo(
+            "Select Output Folder",
+            f"Selected {len(self.tree_paths)} file(s) for analysis.\n\n"
+            "Next: Choose where to save the results (CSV report and plots).",
+        )
+
+        # Get output folder
+        output_folder = filedialog.askdirectory(
+            parent=self.base,
+            initialdir="./",
+            title="Select output folder for analysis results (CSV & plots):",
+            mustexist=True,
+        )
+
+        # Check if user cancelled
+        if not output_folder:
+            messagebox.showwarning(
+                "Cancelled", "No output folder selected. Analysis cancelled."
             )
+            return
+
+        self.output_path = Path(output_folder)
 
         # create a csv to store analysis results
         timestamp = datetime.now()
@@ -1066,21 +1193,40 @@ class AnalyzerUI(tk.Frame):
             # load and process graph data
             with open(json_file, mode="r") as h:
                 data = json.load(h)
+
+                # Validate JSON format - must be networkx adjacency format
+                if (
+                    not isinstance(data, dict)
+                    or "nodes" not in data
+                    or "adjacency" not in data
+                ):
+                    error_msg = (
+                        f"Invalid JSON format in {graph_name}\n\n"
+                        "Expected networkx adjacency format with 'nodes' and 'adjacency' keys.\n"
+                        "This file appears to be in a different format (possibly a tree/node format).\n\n"
+                        "Only JSON files exported from the Ariadne tracer can be analyzed.\n"
+                        "Test fixture files (test_*.json) are for unit testing only."
+                    )
+                    messagebox.showerror("Invalid File Format", error_msg)
+                    return
+
                 graph = json_graph.adjacency_graph(data)
 
                 # perform analysis
                 results, front, randoms = quantify.analyze(graph)
                 results["filename"] = graph_name_noext
 
-                # Open the CSV file and write the header only once
-                with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
-                    if i == 1:  # Write header only for the first file
-                        w = csv.DictWriter(csvfile, fieldnames=results.keys())
-                        w.writeheader()
+                # Apply scaling transformation to results
+                scaled_results = scaling.apply_scaling_transformation(
+                    results, self.length_scale_factor
+                )
 
-                    # Write results to the CSV for each file
-                    w = csv.DictWriter(csvfile, fieldnames=results.keys())
-                    w.writerow(results)
+                # Write scaled results to CSV
+                with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
+                    w = csv.DictWriter(csvfile, fieldnames=scaled_results.keys())
+                    if i == 1:  # Write header only for the first file
+                        w.writeheader()
+                    w.writerow(scaled_results)
 
                 # debug
                 logging.debug(f"Total root length: {results['Total root length']}")
@@ -1092,13 +1238,16 @@ class AnalyzerUI(tk.Frame):
                     f"Travel distance (random): {results['Travel distance (random)']}"
                 )
 
-                # make pareto plot and save
+                # make pareto plot and save (using scaled results for consistency with CSV)
                 quantify.plot_all(
                     front,
-                    [results["Total root length"], results["Travel distance"]],
+                    [
+                        scaled_results["Total root length"],
+                        scaled_results["Travel distance"],
+                    ],
                     randoms,
-                    results["Total root length (random)"],
-                    results["Travel distance (random)"],
+                    scaled_results["Total root length (random)"],
+                    scaled_results["Travel distance (random)"],
                     pareto_path,
                 )
 
@@ -1107,6 +1256,18 @@ class AnalyzerUI(tk.Frame):
 
         # show confirmation message
         print("Finished.")
+
+        # Show completion dialog with output locations
+        completion_msg = (
+            f"Analysis Complete!\n\n"
+            f"Processed {len(self.tree_paths)} file(s)\n\n"
+            f"Output folder: {self.output_path}\n\n"
+            f"Generated files:\n"
+            f"  • CSV report: {report_dest.name}\n"
+            f"  • Pareto plots: {len(self.tree_paths)} PNG file(s)\n\n"
+            f"You can now open the output folder to view results."
+        )
+        messagebox.showinfo("Analysis Complete", completion_msg)
 
     def clear(self):
         """Clean up a previously imported file."""
