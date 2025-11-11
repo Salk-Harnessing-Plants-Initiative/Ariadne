@@ -30,6 +30,7 @@ Add essential development commands to `.claude/commands/` that are relevant for 
 
 1. **`test.md`** - Run pytest with common configurations
 2. **`changelog.md`** - Maintain CHANGELOG.md following Keep a Changelog format
+3. **`release.md`** - Complete PyPI release workflow with command integrations
 
 ### Commands to Keep (Already Exist)
 
@@ -53,11 +54,15 @@ Add essential development commands to `.claude/commands/` that are relevant for 
 
 ## Success Criteria
 
-1. 2 new commands (`test.md` and `changelog.md`) created and working
+1. 3 new commands created and working:
+   - `test.md` - pytest with common options
+   - `changelog.md` - Keep a Changelog format
+   - `release.md` - Complete PyPI release workflow
 2. Commands adapted for Ariadne's Python/pytest/uv context
 3. Commands follow existing style and format (matching pr-description, review-pr)
 4. Commands reference appropriate tools and configurations
-5. All commands tested with actual usage
+5. Release command integrates with all other commands
+6. All commands tested with actual usage
 
 ## Implementation Plan
 
@@ -164,8 +169,10 @@ The `/release` command will be updated to reference other commands:
 
 - [x] `/test` command created with common pytest options
 - [x] `/changelog` command created following Keep a Changelog format
-- [x] Both commands adapted for Python/pytest/uv context
+- [x] `/release` command created with complete PyPI workflow
+- [x] All commands adapted for Python/pytest/uv context
 - [x] Commands follow existing style (match pr-description, review-pr format)
+- [x] `/release` integrates with `/test`, `/coverage`, `/lint`, `/changelog`, `/pr-description`, `/cleanup-merged`
 - [ ] Commands tested with actual usage scenarios
 - [ ] Proposal approved and OpenSpec change archived
 
