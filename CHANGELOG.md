@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0a1] - 2024-11-11 (Pre-release)
+
 ### Added
 
 - `/test` command for running pytest with common options and filters
@@ -14,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/release` command for complete PyPI release workflow
 - OpenSpec proposal system for managing development changes
 - Comprehensive command integration (test, coverage, lint, changelog, pr-description, review-pr, release, cleanup-merged)
+- CHANGELOG.md file following Keep a Changelog format
+
+**Note**: This is a pre-release version (alpha 1) for testing the new command infrastructure.
 
 ## [0.0.3] - 2024-11-11
 
@@ -53,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-file batch processing
 - NetworkX-based graph algorithms for root networks
 
-[Unreleased]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/compare/v0.0.3...HEAD
+[Unreleased]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/compare/v0.1.0a1...HEAD
+[0.1.0a1]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/compare/v0.0.3...v0.1.0a1
 [0.0.3]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases/tag/v0.0.2
