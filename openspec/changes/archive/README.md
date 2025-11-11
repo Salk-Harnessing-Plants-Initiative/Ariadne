@@ -101,6 +101,49 @@ Original fix by @pradal addressed `UnboundLocalError` when lateral root indices 
 
 ---
 
+## integrate-pr29-scaling-features (November 2024)
+**Status**: ✅ Completed - Merged in PR #33
+
+Integrated PR #29 scaling features onto current main branch with proper test coverage and CI compatibility.
+
+- **Proposal**: [proposal.md](integrate-pr29-scaling-features/proposal.md)
+- **Tasks**: [tasks.md](integrate-pr29-scaling-features/tasks.md)
+- **Related PR**: #33
+- **Original PR**: #29
+
+**Key Deliverables**:
+- Custom scaling dialog for converting pixel measurements to real-world units
+- Support for mm, cm, and µm unit selection in GUI
+- Automated scaling transformation applied to all measurements in CSV output
+- Improved Pareto front visualization with better graph centering
+- Config module (`config.py`) for global scaling configuration
+- Preserved tkinter mocking and test infrastructure
+- Maintained 98.38% coverage
+
+**Timeline**: Rebased and integrated with full test coverage
+
+---
+
+## add-scaling-tests (November 2024)
+**Status**: ✅ Completed - Merged in PR #33
+
+Added comprehensive unit tests for the scaling logic introduced in PR #29.
+
+- **Proposal**: [proposal.md](add-scaling-tests/proposal.md)
+- **Tasks**: [tasks.md](add-scaling-tests/tasks.md)
+- **Related PR**: #33
+
+**Key Deliverables**:
+- Unit tests for config module (default values, custom values, state persistence)
+- Unit tests for scaling transformation logic (excluded fields, numeric fields, arrays, edge cases)
+- Tests for buffer calculation edge cases (zero values, negative coordinates)
+- 15 new tests covering scaling functionality
+- Maintained 98.38% overall coverage
+
+**Timeline**: Implemented alongside feature integration in PR #33
+
+---
+
 ## add-development-commands (November 2024)
 **Status**: ✅ Completed - Merged in PR #41
 
