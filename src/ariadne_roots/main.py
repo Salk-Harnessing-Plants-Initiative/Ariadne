@@ -1106,7 +1106,7 @@ class AnalyzerUI(tk.Frame):
             except ValueError:
                 messagebox.showerror(
                     "Error",
-                    "Please enter valid numeric values for distances and a unit.",
+                    "Please enter positive numeric values for both distances and a non-empty unit.",
                 )
 
         def cancel_scale():

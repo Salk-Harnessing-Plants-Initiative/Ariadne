@@ -64,6 +64,7 @@ def apply_scaling_transformation(results, scale_factor, excluded_fields=None):
             "alpha",
             "Mean LR angles",
             "Median LR angles",
+            "LR angles",  # Array of angles (dimensionless) - explicit exclusion
             "LR count",
             "Branched Zone density",
             "scaling distance to front",

@@ -422,11 +422,15 @@ def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
     base_y_min = min(front_y_min, scaled_srand)
     base_y_max = max(front_y_max, scaled_srand)
 
-    # Add 20% buffer that works for negative, positive, and zero values
-    x_min = base_x_min - abs(base_x_min) * 0.20
-    x_max = base_x_max + abs(base_x_max) * 0.20
-    y_min = base_y_min - abs(base_y_min) * 0.20
-    y_max = base_y_max + abs(base_y_max) * 0.20
+    # Add 20% buffer based on range, with minimum buffer of 1.0 for zero/small values
+    x_range = abs(base_x_max - base_x_min)
+    y_range = abs(base_y_max - base_y_min)
+    buffer_x = max(x_range * 0.20, 1.0)
+    buffer_y = max(y_range * 0.20, 1.0)
+    x_min = base_x_min - buffer_x
+    x_max = base_x_max + buffer_x
+    y_min = base_y_min - buffer_y
+    y_max = base_y_max + buffer_y
 
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)
