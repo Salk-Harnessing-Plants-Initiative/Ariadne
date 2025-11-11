@@ -343,6 +343,39 @@ def calc_density_LRs(G):  # pragma: no cover
     # add up to _n_ degrees
 
 
+def calculate_plot_buffer(base_min, base_max, buffer_percent=0.20, min_buffer=1.0):
+    """Calculate plot buffer for axis limits.
+
+    Computes appropriate buffer margins for plot axes based on data range,
+    handling edge cases like negative coordinates, zero values, and small ranges.
+
+    Args:
+        base_min: Minimum value in the data range
+        base_max: Maximum value in the data range
+        buffer_percent: Buffer size as fraction of range (default 0.20 = 20%)
+        min_buffer: Minimum buffer to prevent degenerate plots (default 1.0)
+
+    Returns:
+        Tuple of (min_limit, max_limit) for axis
+
+    Examples:
+        >>> calculate_plot_buffer(0, 10)  # Normal positive range
+        (-2.0, 12.0)
+
+        >>> calculate_plot_buffer(-10, 10)  # Range crossing zero
+        (-14.0, 14.0)
+
+        >>> calculate_plot_buffer(0, 0)  # Degenerate range (all zeros)
+        (-1.0, 1.0)
+
+        >>> calculate_plot_buffer(-5, -3)  # Negative range
+        (-5.4, -2.6)
+    """
+    data_range = abs(base_max - base_min)
+    buffer = max(data_range * buffer_percent, min_buffer)
+    return (base_min - buffer, base_max + buffer)
+
+
 def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
     """Plot Pareto front with actual and random trees, with scaling and centering.
 
@@ -422,15 +455,9 @@ def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
     base_y_min = min(front_y_min, scaled_srand)
     base_y_max = max(front_y_max, scaled_srand)
 
-    # Add 20% buffer based on range, with minimum buffer of 1.0 for zero/small values
-    x_range = abs(base_x_max - base_x_min)
-    y_range = abs(base_y_max - base_y_min)
-    buffer_x = max(x_range * 0.20, 1.0)
-    buffer_y = max(y_range * 0.20, 1.0)
-    x_min = base_x_min - buffer_x
-    x_max = base_x_max + buffer_x
-    y_min = base_y_min - buffer_y
-    y_max = base_y_max + buffer_y
+    # Calculate axis limits with 20% buffer
+    x_min, x_max = calculate_plot_buffer(base_x_min, base_x_max)
+    y_min, y_max = calculate_plot_buffer(base_y_min, base_y_max)
 
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)

@@ -28,6 +28,7 @@ from ariadne_roots.quantify import (
     calc_len_LRs,
     calc_zones,
     calculate_convex_hull_area,
+    calculate_plot_buffer,
     distance_from_front,
     pareto_calcs,
     calc_len_LRs_with_distances,
@@ -597,3 +598,90 @@ def test_analyze(
         assert isclose(
             front.get(np.float64(0.5))[1], 34690.010682440174, rel_tol=1e-8
         )  # total_travel_distance
+
+
+class TestPlotBufferCalculation:
+    """Test buffer calculation for plot axis limits."""
+
+    def test_buffer_normal_positive_range(self):
+        """Test buffer with normal positive coordinate range."""
+        min_limit, max_limit = calculate_plot_buffer(0, 10)
+        
+        # 20% of range (10) = 2.0 buffer
+        assert min_limit == -2.0
+        assert max_limit == 12.0
+
+    def test_buffer_negative_range(self):
+        """Test buffer with negative coordinate range."""
+        min_limit, max_limit = calculate_plot_buffer(-10, -2)
+
+        # Range is 8, 20% buffer = 1.6
+        assert isclose(min_limit, -11.6, rel_tol=1e-9)
+        assert isclose(max_limit, -0.4, rel_tol=1e-9)
+
+    def test_buffer_range_crossing_zero(self):
+        """Test buffer with range crossing zero."""
+        min_limit, max_limit = calculate_plot_buffer(-5, 5)
+        
+        # Range is 10, 20% buffer = 2.0
+        assert min_limit == -7.0
+        assert max_limit == 7.0
+
+    def test_buffer_zero_values(self):
+        """Test buffer when all values are zero (degenerate case)."""
+        min_limit, max_limit = calculate_plot_buffer(0, 0)
+        
+        # Range is 0, minimum buffer of 1.0 applies
+        assert min_limit == -1.0
+        assert max_limit == 1.0
+
+    def test_buffer_small_range(self):
+        """Test buffer with very small range (less than min_buffer)."""
+        min_limit, max_limit = calculate_plot_buffer(5.0, 5.1)
+        
+        # Range is 0.1, 20% = 0.02 < min_buffer of 1.0
+        # So min_buffer applies
+        assert min_limit == 4.0
+        assert max_limit == 6.1
+
+    def test_buffer_large_range(self):
+        """Test buffer with large coordinate range."""
+        min_limit, max_limit = calculate_plot_buffer(0, 1000)
+        
+        # Range is 1000, 20% buffer = 200.0
+        assert min_limit == -200.0
+        assert max_limit == 1200.0
+
+    def test_buffer_negative_to_positive(self):
+        """Test buffer with range from negative to positive (asymmetric)."""
+        min_limit, max_limit = calculate_plot_buffer(-3, 7)
+        
+        # Range is 10, 20% buffer = 2.0
+        assert min_limit == -5.0
+        assert max_limit == 9.0
+
+    def test_buffer_custom_percent(self):
+        """Test buffer with custom buffer percentage."""
+        min_limit, max_limit = calculate_plot_buffer(0, 10, buffer_percent=0.10)
+        
+        # 10% of range (10) = 1.0 buffer
+        assert min_limit == -1.0
+        assert max_limit == 11.0
+
+    def test_buffer_custom_min_buffer(self):
+        """Test buffer with custom minimum buffer."""
+        min_limit, max_limit = calculate_plot_buffer(0, 0, min_buffer=5.0)
+        
+        # Range is 0, custom min_buffer of 5.0 applies
+        assert min_limit == -5.0
+        assert max_limit == 5.0
+
+    def test_buffer_prevents_matplotlib_error(self):
+        """Test that buffer prevents degenerate xlim/ylim that causes matplotlib errors."""
+        # This was the original bug - when all values are the same
+        min_limit, max_limit = calculate_plot_buffer(42.0, 42.0)
+        
+        # Must have different min/max to avoid matplotlib error
+        assert min_limit < max_limit
+        assert min_limit == 41.0
+        assert max_limit == 43.0
