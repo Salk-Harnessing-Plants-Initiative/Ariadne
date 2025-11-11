@@ -101,6 +101,28 @@ Original fix by @pradal addressed `UnboundLocalError` when lateral root indices 
 
 ---
 
+## add-development-commands (November 2024)
+**Status**: ✅ Completed - Merged in PR #41
+
+Added comprehensive development commands for managing the Ariadne project, including test, changelog, and release workflows.
+
+- **Proposal**: [proposal.md](add-development-commands/proposal.md)
+- **Tasks**: [tasks.md](add-development-commands/tasks.md)
+- **Related PR**: #41
+- **Related Issue**: #35
+
+**Key Deliverables**:
+- `/test` command for running pytest with common options and filters
+- `/changelog` command for maintaining CHANGELOG.md following Keep a Changelog format
+- `/release` command for complete PyPI release workflow with command integrations
+- CHANGELOG.md file following Keep a Changelog format
+- OpenSpec proposal system for managing development changes
+- Comprehensive command integration (test, coverage, lint, changelog, pr-description, review-pr, release, cleanup-merged)
+
+**Timeline**: 1-2 hours (as estimated)
+
+---
+
 ## Archive Management
 
 When archiving a new OpenSpec change:
