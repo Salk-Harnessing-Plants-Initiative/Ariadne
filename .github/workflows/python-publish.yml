@@ -6,6 +6,9 @@ on:
     types:
       - published
 
+permissions:
+  contents: read
+
 jobs:
   validate-release:
     name: Validate Release
@@ -100,9 +103,7 @@ jobs:
           mkdir -p test-install && cd test-install
           uv init --no-readme --no-workspace test-project
           cd test-project
-          WHEEL=$(ls ../../dist/*.whl)
-          echo "Installing wheel: $WHEEL"
-          uv add "$WHEEL"
+          uv add ../../dist/*.whl
           uv run python -c "import ariadne_roots; print('✅ Wheel installation successful'); print('Version:', getattr(ariadne_roots, '__version__', 'unknown'))"
           cd ../..
 
