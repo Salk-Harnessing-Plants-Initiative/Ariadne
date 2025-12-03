@@ -1124,7 +1124,7 @@ class AnalyzerUI(tk.Frame):
         config.length_scale_factor = self.length_scale_factor
         config.length_scale_unit = self.length_scale_unit
         
-        print(f"DEBUG: Scale set to {config.length_scale_factor} {config.length_scale_unit}")
+   
         self.tree_paths = tk.filedialog.askopenfilenames(
             parent=self.base, initialdir="./", title="Select files to analyze:"
         )
@@ -1221,7 +1221,7 @@ class AnalyzerUI(tk.Frame):
 
                 # make pareto plot and save
                 import config
-                print(f"DEBUG: scale_factor = {config.length_scale_factor}")
+                
                 scale_factor = config.length_scale_factor if config.length_scale_factor is not None else 1.0
                 scale_unit = config.length_scale_unit
                 print(f"Using scale_factor = {scale_factor}")
