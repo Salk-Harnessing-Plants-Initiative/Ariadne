@@ -36,6 +36,11 @@ except ImportError:
 # parser.add_argument('-i', '--input', help='Full path to input file', required=True)
 # args = parser.parse_args()
 
+def format_number(value, decimals=6):
+    """Format a number to specified decimal places if it's a float."""
+    if isinstance(value, float):
+        return format(value, f'.{decimals}f')
+    return value
 
 def distance(p1, p2):
     """Compute 2D Euclidian distance between two (x,y) points."""
@@ -228,7 +233,65 @@ def calc_root_len(G, nodes):
         G.edges[prev, current_node]["weight"] = segment
 
     return dist
-
+def calculate_tradeoff(front, actual_tree):
+    """
+    Calculate Tradeoff metric:
+    ((total root length / travel distance) / 
+     (steiner_length / satellite_distance))
+    
+    Where:
+    - steiner_length = min total root length on Pareto front (material-optimal)
+    - satellite_distance = min travel distance on Pareto front (distance-optimal)
+    - actual_tree = (total_root_length, travel_distance) of the actual tree
+    """
+    
+    # Extract Pareto front values
+    front_points = list(front.values())  # List of [total_length, travel_distance] pairs
+    
+    if len(front_points) < 1:
+        print("Warning: Pareto front is empty, cannot calculate Tradeoff")
+        return {}
+    
+    # Find Steiner architecture (minimizes total root length)
+    steiner_point = min(front_points, key=lambda x: x[0])
+    steiner_length, steiner_distance = steiner_point
+    
+    # Find Satellite architecture (minimizes travel distance)
+    satellite_point = min(front_points, key=lambda x: x[1])
+    satellite_length, satellite_distance = satellite_point
+    
+    # Actual tree values
+    actual_length, actual_distance = actual_tree
+    
+    # Calculate ratios - handle division by zero
+    if actual_distance == 0:
+        actual_ratio = float('inf')
+        print("Warning: Actual travel distance is 0, actual_ratio set to infinity")
+    else:
+        actual_ratio = actual_length / actual_distance
+    
+    if satellite_distance == 0:
+        optimal_ratio = float('inf')
+        print("Warning: Satellite travel distance is 0, optimal_ratio set to infinity")
+    else:
+        optimal_ratio = steiner_length / satellite_distance
+    
+    # Calculate tradeoff
+    if optimal_ratio == 0 or optimal_ratio == float('inf') or actual_ratio == float('inf'):
+        tradeoff = None
+        print("Warning: Could not calculate tradeoff due to invalid ratios")
+    else:
+        tradeoff = actual_ratio / optimal_ratio
+    
+    return {
+        "Tradeoff": tradeoff,
+        "Steiner_length": steiner_length,
+        "Steiner_distance": steiner_distance,
+        "Satellite_length": satellite_length,
+        "Satellite_distance": satellite_distance,
+        "Actual_ratio": actual_ratio,
+        "Optimal_ratio": optimal_ratio
+    }
 
 def calc_len_LRs(H):
     """Find the total length of each LR type in the graph."""
@@ -381,51 +444,66 @@ def plot_all(front, actual, randoms, mrand, srand, dest, scale_factor, scale_uni
 def distance_from_front(front, actual_tree):
     """
     Return the closest alpha for the actual tree, and its distance to the front.
-
-    actual_tree is just (mactual, sactual)
-    front is a dict of form {alpha : [total_root_length, total_travel_distance]}
+    
+    Interpolates between discrete alpha values for higher precision.
     """
-
     # for each alpha value, find distance to the actual tree
     distances = {}
-
+    
     for alpha in front.items():
         alpha_value = alpha[0]
         alpha_tree = alpha[1]
-
+        
         material_ratio = actual_tree[0] / alpha_tree[0]
         transport_ratio = actual_tree[1] / alpha_tree[1]
-
+        
         distances[alpha_value] = max(material_ratio, transport_ratio)
-
-    # print(distances)
-    closest = min(distances.items(), key=lambda x: x[1])
-    # print(closest)
-
-    characteristic_alpha, scaling_distance = closest
-
-    return characteristic_alpha, scaling_distance
-
+    
+    # Find the two closest alpha values
+    sorted_alphas = sorted(distances.items(), key=lambda x: x[1])
+    closest = sorted_alphas[0]
+    second_closest = sorted_alphas[1] if len(sorted_alphas) > 1 else closest
+    
+    # Interpolate between the two closest alphas
+    alpha1, dist1 = closest
+    alpha2, dist2 = second_closest
+    
+    # Linear interpolation
+    if dist1 == dist2:
+        interpolated_alpha = alpha1
+    else:
+        # Weighted average based on distances
+        total_dist = dist1 + dist2
+        weight1 = dist2 / total_dist  # Closer distance gets higher weight
+        weight2 = dist1 / total_dist
+        
+        interpolated_alpha = alpha1 * weight1 + alpha2 * weight2
+    
+    # Format to 6 decimal places
+    interpolated_alpha = f"{interpolated_alpha:.6f}"
+    scaling_distance = f"{dist1:.6f}"
+    
+    return interpolated_alpha, scaling_distance
 
 def pareto_calcs(H):
     """Perform Pareto-related calculations."""
     front, actual = pareto_front(H)
     mactual, sactual = actual
    
-
     # for debug: show total_root_length, total_travel_distance
     print(list(front.items())[0:5])
 
+    # Calculate tradeoff metrics
+    tradeoff_info = calculate_tradeoff(front, actual)
+
     plant_alpha, plant_scaling = distance_from_front(front, actual)
     randoms = random_tree(H)
-
 
     # centroid of randoms
     mrand = np.mean([x[0] for x in randoms])
     srand = np.mean([x[1] for x in randoms])
 
     rand_alpha, rand_scaling = distance_from_front(front, (mrand, srand))
-
 
     # assemble dict for export
     results = {
@@ -438,6 +516,8 @@ def pareto_calcs(H):
         "alpha (random)": rand_alpha,
         "scaling (random)": rand_scaling,
     }
+    
+    results.update(tradeoff_info)
 
     return results, front, randoms
 
@@ -773,12 +853,10 @@ def analyze(G):
     results["Total minimal Distance"] = total_distance  # Add the total distance to the results
     results["Tortuosity"] = material_distance_ratio   
     results["Convex Hull Area"] = convex_hull_area                                 
-    
     results["Barycenter x displacement"] = barycenter_x_displacement
     results["Barycenter y displacement"] = barycenter_y_displacement
-    results["Total minimal Distance"] = (
-        total_distance  # Add the total distance to the results
-    )
+    results["scale_factor"] = scale_factor
+    results["scale_unit"] = scale_unit
 
     # Calculate the material cost (total root length)
     Total_root_length = len_PR + sum(lens_LRs)
@@ -788,7 +866,8 @@ def analyze(G):
         # Don't scale these fields
         if any(excl in key for excl in ["LR density", "alpha", "Mean LR angles", 
                                        "Median LR angles", "LR count", "Branched Zone density", 
-                                       "scaling distance to front", "Tortuosity", "scaling (random)"]):
+                                       "scaling distance to front", "Tortuosity", "scaling (random)",
+                                       "Tradeoff", "Actual_ratio", "Optimal_ratio", "scale_factor"]):
             scaled_results[key] = value
         else:
             try:
@@ -796,8 +875,4 @@ def analyze(G):
             except (ValueError, TypeError):
                 scaled_results[key] = value
     
-    return scaled_results, front, randoms
-
-
-
-
+    return scaled_results, front, randoms,scale_factor, scale_unit

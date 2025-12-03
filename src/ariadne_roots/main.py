@@ -1,5 +1,4 @@
-"""
-ARIADNE
+"""ARIADNE
 
 A GUI for segmenting root images from Arabidopsis seedlings grown on agar plates.
 
@@ -1165,8 +1164,10 @@ class AnalyzerUI(tk.Frame):
                 graph = json_graph.adjacency_graph(data)
 
                 # perform analysis
-                results, front, randoms = quantify.analyze(graph)
+                results, front, randoms, scale_factor, scale_unit = quantify.analyze(graph)
                 results["filename"] = graph_name_noext
+                results["scale_factor"] = scale_factor  # Add scale factor to results
+                results["scale_unit"] = scale_unit      # Add scale unit to results
 
                 # Fields to exclude from scaling
                 excluded_fields = {
@@ -1178,7 +1179,11 @@ class AnalyzerUI(tk.Frame):
                     "Branched Zone density",
                     "scaling distance to front",
                     "Tortuosity",
-                    "scaling (random)"
+                    "scaling (random)",
+                    "Tradeoff", 
+                    "Actual_ratio", 
+                    "Optimal_ratio",
+                    "scale_factor"
                 }
 
                 # Create scaled results dictionary for the .csv file
