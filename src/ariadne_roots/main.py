@@ -1238,16 +1238,16 @@ class AnalyzerUI(tk.Frame):
                     f"Travel distance (random): {results['Travel distance (random)']}"
                 )
 
-                # make pareto plot and save (using scaled results for consistency with CSV)
+                # make pareto plot and save (using unscaled results - plot_all handles scaling)
                 quantify.plot_all(
                     front,
                     [
-                        scaled_results["Total root length"],
-                        scaled_results["Travel distance"],
+                        results["Total root length"],
+                        results["Travel distance"],
                     ],
                     randoms,
-                    scaled_results["Total root length (random)"],
-                    scaled_results["Travel distance (random)"],
+                    results["Total root length (random)"],
+                    results["Travel distance (random)"],
                     pareto_path,
                 )
 
