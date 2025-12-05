@@ -261,3 +261,33 @@ def issue26_root_json():
     """
     file_path = "tests/data/test_issue26_230629PN005_0.json"
     return file_path
+
+
+# ========== Matt Platre Test Data (v0.1.0a1 bug report) ==========
+
+
+@pytest.fixture
+def matt_etoh_exp1_plantB_day10_json():
+    """EtOH experiment 1, plant B, day 10 from Matt Platre's bug report.
+
+    Small root system used to verify np.float64 serialization fix.
+    """
+    return "tests/data/_set1_day1_20230206-153345_022_EtOH_EXP1_plantB_day10.json"
+
+
+@pytest.fixture
+def matt_etoh_exp2_plantB_day11_json():
+    """EtOH experiment 2, plant B, day 11 from Matt Platre's bug report.
+
+    Medium root system used to verify np.float64 serialization fix.
+    """
+    return "tests/data/_set1_day1_20230320-154926_001_EtOH_EXP2_plantB_day11.json"
+
+
+@pytest.fixture
+def matt_etoh_exp3_plantE_day11_json():
+    """EtOH experiment 3, plant E, day 11 from Matt Platre's bug report.
+
+    Large root system (32KB) used to verify np.float64 serialization fix.
+    """
+    return "tests/data/_set1_day1_20230509-125246_004_EtOH_EXP3_plantE_day11.json"

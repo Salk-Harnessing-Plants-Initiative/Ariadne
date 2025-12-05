@@ -257,3 +257,87 @@ class TestCSVSerialization:
             assert (
                 "numpy" not in str_repr.lower()
             ), f"{field} contains numpy in string representation"
+
+
+class TestMattPlatreData:
+    """Tests using Matt Platre's data from v0.1.0a1 bug report.
+
+    These tests verify the np.float64 serialization fix works on the
+    actual data that exposed the bug.
+    """
+
+    def test_matt_exp1_no_numpy_types(self, matt_etoh_exp1_plantB_day10_json):
+        """Verify EtOH EXP1 data has no numpy types in results."""
+        with open(matt_etoh_exp1_plantB_day10_json) as f:
+            data = json.load(f)
+            graph = json_graph.adjacency_graph(data)
+
+        results, _, _ = quantify.analyze(graph)
+
+        # Check LR angles specifically (the field Matt reported)
+        for i, angle in enumerate(results.get("LR angles", [])):
+            assert isinstance(angle, float), f"LR angles[{i}] is {type(angle)}"
+            assert not isinstance(angle, np.floating)
+
+        # Check CSV serialization
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=results.keys())
+        writer.writerow(results)
+        assert "np.float64" not in output.getvalue()
+
+    def test_matt_exp2_no_numpy_types(self, matt_etoh_exp2_plantB_day11_json):
+        """Verify EtOH EXP2 data has no numpy types in results."""
+        with open(matt_etoh_exp2_plantB_day11_json) as f:
+            data = json.load(f)
+            graph = json_graph.adjacency_graph(data)
+
+        results, _, _ = quantify.analyze(graph)
+
+        # Check LR angles specifically (the field Matt reported)
+        for i, angle in enumerate(results.get("LR angles", [])):
+            assert isinstance(angle, float), f"LR angles[{i}] is {type(angle)}"
+            assert not isinstance(angle, np.floating)
+
+        # Check CSV serialization
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=results.keys())
+        writer.writerow(results)
+        assert "np.float64" not in output.getvalue()
+
+    def test_matt_exp3_no_numpy_types(self, matt_etoh_exp3_plantE_day11_json):
+        """Verify EtOH EXP3 data (largest file) has no numpy types in results."""
+        with open(matt_etoh_exp3_plantE_day11_json) as f:
+            data = json.load(f)
+            graph = json_graph.adjacency_graph(data)
+
+        results, _, _ = quantify.analyze(graph)
+
+        # Check LR angles specifically (the field Matt reported)
+        for i, angle in enumerate(results.get("LR angles", [])):
+            assert isinstance(angle, float), f"LR angles[{i}] is {type(angle)}"
+            assert not isinstance(angle, np.floating)
+
+        # Check CSV serialization
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=results.keys())
+        writer.writerow(results)
+        assert "np.float64" not in output.getvalue()
+
+    def test_matt_data_valid_ranges(self, matt_etoh_exp1_plantB_day10_json):
+        """Verify Matt's data produces valid ranges for all fields."""
+        with open(matt_etoh_exp1_plantB_day10_json) as f:
+            data = json.load(f)
+            graph = json_graph.adjacency_graph(data)
+
+        results, _, _ = quantify.analyze(graph)
+
+        # LR angles should be 0-180
+        for angle in results.get("LR angles", []):
+            assert 0 <= angle <= 180
+
+        # Lengths should be positive
+        assert results["Total root length"] > 0
+        assert results["PR length"] > 0
+
+        # Alpha should be 0-1
+        assert 0 <= results["alpha"] <= 1
