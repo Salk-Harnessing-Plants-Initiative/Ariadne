@@ -1,6 +1,5 @@
-import pytest
-import numpy as np
 import networkx as nx
+import pytest
 
 
 # ========== Helper Functions ==========
@@ -189,31 +188,32 @@ def plantB_day11_lr_lengths():
 
 @pytest.fixture
 def plantB_day11_lr_angles():
+    # Using Python floats (not np.float64) to match fixed analyze() output
     expected_lr_angles = [
-        np.float64(48.81407483429036),
-        np.float64(46.63657704161672),
-        np.float64(54.6887865603668),
-        np.float64(73.49563861824498),
-        np.float64(86.63353933657021),
-        np.float64(46.16913932790742),
-        np.float64(57.9946167919165),
-        np.float64(58.3924977537511),
-        np.float64(75.96375653207352),
-        np.float64(86.63353933657021),
-        np.float64(66.03751102542181),
-        np.float64(60.64224645720873),
-        np.float64(51.14662565964668),
-        np.float64(42.70938995736147),
-        np.float64(67.06789956241022),
-        np.float64(69.86369657175187),
-        np.float64(59.34933204294713),
-        np.float64(60.57254359681026),
-        np.float64(84.0938588862295),
-        np.float64(36.86989764584401),
-        np.float64(55.885527054658745),
-        np.float64(47.91083782616775),
-        np.float64(73.49563861824498),
-        np.float64(59.58891873287464),
+        48.81407483429036,
+        46.63657704161672,
+        54.6887865603668,
+        73.49563861824498,
+        86.63353933657021,
+        46.16913932790742,
+        57.9946167919165,
+        58.3924977537511,
+        75.96375653207352,
+        86.63353933657021,
+        66.03751102542181,
+        60.64224645720873,
+        51.14662565964668,
+        42.70938995736147,
+        67.06789956241022,
+        69.86369657175187,
+        59.34933204294713,
+        60.57254359681026,
+        84.0938588862295,
+        36.86989764584401,
+        55.885527054658745,
+        47.91083782616775,
+        73.49563861824498,
+        59.58891873287464,
     ]
     return expected_lr_angles
 
@@ -260,3 +260,33 @@ def issue26_root_json():
     """
     file_path = "tests/data/test_issue26_230629PN005_0.json"
     return file_path
+
+
+# ========== Matt Platre Test Data (v0.1.0a1 bug report) ==========
+
+
+@pytest.fixture
+def matt_etoh_exp1_plantB_day10_json():
+    """EtOH experiment 1, plant B, day 10 from Matt Platre's bug report.
+
+    Small root system used to verify np.float64 serialization fix.
+    """
+    return "tests/data/_set1_day1_20230206-153345_022_EtOH_EXP1_plantB_day10.json"
+
+
+@pytest.fixture
+def matt_etoh_exp2_plantB_day11_json():
+    """EtOH experiment 2, plant B, day 11 from Matt Platre's bug report.
+
+    Medium root system used to verify np.float64 serialization fix.
+    """
+    return "tests/data/_set1_day1_20230320-154926_001_EtOH_EXP2_plantB_day11.json"
+
+
+@pytest.fixture
+def matt_etoh_exp3_plantE_day11_json():
+    """EtOH experiment 3, plant E, day 11 from Matt Platre's bug report.
+
+    Large root system (32KB) used to verify np.float64 serialization fix.
+    """
+    return "tests/data/_set1_day1_20230509-125246_004_EtOH_EXP3_plantE_day11.json"

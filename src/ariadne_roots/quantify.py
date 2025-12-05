@@ -784,14 +784,14 @@ def analyze(G):
         num_LRs / branched_zone_length if branched_zone_length != 0 else 0
     )
 
-    # Calculate mean and median
-    mean_LR_lengths = np.mean(lens_LRs)
-    median_LR_lengths = np.median(lens_LRs)
-    median_LR_angles = np.median(angles_LRs)
-    mean_LR_angles = np.mean(angles_LRs)
-    mean_LR_distances = np.mean(distances_LRs)
-    median_LR_distances = np.median(distances_LRs)
-    sum_LR_distances = np.sum(distances_LRs)
+    # Calculate mean and median (convert to Python floats for clean CSV serialization)
+    mean_LR_lengths = float(np.mean(lens_LRs))
+    median_LR_lengths = float(np.median(lens_LRs))
+    median_LR_angles = float(np.median(angles_LRs))
+    mean_LR_angles = float(np.mean(angles_LRs))
+    mean_LR_distances = float(np.mean(distances_LRs))
+    median_LR_distances = float(np.median(distances_LRs))
+    sum_LR_distances = float(np.sum(distances_LRs))
 
     # Calculate the total distance (sum of LR distances and PR minimal distance)
     total_distance = sum_LR_distances + distance_root
@@ -812,11 +812,12 @@ def analyze(G):
     results["LR count"] = num_LRs
     results["LR density"] = density_LRs
     results["Branched Zone density"] = branched_zone_density
-    results["LR lengths"] = lens_LRs
-    results["LR angles"] = angles_LRs
-    results["LR minimal lengths"] = distances_LRs
-    results["Barycenter x displacement"] = barycenter_x_displacement
-    results["Barycenter y displacement"] = barycenter_y_displacement
+    # Convert list elements to Python floats for clean CSV serialization
+    results["LR lengths"] = [float(x) for x in lens_LRs]
+    results["LR angles"] = [float(x) for x in angles_LRs]
+    results["LR minimal lengths"] = [float(x) for x in distances_LRs]
+    results["Barycenter x displacement"] = float(barycenter_x_displacement)
+    results["Barycenter y displacement"] = float(barycenter_y_displacement)
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
     )
@@ -834,6 +835,6 @@ def analyze(G):
     hull = ConvexHull(points)
     convex_hull_area = hull.volume  # Convex hull area in 2D is the same as its volume
 
-    results["Convex Hull Area"] = convex_hull_area
+    results["Convex Hull Area"] = float(convex_hull_area)
 
     return results, front, randoms

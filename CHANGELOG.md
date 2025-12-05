@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed `np.float64` serialization in CSV output for LR angles, lengths, and other numeric fields
+- Fixed double-scaling bug in Pareto front graph visualization where data was scaled twice
+- Updated test fixtures to use Python native floats instead of numpy types
+
+### Added
+
+- Comprehensive CSV output validation tests (`tests/test_csv_output.py`)
+  - Field type validation (Python native types, not numpy)
+  - Field range validation (angles 0-180°, lengths ≥ 0, etc.)
+  - CSV serialization validation (no numpy type strings)
+
 ## [0.1.0a1] - 2024-11-11 (Pre-release)
 
 ### Added
