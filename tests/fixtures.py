@@ -1,6 +1,5 @@
-import pytest
-import numpy as np
 import networkx as nx
+import pytest
 
 
 # ========== Helper Functions ==========

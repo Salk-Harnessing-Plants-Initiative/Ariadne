@@ -15,7 +15,6 @@ import io
 import json
 
 import numpy as np
-import pytest
 from networkx.readwrite import json_graph
 
 from ariadne_roots import quantify
