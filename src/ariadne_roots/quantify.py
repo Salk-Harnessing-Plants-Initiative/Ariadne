@@ -517,6 +517,83 @@ def distance_from_front(front, actual_tree):
     return interpolated_alpha, float(dist1)
 
 
+def calculate_tradeoff(front, actual_tree):
+    """Calculate Tradeoff metric comparing actual root to optimal architectures.
+
+    The Tradeoff metric quantifies how close an actual root architecture is to
+    theoretically optimal architectures on the Pareto front:
+
+    - Steiner architecture: Minimizes total root length (material cost)
+    - Satellite architecture: Minimizes travel distance (transport efficiency)
+
+    Tradeoff = (actual_length / actual_distance) / (steiner_length / satellite_distance)
+
+    Based on Matt Platre's implementation.
+
+    Args:
+        front: Dict of {alpha: [total_length, travel_distance]} Pareto front points
+        actual_tree: Tuple of (total_root_length, travel_distance)
+
+    Returns:
+        Dict with Tradeoff metric and component values (all Python floats)
+    """
+    # Extract Pareto front values
+    front_points = list(front.values())  # List of [total_length, travel_distance] pairs
+
+    if len(front_points) < 1:
+        print("Warning: Pareto front is empty, cannot calculate Tradeoff")
+        return {
+            "Tradeoff": None,
+            "Steiner_length": None,
+            "Steiner_distance": None,
+            "Satellite_length": None,
+            "Satellite_distance": None,
+            "Actual_ratio": None,
+            "Optimal_ratio": None,
+        }
+
+    # Find Steiner architecture (minimizes total root length)
+    steiner_point = min(front_points, key=lambda x: x[0])
+    steiner_length, steiner_distance = steiner_point
+
+    # Find Satellite architecture (minimizes travel distance)
+    satellite_point = min(front_points, key=lambda x: x[1])
+    satellite_length, satellite_distance = satellite_point
+
+    # Actual tree values
+    actual_length, actual_distance = actual_tree
+
+    # Calculate ratios - handle division by zero
+    if actual_distance == 0:
+        actual_ratio = None
+        print("Warning: Actual travel distance is 0, actual_ratio set to None")
+    else:
+        actual_ratio = float(actual_length / actual_distance)
+
+    if satellite_distance == 0:
+        optimal_ratio = None
+        print("Warning: Satellite travel distance is 0, optimal_ratio set to None")
+    else:
+        optimal_ratio = float(steiner_length / satellite_distance)
+
+    # Calculate tradeoff
+    if optimal_ratio is None or optimal_ratio == 0 or actual_ratio is None:
+        tradeoff = None
+        print("Warning: Could not calculate tradeoff due to invalid ratios")
+    else:
+        tradeoff = float(actual_ratio / optimal_ratio)
+
+    return {
+        "Tradeoff": tradeoff,
+        "Steiner_length": float(steiner_length),
+        "Steiner_distance": float(steiner_distance),
+        "Satellite_length": float(satellite_length),
+        "Satellite_distance": float(satellite_distance),
+        "Actual_ratio": actual_ratio,
+        "Optimal_ratio": optimal_ratio,
+    }
+
+
 def pareto_calcs(H):
     """Perform Pareto-related calculations."""
     front, actual = pareto_front(H)
@@ -524,6 +601,9 @@ def pareto_calcs(H):
 
     # for debug: show total_root_length, total_travel_distance
     print(list(front.items())[0:5])
+
+    # Calculate tradeoff metrics
+    tradeoff_info = calculate_tradeoff(front, actual)
 
     plant_alpha, plant_scaling = distance_from_front(front, actual)
     randoms = random_tree(H)
@@ -545,6 +625,9 @@ def pareto_calcs(H):
         "alpha (random)": rand_alpha,
         "scaling (random)": rand_scaling,
     }
+
+    # Merge tradeoff metrics into results
+    results.update(tradeoff_info)
 
     return results, front, randoms
 
