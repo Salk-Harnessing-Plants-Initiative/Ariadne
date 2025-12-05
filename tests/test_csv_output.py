@@ -35,6 +35,8 @@ class TestCSVFieldTypes:
         numeric_fields = [
             "Total root length",
             "Travel distance",
+            "alpha",
+            "scaling distance to front",
             "PR length",
             "PR_minimal_length",
             "Basal Zone length",
