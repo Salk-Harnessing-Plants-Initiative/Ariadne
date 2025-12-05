@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Tradeoff calculation for comparing actual root architecture to optimal Steiner/Satellite architectures
+  - New `calculate_tradeoff()` function computes Steiner (material-optimal) and Satellite (transport-optimal) points
+  - 7 new CSV output fields: `Tradeoff`, `Steiner_length`, `Steiner_distance`, `Satellite_length`, `Satellite_distance`, `Actual_ratio`, `Optimal_ratio`
+  - Tradeoff metric quantifies how close actual root is to theoretically optimal architectures
+  - Dimensionless ratio fields excluded from scaling transformation
+
 ### Fixed
 
 - Fixed `np.float64` serialization in CSV output for LR angles, lengths, and other numeric fields

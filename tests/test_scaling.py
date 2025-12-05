@@ -232,3 +232,38 @@ class TestScalingTransformation:
         # Lengths should be scaled
         assert scaled["LR lengths"] == [20.0, 40.0, 60.0]
         assert scaled["Total root length"] == 200.0
+
+    def test_tradeoff_fields_scaling(self):
+        """Test that tradeoff fields are handled correctly during scaling.
+
+        Tradeoff, Actual_ratio, and Optimal_ratio are dimensionless ratios
+        and should NOT be scaled. Steiner/Satellite lengths and distances
+        should be scaled.
+        """
+        results = {
+            # Dimensionless ratios - should NOT be scaled
+            "Tradeoff": 2.5,
+            "Actual_ratio": 0.38,
+            "Optimal_ratio": 0.15,
+            # Length/distance metrics - SHOULD be scaled
+            "Steiner_length": 4920.75,
+            "Steiner_distance": 39266.99,
+            "Satellite_length": 32523.42,
+            "Satellite_distance": 32523.42,
+            # Other metric for comparison
+            "Total root length": 100.0,
+        }
+
+        scaled = apply_scaling_transformation(results, 2.0)
+
+        # Dimensionless ratios should NOT be scaled
+        assert scaled["Tradeoff"] == 2.5
+        assert scaled["Actual_ratio"] == 0.38
+        assert scaled["Optimal_ratio"] == 0.15
+
+        # Length/distance metrics should be scaled
+        assert scaled["Steiner_length"] == 4920.75 * 2.0
+        assert scaled["Steiner_distance"] == 39266.99 * 2.0
+        assert scaled["Satellite_length"] == 32523.42 * 2.0
+        assert scaled["Satellite_distance"] == 32523.42 * 2.0
+        assert scaled["Total root length"] == 200.0
