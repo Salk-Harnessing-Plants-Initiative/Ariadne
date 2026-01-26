@@ -357,8 +357,9 @@ def test_distance_from_front_interpolation():
 
     alpha, scaling = distance_from_front(front, actual)
 
-    # Alpha should be interpolated between 0.2 and 0.3 (not exactly one of them)
-    assert 0.0 <= alpha <= 1.0
+    # Alpha should be interpolated between the two closest points on the front
+    # The actual tree (75, 35) is closest to alpha=0.2 [80, 30] and alpha=0.3 [70, 40]
+    assert 0.2 <= alpha <= 0.3
     # Should be a Python float, not string
     assert isinstance(alpha, float)
     assert isinstance(scaling, float)
@@ -377,8 +378,8 @@ def test_distance_from_front_equal_distances():
 
     alpha, scaling = distance_from_front(front, actual)
 
-    # Should return one of the alphas (behavior when dist1 == dist2)
-    assert alpha in [0.0, 1.0] or 0.0 <= alpha <= 1.0
+    # When distances are equal, sorted() preserves insertion order so alpha1=0.0 is returned
+    assert alpha == 0.0
     assert isinstance(alpha, float)
 
 

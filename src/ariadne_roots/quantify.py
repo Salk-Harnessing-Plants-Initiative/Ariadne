@@ -489,6 +489,9 @@ def distance_from_front(front, actual_tree):
     distances = {}
 
     for alpha_value, alpha_tree in front.items():
+        # Guard against division by zero (unlikely with real root data)
+        if alpha_tree[0] == 0 or alpha_tree[1] == 0:
+            continue
         material_ratio = actual_tree[0] / alpha_tree[0]
         transport_ratio = actual_tree[1] / alpha_tree[1]
         distances[alpha_value] = max(material_ratio, transport_ratio)
@@ -503,7 +506,7 @@ def distance_from_front(front, actual_tree):
 
     # Linear interpolation between the two closest alphas
     # Closer distance gets higher weight
-    if dist1 == dist2:
+    if math.isclose(dist1, dist2, rel_tol=1e-9):
         interpolated_alpha = float(alpha1)
     else:
         total_dist = dist1 + dist2
