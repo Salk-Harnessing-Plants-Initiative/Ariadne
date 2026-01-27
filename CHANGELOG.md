@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Alpha interpolation for more precise characteristic alpha values in Pareto front analysis
+  - `distance_from_front()` now interpolates between the two closest discrete alpha values
+  - Returns Python floats (not strings) for clean CSV serialization
+  - Added tests for interpolation, edge cases, and type validation
+
 ### Fixed
 
 - Fixed `np.float64` serialization in CSV output for LR angles, lengths, and other numeric fields

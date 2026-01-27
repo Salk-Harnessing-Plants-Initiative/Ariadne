@@ -473,30 +473,48 @@ def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
 
 
 def distance_from_front(front, actual_tree):
-    """Return the closest alpha for the actual tree, and its distance to the front.
+    """Return the interpolated alpha for the actual tree, and its distance to the front.
 
-    actual_tree is just (mactual, sactual)
-    front is a dict of form {alpha : [total_root_length, total_travel_distance]}
+    Interpolates between the two closest discrete alpha values on the Pareto front
+    for higher precision (based on Matt Platre's implementation).
+
+    Args:
+        actual_tree: Tuple of (total_root_length, total_travel_distance)
+        front: Dict of form {alpha: [total_root_length, total_travel_distance]}
+
+    Returns:
+        Tuple of (interpolated_alpha, scaling_distance) as Python floats
     """
-    # for each alpha value, find distance to the actual tree
+    # For each alpha value, find distance to the actual tree
     distances = {}
 
-    for alpha in front.items():
-        alpha_value = alpha[0]
-        alpha_tree = alpha[1]
-
+    for alpha_value, alpha_tree in front.items():
+        # Guard against division by zero (unlikely with real root data)
+        if alpha_tree[0] == 0 or alpha_tree[1] == 0:
+            continue
         material_ratio = actual_tree[0] / alpha_tree[0]
         transport_ratio = actual_tree[1] / alpha_tree[1]
-
         distances[alpha_value] = max(material_ratio, transport_ratio)
 
-    # print(distances)
-    closest = min(distances.items(), key=lambda x: x[1])
-    # print(closest)
+    # Find the two closest alpha values
+    sorted_alphas = sorted(distances.items(), key=lambda x: x[1])
+    closest = sorted_alphas[0]
+    second_closest = sorted_alphas[1] if len(sorted_alphas) > 1 else closest
 
-    characteristic_alpha, scaling_distance = closest
+    alpha1, dist1 = closest
+    alpha2, dist2 = second_closest
 
-    return characteristic_alpha, scaling_distance
+    # Linear interpolation between the two closest alphas
+    # Closer distance gets higher weight
+    if math.isclose(dist1, dist2, rel_tol=1e-9):
+        interpolated_alpha = float(alpha1)
+    else:
+        total_dist = dist1 + dist2
+        weight1 = dist2 / total_dist  # Inverse weighting: closer = higher weight
+        weight2 = dist1 / total_dist
+        interpolated_alpha = float(alpha1 * weight1 + alpha2 * weight2)
+
+    return interpolated_alpha, float(dist1)
 
 
 def pareto_calcs(H):

@@ -297,7 +297,11 @@ def test_distance_from_front_on_front():
 
     alpha, scaling = distance_from_front(front, actual)
 
-    assert alpha == 0.5
+    # Alpha is interpolated between the two closest points (0.5 and 0.0 or 1.0)
+    # With 3-point front, interpolation gives ~0.4167 when on the alpha=0.5 point
+    # because dist to 0.5 is 1.0 and dist to 0.0/1.0 is 5.0
+    # weight1 = 5/6, weight2 = 1/6, so alpha = 0.5 * 5/6 + 0.0 * 1/6 = 5/12
+    assert math.isclose(alpha, 5 / 12, rel_tol=1e-8)
     # Scaling should be 1.0 (on the front)
     assert math.isclose(scaling, 1.0, rel_tol=1e-8)
 
@@ -334,6 +338,82 @@ def test_distance_from_front_dominating():
 
     # Scaling should be < 1 (dominates the front)
     assert scaling < 1.0
+
+
+def test_distance_from_front_interpolation():
+    """Test that alpha is interpolated between two closest points."""
+    # Create a dense front
+    front = {
+        0.0: [100, 10],
+        0.1: [90, 20],
+        0.2: [80, 30],
+        0.3: [70, 40],
+        0.4: [60, 50],
+        0.5: [50, 60],
+    }
+
+    # Actual tree somewhere between alpha=0.2 and alpha=0.3
+    actual = (75, 35)
+
+    alpha, scaling = distance_from_front(front, actual)
+
+    # Alpha should be interpolated between the two closest points on the front
+    # The actual tree (75, 35) is closest to alpha=0.2 [80, 30] and alpha=0.3 [70, 40]
+    assert 0.2 <= alpha <= 0.3
+    # Should be a Python float, not string
+    assert isinstance(alpha, float)
+    assert isinstance(scaling, float)
+
+
+def test_distance_from_front_equal_distances():
+    """Test alpha when two points are equally close (edge case)."""
+    # Create symmetric front where two alphas could be equidistant
+    front = {
+        0.0: [100, 50],
+        1.0: [50, 100],
+    }
+
+    # Point equidistant from both
+    actual = (75, 75)
+
+    alpha, scaling = distance_from_front(front, actual)
+
+    # When distances are equal, sorted() preserves insertion order so alpha1=0.0 is returned
+    assert alpha == 0.0
+    assert isinstance(alpha, float)
+
+
+def test_distance_from_front_single_point():
+    """Test alpha with only one point in the front (edge case)."""
+    front = {
+        0.5: [50, 50],
+    }
+
+    actual = (60, 60)
+
+    alpha, scaling = distance_from_front(front, actual)
+
+    # With only one point, should return that alpha
+    assert alpha == 0.5
+    assert isinstance(alpha, float)
+    assert isinstance(scaling, float)
+
+
+def test_distance_from_front_returns_float():
+    """Test that both alpha and scaling are Python floats (not np.float64 or str)."""
+    front = {
+        0.0: [100, 10],
+        0.5: [50, 50],
+        1.0: [10, 100],
+    }
+
+    actual = (60, 60)
+
+    alpha, scaling = distance_from_front(front, actual)
+
+    # Should be plain Python float (for JSON serialization)
+    assert type(alpha) is float
+    assert type(scaling) is float
 
 
 # ========== Test pareto_calcs() ==========
@@ -540,7 +620,8 @@ def test_analyze(
         # Scalar assertions
         assert isclose(results["Total root length"], 13196.30945, rel_tol=1e-8)
         assert isclose(results["Travel distance"], 34709.9406, rel_tol=1e-8)
-        assert isclose(results["alpha"], 0, rel_tol=1e-8)
+        # Alpha is now interpolated between discrete values for higher precision
+        assert isclose(results["alpha"], 0.004435003275475457, rel_tol=1e-8)
         assert isclose(results["scaling distance to front"], 1.067228823, rel_tol=1e-8)
         assert isclose(results["PR length"], 3610.664228, rel_tol=1e-8)
         assert isclose(results["PR_minimal_length"], 3459.128503, rel_tol=1e-8)
