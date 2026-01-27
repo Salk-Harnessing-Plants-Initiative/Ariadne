@@ -520,22 +520,38 @@ def distance_from_front(front, actual_tree):
 def calculate_tradeoff(front, actual_tree):
     """Calculate Tradeoff metric comparing actual root to optimal architectures.
 
-    The Tradeoff metric quantifies how close an actual root architecture is to
-    theoretically optimal architectures on the Pareto front:
+    As cited in Conn et al., 2019 (https://doi.org/10.1371/journal.pcbi.1007325):
+
+    "The numerator quantifies the excess length of the plant compared to the
+    optimal minimum length of the Steiner tree. Similarly, the denominator
+    quantifies the excess travel distance of the plant compared to the optimal
+    minimum travel distance of the Satellite tree. A high value of this feature
+    (i.e., a large numerator and small denominator) indicates that the plant
+    prioritizes minimizing travel distance; a low trade-off value indicates
+    the plant prioritizes minimizing total length."
+
+    This represents an alternative way to calculate the prioritization weight
+    compared to the computed alpha value on the Pareto front.
 
     - Steiner architecture: Minimizes total root length (material cost)
     - Satellite architecture: Minimizes travel distance (transport efficiency)
 
-    Tradeoff = (actual_length / actual_distance) / (steiner_length / satellite_distance)
-
-    Based on Matt Platre's implementation.
+    Tradeoff = Actual_ratio / Optimal_ratio
+             = (actual_length / actual_distance) / (steiner_length / satellite_distance)
 
     Args:
         front: Dict of {alpha: [total_length, travel_distance]} Pareto front points
         actual_tree: Tuple of (total_root_length, travel_distance)
 
     Returns:
-        Dict with Tradeoff metric and component values (all Python floats)
+        Dict with Tradeoff metric and component values:
+        - Tradeoff: Ratio of actual to optimal efficiency
+        - Steiner_length: Min total root length on Pareto front
+        - Steiner_distance: Travel distance of the Steiner architecture
+        - Satellite_length: Total root length of the Satellite architecture
+        - Satellite_distance: Travel distance of the Satellite architecture
+        - Actual_ratio: actual_length / actual_distance
+        - Optimal_ratio: steiner_length / satellite_distance
     """
     # Extract Pareto front values
     front_points = list(front.values())  # List of [total_length, travel_distance] pairs
