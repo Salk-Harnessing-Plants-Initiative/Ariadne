@@ -516,6 +516,44 @@ def test_calculate_tradeoff_division_by_zero_actual():
     assert result["Satellite_distance"] == 10
 
 
+def test_calculate_tradeoff_division_by_zero_satellite():
+    """Test handling of division by zero when satellite distance is 0."""
+    front = {
+        0.0: [100, 0],  # Satellite point with zero distance
+        1.0: [10, 100],
+    }
+    actual = (50, 50)
+
+    result = calculate_tradeoff(front, actual)
+
+    # Should handle gracefully - optimal_ratio cannot be computed
+    assert result["Optimal_ratio"] is None
+    assert result["Tradeoff"] is None
+    # Other values should still be calculated
+    assert result["Steiner_length"] == 10
+    assert result["Satellite_distance"] == 0
+    assert result["Actual_ratio"] == 1.0
+
+
+def test_calculate_tradeoff_zero_steiner_length():
+    """Test handling when steiner_length is 0 (optimal_ratio would be 0)."""
+    front = {
+        0.0: [100, 10],
+        1.0: [0, 100],  # Steiner point with zero length
+    }
+    actual = (50, 50)
+
+    result = calculate_tradeoff(front, actual)
+
+    # optimal_ratio = 0 / 10 = 0, so tradeoff cannot be computed (division by zero)
+    assert result["Optimal_ratio"] == 0.0
+    assert result["Tradeoff"] is None
+    # Other values should still be calculated
+    assert result["Steiner_length"] == 0
+    assert result["Satellite_distance"] == 10
+    assert result["Actual_ratio"] == 1.0
+
+
 def test_calculate_tradeoff_empty_front():
     """Test handling of empty Pareto front."""
     front = {}

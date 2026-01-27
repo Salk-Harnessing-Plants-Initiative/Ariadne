@@ -518,26 +518,34 @@ def distance_from_front(front, actual_tree):
 
 
 def calculate_tradeoff(front, actual_tree):
-    """Calculate Tradeoff metric comparing actual root to optimal architectures.
+    """Calculate a tradeoff metric comparing the actual root to optimal architectures.
 
-    As cited in Conn et al., 2019 (https://doi.org/10.1371/journal.pcbi.1007325):
+    Conn et al., 2019 (https://doi.org/10.1371/journal.pcbi.1007325) describe
+    a tradeoff feature in which:
 
-    "The numerator quantifies the excess length of the plant compared to the
-    optimal minimum length of the Steiner tree. Similarly, the denominator
-    quantifies the excess travel distance of the plant compared to the optimal
-    minimum travel distance of the Satellite tree. A high value of this feature
-    (i.e., a large numerator and small denominator) indicates that the plant
-    prioritizes minimizing travel distance; a low trade-off value indicates
-    the plant prioritizes minimizing total length."
+        "The numerator quantifies the excess length of the plant compared to the
+        optimal minimum length of the Steiner tree. Similarly, the denominator
+        quantifies the excess travel distance of the plant compared to the optimal
+        minimum travel distance of the Satellite tree. A high value of this feature
+        (i.e., a large numerator and small denominator) indicates that the plant
+        prioritizes minimizing travel distance; a low trade-off value indicates
+        the plant prioritizes minimizing total length."
 
-    This represents an alternative way to calculate the prioritization weight
-    compared to the computed alpha value on the Pareto front.
+    That description corresponds to an excess-based metric roughly of the form:
+        (actual_length - steiner_length) / (actual_distance - satellite_distance)
+
+    In this implementation we use a related, ratio-based metric inspired by the
+    same intuition, defined as a ratio of length-per-distance values:
+
+        Tradeoff = Actual_ratio / Optimal_ratio
+                 = (actual_length / actual_distance) / (steiner_length / satellite_distance)
+
+    This represents an alternative way to quantify the prioritization between
+    minimizing total root length (material cost) and minimizing travel distance
+    (transport efficiency), complementary to the alpha value on the Pareto front.
 
     - Steiner architecture: Minimizes total root length (material cost)
     - Satellite architecture: Minimizes travel distance (transport efficiency)
-
-    Tradeoff = Actual_ratio / Optimal_ratio
-             = (actual_length / actual_distance) / (steiner_length / satellite_distance)
 
     Args:
         front: Dict of {alpha: [total_length, travel_distance]} Pareto front points
