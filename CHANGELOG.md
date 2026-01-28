@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `distance_from_front()` now interpolates between the two closest discrete alpha values
   - Returns Python floats (not strings) for clean CSV serialization
   - Added tests for interpolation, edge cases, and type validation
+- Tradeoff calculation for comparing actual root architecture to optimal Steiner/Satellite architectures (Conn et al., 2019)
+  - New `calculate_tradeoff()` function computes Steiner (material-optimal) and Satellite (transport-optimal) points
+  - 7 new CSV output fields: `Tradeoff`, `Steiner_length`, `Steiner_distance`, `Satellite_length`, `Satellite_distance`, `Actual_ratio`, `Optimal_ratio`
+  - Tradeoff metric quantifies how close actual root is to theoretically optimal architectures
+  - Dimensionless ratio fields excluded from scaling transformation
 
 ### Fixed
 

@@ -8,6 +8,7 @@ Tests cover:
 - calc_zones() - branched/basal/apical zone calculations
 - calculate_convex_hull_area() - convex hull calculations
 - distance_from_front() - Pareto front distance
+- calculate_tradeoff() - Steiner/Satellite tradeoff metric
 - analyze() - full integration test
 """
 
@@ -30,6 +31,7 @@ from ariadne_roots.quantify import (
     calculate_convex_hull_area,
     calculate_plot_buffer,
     distance_from_front,
+    calculate_tradeoff,
     pareto_calcs,
     calc_len_LRs_with_distances,
     find_lowermost_node_of_primary_root,
@@ -416,6 +418,182 @@ def test_distance_from_front_returns_float():
     assert type(scaling) is float
 
 
+# ========== Test calculate_tradeoff() ==========
+
+
+def test_calculate_tradeoff_steiner_point():
+    """Test that Steiner point is correctly identified (min total root length)."""
+    front = {
+        0.0: [100, 10],  # High length, low distance
+        0.5: [50, 50],  # Balanced
+        1.0: [10, 100],  # Low length (Steiner), high distance
+    }
+    actual = (60, 60)
+
+    result = calculate_tradeoff(front, actual)
+
+    # Steiner point minimizes total root length (10)
+    assert result["Steiner_length"] == 10
+    assert result["Steiner_distance"] == 100
+
+
+def test_calculate_tradeoff_satellite_point():
+    """Test that Satellite point is correctly identified (min travel distance)."""
+    front = {
+        0.0: [100, 10],  # High length, low distance (Satellite)
+        0.5: [50, 50],  # Balanced
+        1.0: [10, 100],  # Low length, high distance
+    }
+    actual = (60, 60)
+
+    result = calculate_tradeoff(front, actual)
+
+    # Satellite point minimizes travel distance (10)
+    assert result["Satellite_length"] == 100
+    assert result["Satellite_distance"] == 10
+
+
+def test_calculate_tradeoff_calculation():
+    """Test Tradeoff metric calculation."""
+    front = {
+        0.0: [100, 10],  # Satellite point
+        1.0: [10, 100],  # Steiner point
+    }
+    # Actual tree: length=50, distance=50
+    actual = (50, 50)
+
+    result = calculate_tradeoff(front, actual)
+
+    # Actual_ratio = 50/50 = 1.0
+    assert math.isclose(result["Actual_ratio"], 1.0, rel_tol=1e-8)
+
+    # Optimal_ratio = steiner_length / satellite_distance = 10/10 = 1.0
+    assert math.isclose(result["Optimal_ratio"], 1.0, rel_tol=1e-8)
+
+    # Tradeoff = actual_ratio / optimal_ratio = 1.0/1.0 = 1.0
+    assert math.isclose(result["Tradeoff"], 1.0, rel_tol=1e-8)
+
+
+def test_calculate_tradeoff_all_fields_present():
+    """Test that all 7 tradeoff fields are present in results."""
+    front = {
+        0.0: [100, 10],
+        1.0: [10, 100],
+    }
+    actual = (50, 50)
+
+    result = calculate_tradeoff(front, actual)
+
+    expected_fields = [
+        "Tradeoff",
+        "Steiner_length",
+        "Steiner_distance",
+        "Satellite_length",
+        "Satellite_distance",
+        "Actual_ratio",
+        "Optimal_ratio",
+    ]
+    for field in expected_fields:
+        assert field in result, f"Missing field: {field}"
+
+
+def test_calculate_tradeoff_division_by_zero_actual():
+    """Test handling of division by zero when actual distance is 0."""
+    front = {
+        0.0: [100, 10],
+        1.0: [10, 100],
+    }
+    # Actual tree with zero travel distance
+    actual = (50, 0)
+
+    result = calculate_tradeoff(front, actual)
+
+    # Should handle gracefully
+    assert result["Actual_ratio"] is None
+    assert result["Tradeoff"] is None
+    # Other values should still be calculated
+    assert result["Steiner_length"] == 10
+    assert result["Satellite_distance"] == 10
+
+
+def test_calculate_tradeoff_division_by_zero_satellite():
+    """Test handling of division by zero when satellite distance is 0."""
+    front = {
+        0.0: [100, 0],  # Satellite point with zero distance
+        1.0: [10, 100],
+    }
+    actual = (50, 50)
+
+    result = calculate_tradeoff(front, actual)
+
+    # Should handle gracefully - optimal_ratio cannot be computed
+    assert result["Optimal_ratio"] is None
+    assert result["Tradeoff"] is None
+    # Other values should still be calculated
+    assert result["Steiner_length"] == 10
+    assert result["Satellite_distance"] == 0
+    assert result["Actual_ratio"] == 1.0
+
+
+def test_calculate_tradeoff_zero_steiner_length():
+    """Test handling when steiner_length is 0 (optimal_ratio would be 0)."""
+    front = {
+        0.0: [100, 10],
+        1.0: [0, 100],  # Steiner point with zero length
+    }
+    actual = (50, 50)
+
+    result = calculate_tradeoff(front, actual)
+
+    # optimal_ratio = 0 / 10 = 0, so tradeoff cannot be computed (division by zero)
+    assert result["Optimal_ratio"] == 0.0
+    assert result["Tradeoff"] is None
+    # Other values should still be calculated
+    assert result["Steiner_length"] == 0
+    assert result["Satellite_distance"] == 10
+    assert result["Actual_ratio"] == 1.0
+
+
+def test_calculate_tradeoff_empty_front():
+    """Test handling of empty Pareto front."""
+    front = {}
+    actual = (50, 50)
+
+    result = calculate_tradeoff(front, actual)
+
+    # All values should be None
+    assert result["Tradeoff"] is None
+    assert result["Steiner_length"] is None
+    assert result["Steiner_distance"] is None
+    assert result["Satellite_length"] is None
+    assert result["Satellite_distance"] is None
+    assert result["Actual_ratio"] is None
+    assert result["Optimal_ratio"] is None
+
+
+def test_calculate_tradeoff_returns_python_floats():
+    """Test that all numeric results are Python floats (not numpy types)."""
+    front = {
+        0.0: [100, 10],
+        1.0: [10, 100],
+    }
+    actual = (50, 50)
+
+    result = calculate_tradeoff(front, actual)
+
+    # All numeric fields should be Python float
+    for field in [
+        "Tradeoff",
+        "Steiner_length",
+        "Steiner_distance",
+        "Satellite_length",
+        "Satellite_distance",
+        "Actual_ratio",
+        "Optimal_ratio",
+    ]:
+        assert type(result[field]) is float, f"{field} should be Python float"
+
+
 # ========== Test pareto_calcs() ==========
 
 
@@ -615,7 +793,7 @@ def test_analyze(
         results, front, randoms = analyze(graph)
 
         # check the results
-        assert len(results) == 31  # 31 features
+        assert len(results) == 38  # 31 original + 7 tradeoff fields
         # Random values are not tested here
         # Scalar assertions
         assert isclose(results["Total root length"], 13196.30945, rel_tol=1e-8)
@@ -623,6 +801,15 @@ def test_analyze(
         # Alpha is now interpolated between discrete values for higher precision
         assert isclose(results["alpha"], 0.004435003275475457, rel_tol=1e-8)
         assert isclose(results["scaling distance to front"], 1.067228823, rel_tol=1e-8)
+
+        # Tradeoff metric assertions
+        assert isclose(results["Tradeoff"], 2.512831837486991, rel_tol=1e-8)
+        assert isclose(results["Steiner_length"], 4920.752469563776, rel_tol=1e-8)
+        assert isclose(results["Steiner_distance"], 39266.99938955784, rel_tol=1e-8)
+        assert isclose(results["Satellite_length"], 32523.42876279192, rel_tol=1e-8)
+        assert isclose(results["Satellite_distance"], 32523.42876279192, rel_tol=1e-8)
+        assert isclose(results["Actual_ratio"], 0.3801881886469075, rel_tol=1e-8)
+        assert isclose(results["Optimal_ratio"], 0.1512986993300445, rel_tol=1e-8)
         assert isclose(results["PR length"], 3610.664228, rel_tol=1e-8)
         assert isclose(results["PR_minimal_length"], 3459.128503, rel_tol=1e-8)
         assert isclose(results["Basal Zone length"], 0, rel_tol=1e-8)

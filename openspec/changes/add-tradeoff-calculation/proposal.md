@@ -9,6 +9,14 @@ Researchers need to quantify how close an actual root architecture is to theoret
 
 A "Tradeoff" metric comparing the actual root to these optima provides insight into the evolutionary/developmental strategy of the plant.
 
+## Scientific Reference
+
+As cited in Conn et al., 2019 (https://doi.org/10.1371/journal.pcbi.1007325):
+
+> "The numerator quantifies the excess length of the plant compared to the optimal minimum length of the Steiner tree. Similarly, the denominator quantifies the excess travel distance of the plant compared to the optimal minimum travel distance of the Satellite tree. A high value of this feature (i.e., a large numerator and small denominator) indicates that the plant prioritizes minimizing travel distance; a low trade-off value indicates the plant prioritizes minimizing total length."
+
+This represents an alternative way to calculate the prioritization weight compared to the computed alpha value on the Pareto front.
+
 ## What Changes
 
 ### New Function: `calculate_tradeoff()` in `quantify.py`
