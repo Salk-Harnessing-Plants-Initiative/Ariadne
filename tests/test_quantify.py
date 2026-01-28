@@ -564,7 +564,11 @@ def test_calculate_tradeoff_empty_front():
     # All values should be None
     assert result["Tradeoff"] is None
     assert result["Steiner_length"] is None
+    assert result["Steiner_distance"] is None
     assert result["Satellite_length"] is None
+    assert result["Satellite_distance"] is None
+    assert result["Actual_ratio"] is None
+    assert result["Optimal_ratio"] is None
 
 
 def test_calculate_tradeoff_returns_python_floats():

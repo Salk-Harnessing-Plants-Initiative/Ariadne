@@ -19,10 +19,10 @@ def apply_scaling_transformation(results, scale_factor, excluded_fields=None):
         scale_factor: Multiplicative scaling factor (e.g., 2.5 for 1 px = 2.5 mm)
         excluded_fields: Set of substring patterns to exclude from scaling.
                         Uses substring matching (not exact matching).
-                        Defaults to 12 dimensionless patterns:
+                        Defaults to 13 dimensionless patterns:
                         - "LR density", "Branched Zone density" (densities)
                         - "alpha" (shape parameter)
-                        - "Mean LR angles", "Median LR angles" (angles in degrees)
+                        - "Mean LR angles", "Median LR angles", "LR angles" (angles)
                         - "LR count" (count)
                         - "scaling distance to front", "scaling (random)" (normalized)
                         - "Tortuosity" (ratio)
