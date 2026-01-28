@@ -4,6 +4,20 @@ This directory contains completed OpenSpec changes that have been implemented an
 
 ---
 
+## add-format-number-helper (January 2026)
+**Status**: ⏸️ Deferred - Tracked in issue #47
+
+Utility function for formatting floats to a specified number of decimal places. Originated from Matt Platre's MATT_P branch (PR #29). Deferred as low priority — the function was never called in the original branch.
+
+- **Proposal**: [proposal.md](add-format-number-helper/proposal.md)
+- **Tasks**: [tasks.md](add-format-number-helper/tasks.md)
+- **Related Issue**: #47
+- **Original PR**: #29
+
+**Recommendation**: Defer until a concrete use case arises (e.g., GUI display panel, formatted reporting).
+
+---
+
 ## add-alpha-interpolation (January 2026)
 **Status**: ✅ Completed - Merged in PR #43
 
