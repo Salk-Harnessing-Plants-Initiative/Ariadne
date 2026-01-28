@@ -4,6 +4,50 @@ This directory contains completed OpenSpec changes that have been implemented an
 
 ---
 
+## add-alpha-interpolation (January 2026)
+**Status**: ✅ Completed - Merged in PR #43
+
+Added distance-weighted linear interpolation for more precise characteristic alpha values in Pareto front analysis. Based on Matt Platre's implementation in the MATT_P branch.
+
+- **Proposal**: [proposal.md](add-alpha-interpolation/proposal.md)
+- **Tasks**: [tasks.md](add-alpha-interpolation/tasks.md)
+- **Related PR**: #43
+- **Original PR**: #29
+
+**Key Deliverables**:
+- `distance_from_front()` now interpolates between the two closest discrete alpha values
+- Division-by-zero guard for zero-value Pareto front points
+- `math.isclose()` for robust float comparison
+- Returns Python floats (not strings) for clean CSV serialization
+- 4 new tests for interpolation, edge cases, and type validation
+- Comprehensive CSV output validation tests (`tests/test_csv_output.py`)
+
+**Timeline**: 1 day (including Copilot review feedback)
+
+---
+
+## add-tradeoff-calculation (January 2026)
+**Status**: ✅ Completed - Merged in PR #44
+
+Added `calculate_tradeoff()` function to quantify how close an actual root architecture is to theoretically optimal Steiner/Satellite architectures. Inspired by Conn et al., 2019 (https://doi.org/10.1371/journal.pcbi.1007325).
+
+- **Proposal**: [proposal.md](add-tradeoff-calculation/proposal.md)
+- **Tasks**: [tasks.md](add-tradeoff-calculation/tasks.md)
+- **Related PR**: #44
+- **Original PR**: #29
+
+**Key Deliverables**:
+- New `calculate_tradeoff()` function with Conn et al. citation in docstring
+- 7 new CSV output fields: Tradeoff, Steiner_length, Steiner_distance, Satellite_length, Satellite_distance, Actual_ratio, Optimal_ratio
+- Dimensionless ratio fields excluded from scaling transformation
+- 9 tradeoff tests + 1 scaling test covering all edge cases
+- Integration test validates against real plant data (Tradeoff = 2.5128)
+- 143 tests pass, 98.23% coverage
+
+**Timeline**: 2 days (including two rounds of Copilot review feedback)
+
+---
+
 ## add-comprehensive-test-coverage (November 2025)
 **Status**: ✅ Completed - Merged in PR #30
 
