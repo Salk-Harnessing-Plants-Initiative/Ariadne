@@ -45,6 +45,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage.json
 *.cover
 *.py,cover
 .hypothesis/
@@ -164,3 +165,17 @@ cython_debug/
 # VS Code
 #  This ignores the .vscode/ folder which might contain user-specific settings and tasks.json files
 .vscode/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temporary analysis files and generated outputs
+*.ipynb
+*.png
+*.svg
+*.csv
+report_*.csv
+*_pareto.png
+*_pareto.svg

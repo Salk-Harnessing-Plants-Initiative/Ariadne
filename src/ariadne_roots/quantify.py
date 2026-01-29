@@ -25,6 +25,7 @@ from ariadne_roots.pareto_functions import (
     random_tree_3d_path_tortuosity,
     get_critical_nodes,
 )
+from ariadne_roots import config
 
 
 # parser = argparse.ArgumentParser(description='select file')
@@ -44,8 +45,11 @@ def distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
-def make_graph(target):
-    """Construct graph from file and check for errors."""
+def make_graph(target):  # pragma: no cover
+    """Construct graph from file and check for errors.
+
+    Legacy function for text file format. Not used in current JSON workflow.
+    """
     G = nx.Graph()
     with open(target, "r") as f:  # parse input file
         q = Queue()
@@ -129,8 +133,11 @@ def make_graph(target):
 # G = make_graph('/Users/kianfaizi/projects/ariadne/color-final_plantA_day1.txt')
 
 
-def make_graph_alt(target):
-    """Construct a broken graph (without problematic edges)."""
+def make_graph_alt(target):  # pragma: no cover
+    """Construct a broken graph (without problematic edges).
+
+    Legacy function for text file format. Not used in current JSON workflow.
+    """
     G = nx.Graph()
     with open(target, "r") as f:  # parse input file
         q = Queue()
@@ -211,30 +218,30 @@ def plot_graph(
     figsize=(10, 15),
     show_grid=True,
     save_path=None,
-):
+):  # pragma: no cover
     """Plots a root-system graph using node positions from their attributes, with axes and optional grid.
 
     Args:
-        G (networkx.DiGraph): The graph to be plotted. Must have node positions stored 
+        G (networkx.DiGraph): The graph to be plotted. Must have node positions stored
             as attributes. Assumes the graph is directed.
-        node_size_factor (float, optional): Multiplier for node sizes based on degree. 
+        node_size_factor (float, optional): Multiplier for node sizes based on degree.
             Defaults to 20.
-        node_base_size (int, optional): Base size for all nodes. 
+        node_base_size (int, optional): Base size for all nodes.
             Defaults to 2.
-        edge_width_factor (float, optional): Multiplier for edge widths. 
+        edge_width_factor (float, optional): Multiplier for edge widths.
             Defaults to 1.0.
-        base_node_color (str, optional): Color for the base node (node 0). 
+        base_node_color (str, optional): Color for the base node (node 0).
             Defaults to "#2E8B57".
-        secondary_node_color (str, optional): Color for all other nodes. 
+        secondary_node_color (str, optional): Color for all other nodes.
             Defaults to "#A0522D".
-        edge_color (str, optional): Color of the edges. Defaults to 
+        edge_color (str, optional): Color of the edges. Defaults to
             "#3D2B1F".
-        critical_node_color (str, optional): Color for nodes with degree == 1 (critical nodes). 
+        critical_node_color (str, optional): Color for nodes with degree == 1 (critical nodes).
             Defaults to "#FF0000".
-        with_labels (bool, optional): Whether to display labels on nodes. 
+        with_labels (bool, optional): Whether to display labels on nodes.
             Defaults to False.
         title (str, optional): Title for the plot. Defaults to "Root System Graph".
-        figsize (tuple, optional): Size of the plot figure (width, height). 
+        figsize (tuple, optional): Size of the plot figure (width, height).
             Defaults to (10, 15).
         show_grid (bool, optional): Whether to display a grid. Defaults to True.
         save_path (str, optional): The file path to save the plot. Defaults to None.
@@ -320,10 +327,11 @@ def plot_graph(
     return fig, ax
 
 
+def save_plot(path, name, title):  # pragma: no cover
+    """Plot a Pareto front and save to .jpg.
 
-def save_plot(path, name, title):
-    """Plot a Pareto front and save to .jpg."""
-
+    GUI function for manual visualization. Not tested in automated test suite.
+    """
     G = make_graph(path)
     # check that graph is indeed a tree (acyclic, undirected, connected)
     assert nx.is_tree(G)
@@ -397,10 +405,11 @@ def calc_len_LRs(H):
     idxs = {k: v for k, v in idxs.items() if v is not None}  # drop empty (PR) nodes
 
     num_LRs = max(idxs.values()) + 1
-
+    # CPL : Add a minimum LR_index. Main root is None
+    min_num_LRs = min(idxs.values())  # should be 1
     results = {}
 
-    for i in range(num_LRs):
+    for i in range(min_num_LRs, num_LRs):
         # gather nodes corresponding to the current LR index
         selected = []
 
@@ -462,36 +471,145 @@ def calc_len_LRs(H):
     # add LR_index awareness: all, 1 deg, 2 deg, n deg
 
 
-def calc_density_LRs(G):
+def calc_density_LRs(G):  # pragma: no cover
+    """Calculate lateral root density.
+
+    Stub function - not yet implemented.
+    """
     pass
     # add up to _n_ degrees
 
 
-def plot_all(front, actual, randoms, mrand, srand, dest):
+def calculate_plot_buffer(base_min, base_max, buffer_percent=0.20, min_buffer=1.0):
+    """Calculate plot buffer for axis limits.
+
+    Computes appropriate buffer margins for plot axes based on data range,
+    handling edge cases like negative coordinates, zero values, and small ranges.
+
+    Args:
+        base_min: Minimum value in the data range
+        base_max: Maximum value in the data range
+        buffer_percent: Buffer size as fraction of range (default 0.20 = 20%)
+        min_buffer: Minimum buffer to prevent degenerate plots (default 1.0)
+
+    Returns:
+        Tuple of (min_limit, max_limit) for axis
+
+    Examples:
+        >>> calculate_plot_buffer(0, 10)  # Normal positive range
+        (-2.0, 12.0)
+
+        >>> calculate_plot_buffer(-10, 10)  # Range crossing zero
+        (-14.0, 14.0)
+
+        >>> calculate_plot_buffer(0, 0)  # Degenerate range (all zeros)
+        (-1.0, 1.0)
+
+        >>> calculate_plot_buffer(-5, -3)  # Negative range
+        (-5.4, -2.6)
+    """
+    data_range = abs(base_max - base_min)
+    buffer = max(data_range * buffer_percent, min_buffer)
+    return (base_min - buffer, base_max + buffer)
+
+
+def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
+    """Plot Pareto front with actual and random trees, with scaling and centering.
+
+    GUI function for manual visualization. Not tested in automated test suite.
+    Applies user-configured scaling and centers view on Pareto front.
+    """
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    # ax.set_title(title)
-    ax.set_xlabel("Total length (px)", fontsize=15)
-    ax.set_ylabel("Travel distance (px)", fontsize=15)
+
+    def scale_data(data):
+        """Scale data by user-configured factor."""
+        return data * config.length_scale_factor
+
+    # Scale all data
+    scaled_front_x = [scale_data(x[0]) for x in front.values()]
+    scaled_front_y = [scale_data(x[1]) for x in front.values()]
+
+    scaled_actual_x = scale_data(actual[0])
+    scaled_actual_y = scale_data(actual[1])
+
+    scaled_randoms_x = [scale_data(x[0]) for x in randoms]
+    scaled_randoms_y = [scale_data(x[1]) for x in randoms]
+
+    scaled_mrand = scale_data(mrand)
+    scaled_srand = scale_data(srand)
+
+    # Plot scaled data
+    for x, y in zip(scaled_randoms_x, scaled_randoms_y):
+        plt.plot(
+            x,
+            y,
+            marker="+",
+            color="green",
+            markersize=2.5,
+            zorder=0.5,
+            markeredgewidth=0.5,
+        )
 
     plt.plot(
-        [x[0] for x in front.values()],
-        [x[1] for x in front.values()],
+        scaled_front_x,
+        scaled_front_y,
         marker="s",
         linestyle="-",
         markeredgecolor="black",
     )
-    plt.plot(actual[0], actual[1], marker="x", markersize=12)
-    for i in randoms:
-        plt.plot(i[0], i[1], marker="+", color="green", markersize=4)
+    plt.plot(
+        scaled_actual_x,
+        scaled_actual_y,
+        marker="x",
+        markersize=12,
+        zorder=3,
+        markeredgewidth=1.5,
+    )
+    plt.plot(
+        scaled_mrand,
+        scaled_srand,
+        marker="+",
+        color="red",
+        markersize=12,
+        zorder=3,
+        markeredgewidth=1.5,
+    )
 
-    plt.plot(mrand, srand, marker="+", color="red", markersize=12)
+    ax.set_xlabel(f"Total length ({config.length_scale_unit})", fontsize=15)
+    ax.set_ylabel(f"Travel distance ({config.length_scale_unit})", fontsize=15)
 
+    # Set limits to focus on the relevant area (Pareto front centered)
+    front_x_min = min(scaled_front_x)
+    front_x_max = max(scaled_front_x)
+    front_y_min = min(scaled_front_y)
+    front_y_max = max(scaled_front_y)
+
+    # Create a bounding box that includes Pareto front and random centroid
+    # Use absolute value to handle negative coordinates correctly
+    base_x_min = min(front_x_min, scaled_mrand)
+    base_x_max = max(front_x_max, scaled_mrand)
+    base_y_min = min(front_y_min, scaled_srand)
+    base_y_max = max(front_y_max, scaled_srand)
+
+    # Calculate axis limits with 20% buffer
+    x_min, x_max = calculate_plot_buffer(base_x_min, base_x_max)
+    y_min, y_max = calculate_plot_buffer(base_y_min, base_y_max)
+
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
+
+    # Save as PNG
     plt.savefig(dest, bbox_inches="tight", dpi=300)
-    print(f"Plot saved to {dest}")
+
+    # Also save as SVG for better quality
+    svg_dest = dest.with_suffix(".svg")
+    plt.savefig(svg_dest, bbox_inches="tight", format="svg")
+
+    plt.close(fig)
 
 
-def plot_all_3d(front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path):
+def plot_all_3d(front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path):  # pragma: no cover
     """Plot the 3D Pareto front with the actual plant and random tree costs.
 
     Args:
@@ -573,39 +691,160 @@ def plot_all_3d(front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path)
     # Enable grid and adjust scaling
     ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
 
-    # Save and show the plot
+    # Save as PNG
     plt.savefig(save_path, bbox_inches="tight", dpi=300)
-    plt.show()
-    print(f"Plot saved to {save_path}")
+
+    # Also save as SVG for better quality
+    svg_dest = save_path.with_suffix(".svg")
+    plt.savefig(svg_dest, bbox_inches="tight", format="svg")
+
+    plt.close(fig)
 
 
 def distance_from_front(front, actual_tree):
-    """
-    Return the closest alpha for the actual tree, and its distance to the front.
+    """Return the interpolated alpha for the actual tree, and its distance to the front.
 
-    actual_tree is just (mactual, sactual)
-    front is a dict of form {alpha : [total_root_length, total_travel_distance]}
-    """
+    Interpolates between the two closest discrete alpha values on the Pareto front
+    for higher precision (based on Matt Platre's implementation).
 
-    # for each alpha value, find distance to the actual tree
+    Args:
+        actual_tree: Tuple of (total_root_length, total_travel_distance)
+        front: Dict of form {alpha: [total_root_length, total_travel_distance]}
+
+    Returns:
+        Tuple of (interpolated_alpha, scaling_distance) as Python floats
+    """
+    # For each alpha value, find distance to the actual tree
     distances = {}
 
-    for alpha in front.items():
-        alpha_value = alpha[0]
-        alpha_tree = alpha[1]
-
+    for alpha_value, alpha_tree in front.items():
+        # Guard against division by zero (unlikely with real root data)
+        if alpha_tree[0] == 0 or alpha_tree[1] == 0:
+            continue
         material_ratio = actual_tree[0] / alpha_tree[0]
         transport_ratio = actual_tree[1] / alpha_tree[1]
-
         distances[alpha_value] = max(material_ratio, transport_ratio)
 
-    # print(distances)
-    closest = min(distances.items(), key=lambda x: x[1])
-    # print(closest)
+    # Find the two closest alpha values
+    sorted_alphas = sorted(distances.items(), key=lambda x: x[1])
+    closest = sorted_alphas[0]
+    second_closest = sorted_alphas[1] if len(sorted_alphas) > 1 else closest
 
-    characteristic_alpha, scaling_distance = closest
+    alpha1, dist1 = closest
+    alpha2, dist2 = second_closest
 
-    return characteristic_alpha, scaling_distance
+    # Linear interpolation between the two closest alphas
+    # Closer distance gets higher weight
+    if math.isclose(dist1, dist2, rel_tol=1e-9):
+        interpolated_alpha = float(alpha1)
+    else:
+        total_dist = dist1 + dist2
+        weight1 = dist2 / total_dist  # Inverse weighting: closer = higher weight
+        weight2 = dist1 / total_dist
+        interpolated_alpha = float(alpha1 * weight1 + alpha2 * weight2)
+
+    return interpolated_alpha, float(dist1)
+
+
+def calculate_tradeoff(front, actual_tree):
+    """Calculate a tradeoff metric comparing the actual root to optimal architectures.
+
+    Conn et al., 2019 (https://doi.org/10.1371/journal.pcbi.1007325) describe
+    a tradeoff feature in which:
+
+        "The numerator quantifies the excess length of the plant compared to the
+        optimal minimum length of the Steiner tree. Similarly, the denominator
+        quantifies the excess travel distance of the plant compared to the optimal
+        minimum travel distance of the Satellite tree. A high value of this feature
+        (i.e., a large numerator and small denominator) indicates that the plant
+        prioritizes minimizing travel distance; a low trade-off value indicates
+        the plant prioritizes minimizing total length."
+
+    That description corresponds to an excess-based metric roughly of the form:
+        (actual_length - steiner_length) / (actual_distance - satellite_distance)
+
+    In this implementation we use a related, ratio-based metric inspired by the
+    same intuition, defined as a ratio of length-per-distance values:
+
+        Tradeoff = Actual_ratio / Optimal_ratio
+                 = (actual_length / actual_distance) / (steiner_length / satellite_distance)
+
+    This represents an alternative way to quantify the prioritization between
+    minimizing total root length (material cost) and minimizing travel distance
+    (transport efficiency), complementary to the alpha value on the Pareto front.
+
+    - Steiner architecture: Minimizes total root length (material cost)
+    - Satellite architecture: Minimizes travel distance (transport efficiency)
+
+    Args:
+        front: Dict of {alpha: [total_length, travel_distance]} Pareto front points
+        actual_tree: Tuple of (total_root_length, travel_distance)
+
+    Returns:
+        Dict with Tradeoff metric and component values:
+        - Tradeoff: Ratio of actual to optimal efficiency
+        - Steiner_length: Min total root length on Pareto front
+        - Steiner_distance: Travel distance of the Steiner architecture
+        - Satellite_length: Total root length of the Satellite architecture
+        - Satellite_distance: Travel distance of the Satellite architecture
+        - Actual_ratio: actual_length / actual_distance
+        - Optimal_ratio: steiner_length / satellite_distance
+    """
+    # Extract Pareto front values
+    front_points = list(front.values())  # List of [total_length, travel_distance] pairs
+
+    if len(front_points) < 1:
+        print("Warning: Pareto front is empty, cannot calculate Tradeoff")
+        return {
+            "Tradeoff": None,
+            "Steiner_length": None,
+            "Steiner_distance": None,
+            "Satellite_length": None,
+            "Satellite_distance": None,
+            "Actual_ratio": None,
+            "Optimal_ratio": None,
+        }
+
+    # Find Steiner architecture (minimizes total root length)
+    steiner_point = min(front_points, key=lambda x: x[0])
+    steiner_length, steiner_distance = steiner_point
+
+    # Find Satellite architecture (minimizes travel distance)
+    satellite_point = min(front_points, key=lambda x: x[1])
+    satellite_length, satellite_distance = satellite_point
+
+    # Actual tree values
+    actual_length, actual_distance = actual_tree
+
+    # Calculate ratios - handle division by zero
+    if actual_distance == 0:
+        actual_ratio = None
+        print("Warning: Actual travel distance is 0, actual_ratio set to None")
+    else:
+        actual_ratio = float(actual_length / actual_distance)
+
+    if satellite_distance == 0:
+        optimal_ratio = None
+        print("Warning: Satellite travel distance is 0, optimal_ratio set to None")
+    else:
+        optimal_ratio = float(steiner_length / satellite_distance)
+
+    # Calculate tradeoff
+    if optimal_ratio is None or optimal_ratio == 0 or actual_ratio is None:
+        tradeoff = None
+        print("Warning: Could not calculate tradeoff due to invalid ratios")
+    else:
+        tradeoff = float(actual_ratio / optimal_ratio)
+
+    return {
+        "Tradeoff": tradeoff,
+        "Steiner_length": float(steiner_length),
+        "Steiner_distance": float(steiner_distance),
+        "Satellite_length": float(satellite_length),
+        "Satellite_distance": float(satellite_distance),
+        "Actual_ratio": actual_ratio,
+        "Optimal_ratio": optimal_ratio,
+    }
 
 
 def distance_from_front_3d(front, actual_tree):
@@ -650,6 +889,9 @@ def pareto_calcs(H):
     # for debug: show total_root_length, total_travel_distance
     # print(list(front.items())[0:5])
 
+    # Calculate tradeoff metrics
+    tradeoff_info = calculate_tradeoff(front, actual)
+
     plant_alpha, plant_scaling = distance_from_front(front, actual)
     randoms = random_tree(H)
 
@@ -670,6 +912,9 @@ def pareto_calcs(H):
         "alpha (random)": rand_alpha,
         "scaling (random)": rand_scaling,
     }
+
+    # Merge tradeoff metrics into results
+    results.update(tradeoff_info)
 
     return results, front, randoms
 
@@ -722,19 +967,9 @@ def pareto_calcs_3d_path_tortuosity(H):
 ### CONVEX HULL calculations
 
 
-from scipy.spatial import ConvexHull
-import numpy as np
-import networkx as nx
-import math
-
-
 def distance(p1, p2):
     """Compute 2D Euclidian distance between two (x,y) points."""
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
-
-
-from scipy.spatial import ConvexHull
-import numpy as np
 
 
 def calculate_convex_hull_area(G):
@@ -755,19 +990,13 @@ def calculate_convex_hull_area(G):
     return hull_area
 
 
-import networkx as nx
-import math
-
-
 def distance(pos1, pos2):
     """Calculate the Euclidean distance between two positions."""
     return math.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
 
 
 def calc_zones(G, root_node):
-    """
-    Calculate the Branched Zone, Basal Zone, and Apical Zone lengths along the primary root.
-    """
+    """Calculate the Branched Zone, Basal Zone, and Apical Zone lengths along the primary root."""
     # Perform BFS to find nodes along the primary root
     bfs_paths = dict(nx.bfs_successors(G, root_node))
 
@@ -835,10 +1064,11 @@ def calc_len_LRs_with_distances(H):
     idxs = {k: v for k, v in idxs.items() if v is not None}  # drop empty (PR) nodes
 
     num_LRs = max(idxs.values()) + 1
+    min_num_LRs = min(idxs.values())  # should be 1
 
     results = {}
 
-    for i in range(num_LRs):
+    for i in range(min_num_LRs, num_LRs):
         # gather nodes corresponding to the current LR index
         selected = []
 
@@ -898,9 +1128,6 @@ def find_lowermost_node_of_primary_root(G, root_node):
 def calculate_distance(p1, p2):
     """Compute 2D Euclidean distance between two (x,y) points."""
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
-
-
-import numpy as np
 
 
 def analyze(G):
@@ -991,14 +1218,14 @@ def analyze(G):
         num_LRs / branched_zone_length if branched_zone_length != 0 else 0
     )
 
-    # Calculate mean and median
-    mean_LR_lengths = np.mean(lens_LRs)
-    median_LR_lengths = np.median(lens_LRs)
-    median_LR_angles = np.median(angles_LRs)
-    mean_LR_angles = np.mean(angles_LRs)
-    mean_LR_distances = np.mean(distances_LRs)
-    median_LR_distances = np.median(distances_LRs)
-    sum_LR_distances = np.sum(distances_LRs)
+    # Calculate mean and median (convert to Python floats for clean CSV serialization)
+    mean_LR_lengths = float(np.mean(lens_LRs))
+    median_LR_lengths = float(np.median(lens_LRs))
+    median_LR_angles = float(np.median(angles_LRs))
+    mean_LR_angles = float(np.mean(angles_LRs))
+    mean_LR_distances = float(np.mean(distances_LRs))
+    median_LR_distances = float(np.median(distances_LRs))
+    sum_LR_distances = float(np.sum(distances_LRs))
 
     # Calculate the total distance (sum of LR distances and PR minimal distance)
     total_distance = sum_LR_distances + distance_root
@@ -1019,11 +1246,12 @@ def analyze(G):
     results["LR count"] = num_LRs
     results["LR density"] = density_LRs
     results["Branched Zone density"] = branched_zone_density
-    results["LR lengths"] = lens_LRs
-    results["LR angles"] = angles_LRs
-    results["LR minimal lengths"] = distances_LRs
-    results["Barycenter x displacement"] = barycenter_x_displacement
-    results["Barycenter y displacement"] = barycenter_y_displacement
+    # Convert list elements to Python floats for clean CSV serialization
+    results["LR lengths"] = [float(x) for x in lens_LRs]
+    results["LR angles"] = [float(x) for x in angles_LRs]
+    results["LR minimal lengths"] = [float(x) for x in distances_LRs]
+    results["Barycenter x displacement"] = float(barycenter_x_displacement)
+    results["Barycenter y displacement"] = float(barycenter_y_displacement)
     results["Total minimal Distance"] = (
         total_distance  # Add the total distance to the results
     )
@@ -1041,6 +1269,6 @@ def analyze(G):
     hull = ConvexHull(points)
     convex_hull_area = hull.volume  # Convex hull area in 2D is the same as its volume
 
-    results["Convex Hull Area"] = convex_hull_area
+    results["Convex Hull Area"] = float(convex_hull_area)
 
     return results, front, randoms, results_3d, front_3d, randoms_3d

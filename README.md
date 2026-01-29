@@ -1,4 +1,9 @@
 # Ariadne
+
+[![Stable version](https://img.shields.io/pypi/v/ariadne-roots?label=stable "Stable version")](https://pypi.org/project/ariadne-roots/)
+[![Latest pre-release](https://img.shields.io/github/v/release/Salk-Harnessing-Plants-Initiative/Ariadne?include_prereleases&label=pre-release)](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases)
+
+
 🌱 is a small software package for analyzing images of _Arabidopsis thaliana_ roots.
 
 📷 It features a GUI for semi-automated image segmentation
@@ -21,9 +26,122 @@
 
 ## Installation
 
-Ariadne is installed as a Python package called `ariadne-roots`. We recommend using a package manager and creating an isolated environment for `ariadne-roots` and its dependencies. Our recommended package manager is Mamba. Follow the instructions to install [Miniforge3](https://github.com/conda-forge/miniforge).
-
+Ariadne is installed as a Python package called `ariadne-roots`. We recommend using a package manager and creating an isolated environment for `ariadne-roots` and its dependencies.
 You can find the latest version of `ariadne-roots` on the [Releases](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases) page.
+
+
+## Installation (Users)
+
+We recommend installing Ariadne in an isolated environment using `uv`.  You can install it with [uv](https://docs.astral.sh/uv/) to keep your environment clean and reproducible.
+
+### Prerequisites
+
+The GUI requires **tkinter**, which is part of Python's standard library:
+
+- **uv (recommended)**: tkinter is included automatically with uv's managed Python installations
+- **macOS (system Python via Homebrew)**: `brew install python-tk@3.12` (only if not using uv)
+- **Ubuntu/Debian (system Python)**: `sudo apt-get install python3-tk` (only if not using uv)
+- **Windows (system Python)**: tkinter is typically included with standard Python installations
+- **conda/mamba**: tkinter is included automatically
+
+To verify tkinter is available: `python -c "import tkinter"`
+
+**Note:** If you use `uv` to manage Python (recommended), tkinter is already included and requires no separate installation.
+
+There are three main ways to install and run Ariadne:
+
+---
+
+### Option 1. Local Environment
+
+This creates a local `.venv` folder to hold Ariadne and its dependencies.
+
+```sh
+# Create a local environment with pip + setuptools pre-seeded
+uv venv --seed .venv
+
+# Activate it (Linux/macOS)
+source .venv/bin/activate
+
+# Activate it (Windows PowerShell)
+.venv\Scripts\activate
+
+# Install Ariadne
+uv pip install ariadne-roots
+```
+
+Then run the GUI:
+
+```sh
+ariadne-trace
+```
+
+---
+
+### Option 2. One-liner Install & Run (no manual environment necessary)
+
+You can also run Ariadne directly with `uvx`, which installs it into an isolated cache and exposes the CLI:
+
+```sh
+uvx ariadne-trace
+```
+
+This will launch the GUI without needing to set up or activate a venv manually.
+
+---
+
+### Option 3. Project-Based Workflow (for developers/power users)
+
+This approach creates a dedicated project for using Ariadne with `uv init` and `uv add`:
+
+```sh
+# Create a new project directory
+uv init ariadne-project
+cd ariadne-project
+
+# Add Ariadne as a dependency (creates .venv automatically)
+uv add ariadne-roots
+
+# Run the GUI
+uv run ariadne-trace
+```
+
+This is ideal if you want to:
+- Keep Ariadne alongside other analysis tools in a project
+- Lock dependencies with `uv.lock` for reproducibility
+- Manage multiple environments for different analyses
+
+---
+
+
+## Usage
+
+### If installed in a local environment (Option 1)
+Activate the environment and run:
+
+```sh
+source .venv/bin/activate    # or .venv\Scripts\activate on Windows
+ariadne-trace
+```
+
+### If using the one-liner (Option 2)
+Simply run:
+
+```sh
+uvx ariadne-trace
+```
+
+### If using project-based workflow (Option 3)
+Run from your project directory:
+
+```sh
+cd ariadne-project
+uv run ariadne-trace
+```
+
+### `conda` environment installation
+
+Follow the instructions to install [Miniforge3](https://github.com/conda-forge/miniforge).
 
 ### Step-by-Step Installation
 
@@ -39,8 +157,10 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
 
 3. **Install `ariadne-roots` using pip:**
     ```sh
-    pip install ariadne-roots
+    pip install --pre ariadne-roots  # Use --pre to include pre-release versions
     ```
+    - Omit the `--pre` flag if you only want to install stable releases.
+
 
 ## Usage
 
@@ -86,26 +206,38 @@ You can find the latest version of `ariadne-roots` on the [Releases](https://git
 ### Analyze with Ariadne
 
 1. **Organize your files:**
-    - Gather all the .json files stored at the location where Ariadne has been installed into a new folder named “OUTPUT_JSON” (referred to as “location_1” later on).
-    - Create a folder named “RESULTS” (referred to as “location_2”).
-    - Create a new folder named “Output”.
+    - Gather all the .json files stored at the location where Ariadne has been installed into a new folder named "OUTPUT_JSON" (referred to as "location_1" later on).
+    - Create a folder named "RESULTS" (referred to as "location_2").
+    - Create a new folder named "Output".
 2. **Prepare for analysis:**
     - Close Ariadne but keep the terminal open.
     - Follow the instructions in step 2 above to set up the terminal.
 3. **Run the analysis:**
-    - Click on “Analyze” in Ariadne.
+    - Click on "Analyze" in Ariadne.
 
     <img src="assets/Welcome.png" width="400" height="250">
 
-    - Select the .json files to analyze from “location_1”.
-    - Then select “location_2” for the output.
-    - The software will analyze all the selected .json files.
+    - **Set scaling parameters** (optional):
+        - A dialog will appear asking you to configure measurement units
+        - Enter the conversion factor (e.g., if 1 pixel = 2.5 mm, enter `1` for pixels and `2.5` for distance)
+        - Select or enter the unit name (e.g., "mm", "cm", "µm")
+        - Click "OK" to continue, or "Cancel" to use default (pixels)
+    - **Select input files**:
+        - Choose the .json files to analyze from "location_1"
+        - An info dialog will confirm the number of files selected
+    - **Select output folder**:
+        - Choose "location_2" for the output
+        - The software will analyze all selected files and save results
+    - **Completion**:
+        - A dialog will show where the results were saved (CSV report and Pareto plots)
 
 ### Results
 
-- In the “location_3” folder, you will find:
-    - A graph for each root showing the Pareto optimality.
-    - A .csv file storing all the RSA traits for each root.
+- In the output folder you selected, you will find:
+    - A Pareto optimality plot for each root (PNG format)
+    - A timestamped CSV file (e.g., `report_20241110_153045.csv`) storing all RSA traits for each root
+
+**Note on Units:** If you configured scaling during analysis, all length measurements in the CSV and plots will be in your specified units (e.g., mm, cm). Otherwise, measurements are in pixels.
 
 The RSA traits included in the CSV are
 
@@ -160,39 +292,306 @@ The RSA traits included in the CSV are
 ## Contributing
 Follow these steps to set up your development environment and start making contributions to the project.
 
-1. **Navigate to the desired directory:**
-    Change directories to where you would like the repository to be downloaded:
+1. **Navigate to the desired directory**
+
+    Change directories to where you would like the repository to be downloaded
     ```sh
     cd /path/on/computer/for/repos
     ```
 
-2. **Clone the repository:**
+2. **Clone the repository**
     ```sh
-    git clone https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne.git
+    git clone https//github.com/Salk-Harnessing-Plants-Initiative/Ariadne.git
     ```
 
-3. **Navigate to the root of the cloned repository:**
+3. **Navigate to the root of the cloned repository**
     ```sh
     cd Ariadne
     ```
 
-4. **Create a development environment:**
-    This will install the necessary dependencies and the `ariadne-roots` package in editable mode:
+## 🛠️ For Developers
+
+### Requirements
+- [uv](https://github.com/astral-sh/uv) for dependency management
+- Python 3.11+
+
+### Setting Up a Development Environment
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne.git
+cd Ariadne
+```
+
+## 🛠️ Development with uv
+
+We use [uv](https://github.com/astral-sh/uv) for dependency management and tooling.
+- This workflow is tested in GitHub Actions using `.github/workflows/test-dev.yml`.
+- Python version is pinned to 3.12 in `.python-version` (CI tests 3.12 and 3.13).
+- Dependencies are locked in `uv.lock` for reproducible builds.
+
+### Quick Start
+
+After cloning the repository, set up your development environment:
+
+```bash
+uv sync
+```
+
+This command:
+- Reads `.python-version` to use Python 3.12 automatically
+- Creates `.venv` (if it doesn't exist)
+- Installs dependencies from the committed `uv.lock` file (reproducible!)
+- Installs runtime dependencies plus the `dev` group (tests, linters, etc.)
+
+**Important:** Always use `uv sync` (not `uv pip install`) to ensure you get the exact dependency versions from the lockfile.
+
+---
+
+### Running Commands
+
+Use `uv run` to execute commands **inside the project environment** without manually activating `.venv`:
+
+```bash
+# Run tests with coverage
+uv run pytest --cov=ariadne_roots --cov-report=term-missing
+
+# Check code formatting
+uv run black --check .
+
+# Run linting
+uv run ruff check .
+
+# Run the CLI
+uv run ariadne-trace
+```
+
+**Cross-platform:** `uv run` works on Linux, macOS, and Windows without needing venv activation.
+
+---
+
+### Updating Dependencies
+
+To update dependencies, modify `pyproject.toml` then regenerate the lockfile:
+
+```bash
+# Update lockfile after changing dependencies
+uv lock
+
+# Sync environment with new lockfile
+uv sync
+
+# Commit both files
+git add pyproject.toml uv.lock
+git commit -m "Update dependencies"
+```
+
+**CI Integration:** Our CI uses `uv sync --frozen` to ensure the lockfile isn't modified during builds, catching any uncommitted dependency changes.
+
+---
+
+### Security & Dependency Scanning
+
+We maintain secure dependencies through regular vulnerability scanning. To check for known vulnerabilities:
+
+```bash
+# Scan current dependencies for security issues
+uvx pip-audit
+```
+
+**Best Practices:**
+- Run `uvx pip-audit` before each release
+- Check the lockfile regularly for outdated dependencies with known vulnerabilities
+- Review [GitHub Security Advisories](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/security/advisories) for this repository
+
+**Automated Monitoring:**
+Consider enabling GitHub Dependabot to receive automated pull requests for dependency updates and security patches.
+
+**Current Status:** No known vulnerabilities (last checked: November 2025)
+
+---
+
+### 3. Building artifacts
+To build source and wheel distributions:
+
+```bash
+uv build
+```
+
+Artifacts will be created in the `dist/` directory.
+
+---
+
+### Alternative: install dev extras with pip
+If you’re not using `uv`, you can still install everything with pip:
+
+```bash
+pip install -e ".[dev]"
+```
+
+This installs runtime + dev dependencies into your current environment.
+
+---
+
+### Instructions for `conda` environment
+
+1. **Create a development environment**
+
+    This will install the necessary dependencies and the `ariadne-roots` package in editable mode
     ```sh
-    mamba env create -f environment.yaml
+    mamba create --name ariadne_dev python=3.11 # python 3.11, 3.12, 3.13 are tested in the CI
     ```
 
-5. **Activate the development environment:**
+2. **Activate the development environment**
     ```sh
     mamba activate ariadne_dev
     ```
 
-6. **Create a branch for your changes:**
-    Before making any changes, create a new branch:
+3. **Install dev dependencies and source code in editable mode**
+    ```bash
+    pip install -e ".[dev]"
+    ```
+
+
+## Development Rules
+1. **Create a branch for your changes**
+
+    Before making any changes, create a new branch
     ```sh
     git checkout -b your-branch-name
     ```
 
+2. **Code**
+
+    Make your changes. Please make sure your code is readable and documented.
+
+    - The Google style is preferred.
+    - Use docstrings with args and returns defined for each function.
+    - Typing annotations are preferred.
+    - Use comments to explain steps of calculations and algorithms.
+    - Use consistent variable names.
+        - Please use full words and not letters as variable names so that variables are readable.
+
+3. **Commit often**
+
+    Commit your changes frequently with short, descriptive messages. This helps track progress and makes it easier to identify issues.
+
+    ```sh
+    git add <changed_files>
+    git commit -m "Short, descriptive commit message"
+    ```
+
+4. **Open a pull request**
+
+    Before you make any changes, you can write a descriptive plan of what you intend to do and why.
+    Once your changes are ready, push your branch to the remote repository. Provide a clear explanation of what you changed and why.
+
+    ```sh
+    git push origin your-branch-name
+    ```
+
+    - Go to the repository on GitHub.
+    - Click on **Compare & pull request**.
+    - Fill in the title and description of your pull request.
+    - Click **Create pull request**.
+
+5. **Test your changes**
+
+    Ensure your changes pass all tests and do not break existing functionality.
+
+6. **Request a review**
+
+    In the pull request, request a review from the appropriate team members. Notify them via GitHub.
+
+7. **Merge your changes to main**
+
+    After your code passes review, merge your changes to the `main` branch.
+
+    - Click **Merge pull request** on GitHub.
+    - Confirm the merge.
+
+8. **Delete your remote branch**
+
+    Once your changes are merged, delete your remote branch to keep the repository clean.
+
+
+
+## Releasing `ariadne-roots`
+
+The GitHub Action workflow `.github/workflows/python-publish.yml` results in the package, `ariadne-roots`, being released at [PyPI](https://pypi.org/project/ariadne-roots/).
+
+To release a new package, follow these instructions:
+
+**Follow contributing instructions above**
+
+1. **Make a new branch to record your changes**
+    ```sh
+    git checkout -b <your_name>/bump_version_to_<version>
+    ```
+
+2. **Modify version**
+
+    The `pyproject.toml` file contains the information for the pip package. Incrementally increase the "version" with each release.
+
+    **Semantic Versioning**
+
+    Semantic versioning (SemVer) is a versioning system that uses the format:
+    `MAJOR.MINOR.PATCH`
+
+    - **MAJOR:** Increase when you make incompatible API changes.
+    - **MINOR:** Increase when you add functionality in a backward-compatible manner.
+    - **PATCH:** Increase when you make backward-compatible bug fixes.
+
+    For example:
+
+    - If the current version is `1.2.3`:
+    - A breaking change would result in `2.0.0`.
+    - Adding a new feature would result in `1.3.0`.
+    - Fixing a bug would result in `1.2.4`.
+
+    Learn more about the rules of semantic versioning [here](https://semver.org).
+
+3. **Commit changes**
+
+    After making the required modifications, commit your changes:
+    ```sh
+    git add pyproject.toml
+    git commit -m "Bump version to <version>"
+    git push origin <your_name>/bump_version_to_<version>
+    ```
+
+4. **Open a pull request**
+
+    1. Go to the repository on GitHub.
+    2. You should see a banner prompting you to compare & create a pull request for your branch. Click it.
+    3. Fill in the pull request title and description. For example:
+        - **Title:** Bump version to `<version>`
+        - **Description:** "This PR updates the version to `<version>` for release."
+    4. Click **Create pull request**.
+
+5. **Request a review**
+
+    After creating the pull request, in the right-hand sidebar, click on **Reviewers** and select the appropriate reviewer(s). Notify the reviewer(s) via GitHub.
+
+6. **Merge your changes to `main` after review**
+
+    Once the reviewer approves your pull request, merge it into the `main` branch.
+
+7. **Release to trigger the workflow**
+
+    1. Go to the [release page](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases).
+    2. Draft a new release:
+        - Create a new tag with the version number you used in the repository.
+        - Have GitHub draft the release notes to include all the changes since the last release.
+        - Modify the release name to include `ariadne-roots`, so that it says `ariadne-roots v<version>` like the rest.
+    3. Please ask for your release to be reviewed before releasing.
+
+8. **Verify the release**
+
+    Check [PyPI](https://pypi.org/project/ariadne-roots/#history) and the GitHub Actions of our repository to make sure the pip package was created and published successfully.
+    - You should see the latest release with the correct version number at pypi.org.
+    - The Github Actions should have green checkmarks and not red X's associated with your release.
 
 ## Contributors
 

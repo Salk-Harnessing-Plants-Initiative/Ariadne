@@ -12,8 +12,7 @@ DEFAULT_BETAS = np.arange(0, 1.01, 0.01)
 
 
 def get_critical_nodes(G):
-    """
-    Given a graph G, return a list of its critical nodes (the main root base, which is the first node
+    """Given a graph G, return a list of its critical nodes (the main root base, which is the first node
     with index 0; and all root tips, which are nodes with degree 1).
     """
     critical_nodes = []
@@ -199,8 +198,7 @@ def graph_costs_3d_path_tortuosity(G, critical_nodes=None):
 
 
 def slope_vector(p1, p2):
-    """
-    Given two n-dimensional points, computes the slope m between p1 and p2
+    """Given two n-dimensional points, computes the slope m between p1 and p2
 
     We pick the slope specifically such that p1 = p0 + 1 * m
 
@@ -218,8 +216,7 @@ def slope_vector(p1, p2):
 
 
 def delta_point(p1, slope, t):
-    """
-    given a point p0 and a slope vector, computes p0 + t * slope
+    """Given a point p0 and a slope vector, computes p0 + t * slope
 
     works for any dimension
     """
@@ -231,8 +228,7 @@ def delta_point(p1, slope, t):
 
 
 def steiner_points(p1, p2, npoints=10):
-    """
-    Given two points p1 and p2, this method divides the p1-p2 line segment into several
+    """Given two points p1 and p2, this method divides the p1-p2 line segment into several
     line segments.
 
     This method returns all of the intermediate points along the p1-p2 line
@@ -240,7 +236,6 @@ def steiner_points(p1, p2, npoints=10):
     npoints specifies how many intermediate points to create; the bigger this is, the
     more finely we divide the line segment
     """
-
     # get the slope such that p2 = p1 + m*t
     # for 0 <= t <= 1 this gives us a point along the p1-p2 line segment
     slope = slope_vector(p1, p2)
@@ -260,8 +255,7 @@ def steiner_points(p1, p2, npoints=10):
 
 
 def pareto_cost(total_root_length, total_travel_distance, alpha):
-    """
-    Given a wiring cost, a conduction delay, and alpha, computes the overal pareto cost
+    """Given a wiring cost, a conduction delay, and alpha, computes the overal pareto cost
 
     alpha tells us how much to prioritize each objective. If it's 0, we only care about
     conduction delay. If it's 1, we only care about wiring cost
@@ -280,8 +274,7 @@ def pareto_cost(total_root_length, total_travel_distance, alpha):
 def pareto_cost_3d_path_tortuosity(
     total_root_length, total_travel_distance, total_path_coverage, alpha, beta
 ):
-    """
-    Computes the pareto cost.
+    """Computes the pareto cost.
 
     alpha * total_root_length + beta * total_travel_distance - gamma * total_path_coverage
 
@@ -316,9 +309,7 @@ def pareto_cost_3d_path_tortuosity(
 
 
 def point_dist(p1, p2):
-    """
-    Euclidean distance between two different points (of any dimension)
-    """
+    """Euclidean distance between two different points (of any dimension)"""
     assert len(p1) == len(p2)
     sq_dist = 0
     for i in range(len(p1)):
@@ -328,8 +319,7 @@ def point_dist(p1, p2):
 
 
 def node_dist(G, u, v):
-    """
-    Gets the euclidean distance between two different nodes in a graph
+    """Gets the euclidean distance between two different nodes in a graph
 
     Assumes each node has an attribute 'pos' corresponding to its coordinate
     """
@@ -339,8 +329,7 @@ def node_dist(G, u, v):
 
 
 def k_nearest_neighbors(G, u, k=None, candidate_nodes=None):
-    """
-    Given a graph G and a node u, this method gets u's closest neighbors in G
+    """Given a graph G and a node u, this method gets u's closest neighbors in G
 
     The closest neighbors are determined using the euclidean distance between the nodes
 
@@ -360,11 +349,9 @@ def k_nearest_neighbors(G, u, k=None, candidate_nodes=None):
 
 
 def satellite_tree(G):
-    """
-    Constructs the satellite tree out of G; this is a graph in which every node is connected
+    """Constructs the satellite tree out of G; this is a graph in which every node is connected
     to the root base by a direct line
     """
-
     # assume the _node is node 0
     base_node = 0
 
@@ -389,8 +376,7 @@ def satellite_tree(G):
 
 
 def pareto_steiner_fast(G, alpha):
-    """
-    Given a graph G and a value 0 <= alpha <= 1, compute the Pareto-optimal tree connecting
+    """Given a graph G and a value 0 <= alpha <= 1, compute the Pareto-optimal tree connecting
     the root base_node to all of the lateral root tips of G
 
     The algorithm attempts to optimize alpha * D + (1 - alpha) * W
@@ -597,8 +583,7 @@ def pareto_steiner_fast(G, alpha):
 
 
 def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
-    """
-    Given a graph G and a value 0 <= {alpha, beta} <= 1, compute the Pareto-optimal tree
+    """Given a graph G and a value 0 <= {alpha, beta} <= 1, compute the Pareto-optimal tree
     connecting the base node to all of the lateral root tips of G.
 
     cost = alpha * total_root_length + beta * total_travel_distance - gamma * total_path_coverage
@@ -619,7 +604,7 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
         conduction delay)
     total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per
         path is defined as the ratio of the actual path length to the shortest path
-        length between the base node and the root tip. The total root coverage is the sum of
+        length between the base node and the root tip. The total path coverage is the sum of
         the tortuosity of all the root paths.
 
     The algorithm uses a greedy approach: always take the edge that will reduce the
@@ -823,8 +808,7 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
 
 
 def pareto_front(G):
-    """
-    Given a graph G, compute the Pareto front of optimal solutions for the wiring cost and conduction delay
+    """Given a graph G, compute the Pareto front of optimal solutions for the wiring cost and conduction delay.
 
     This allows to compare how G was connected and how G could have been connected had it
     been trying to optimize wiring cost and conduction delay.
@@ -842,7 +826,6 @@ def pareto_front(G):
         front (dict): A dictionary of edge_lengths, travel_distances_to_base for each alpha value on the front
         actual (tuple): The actual total_root_length, total_travel_distance of the original plant
     """
-
     critical_nodes = get_critical_nodes(G)
 
     # test: compute the actual total_root_length, total_travel_distance for the original plant
@@ -922,8 +905,7 @@ def pareto_front_3d_path_tortuosity(G):
 
 
 def random_tree(G):
-    """
-    Given a graph G, compute 1000 random spanning trees as in Conn et al. 2017.
+    """Given a graph G, compute 1000 random spanning trees as in Conn et al. 2017.
     Only consider the critical nodes (and root node) of G.
 
     Args:

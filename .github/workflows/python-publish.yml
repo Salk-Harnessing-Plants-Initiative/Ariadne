@@ -6,31 +6,126 @@ on:
     types:
       - published
 
+permissions:
+  contents: read
+
 jobs:
-  pypi:
-    name: PyPI Wheel
-    runs-on: "ubuntu-22.04"
+  validate-release:
+    name: Validate Release
+    runs-on: ubuntu-22.04
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Checkout repo
-      uses: actions/checkout@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache-dependency-glob: "**/uv.lock"
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.11
+      - name: Install Python 3.12
+        run: uv python install 3.12
 
-    - name: Install dependencies
-      run: |
-        pip install --editable .[dev]
+      - name: Extract version from tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"  # Strip 'v' prefix
+          echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_ENV
+          echo "Release tag version: $TAG_VERSION"
 
-    - name: Build wheel
-      run: |
-        python -m build --wheel
-        twine check dist/*
-    
-    - name: Upload
-      env:
-        PYPI_TOKEN: ${{ secrets.EBERRIGAN_PYPI_TOKEN }}
-      run: |
-        twine upload -u __token__ -p "$PYPI_TOKEN" dist/* --non-interactive --skip-existing --disable-progress-bar
+      - name: Verify version matches pyproject.toml
+        run: |
+          TOML_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "pyproject.toml version: $TOML_VERSION"
+          if [ "$TAG_VERSION" != "$TOML_VERSION" ]; then
+            echo "❌ ERROR: Tag version ($TAG_VERSION) != pyproject.toml version ($TOML_VERSION)"
+            exit 1
+          fi
+          echo "✅ Version consistency verified"
+
+      - name: Verify CHANGELOG.md updated
+        run: |
+          if ! grep -q "## \[$TAG_VERSION\]" CHANGELOG.md; then
+            echo "❌ ERROR: CHANGELOG.md missing entry for version $TAG_VERSION"
+            echo "Expected heading: ## [$TAG_VERSION]"
+            exit 1
+          fi
+          echo "✅ CHANGELOG.md entry found for $TAG_VERSION"
+
+      - name: Sync dependencies
+        run: uv sync --frozen
+
+      - name: Run test suite
+        run: uv run pytest -q --cov=ariadne_roots --cov-report=term-missing --cov-fail-under=90
+        # Coverage threshold (90%) enforced by --cov-fail-under flag
+
+      - name: Validation summary
+        run: |
+          echo "✅ All validation checks passed:"
+          echo "  - Version consistency verified"
+          echo "  - CHANGELOG.md updated"
+          echo "  - Test suite passing"
+          echo "  - Coverage ≥90%"
+
+  build-and-publish:
+    name: Build and Publish to PyPI
+    needs: validate-release
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache-dependency-glob: "**/uv.lock"
+
+      - name: Install Python 3.12
+        run: uv python install 3.12
+
+      - name: Sync dependencies
+        run: uv sync --frozen
+
+      - name: Build package
+        run: |
+          uv build
+          echo "Build artifacts:"
+          ls -lh dist/
+
+      - name: Check package metadata
+        run: uvx twine check dist/*
+
+      - name: Test wheel installation
+        run: |
+          echo "Testing wheel installation in clean environment..."
+          mkdir -p test-install && cd test-install
+          uv init --no-readme --no-workspace test-project
+          cd test-project
+          uv add ../../dist/*.whl
+          uv run python -c "import ariadne_roots; print('✅ Wheel installation successful'); print('Version:', getattr(ariadne_roots, '__version__', 'unknown'))"
+          cd ../..
+
+      - name: Security audit
+        run: |
+          echo "Running security audit on dependencies..."
+          uvx pip-audit || echo "⚠️  Security audit found issues (non-blocking for now)"
+        continue-on-error: true  # Informational for now, can make blocking later
+
+      - name: Upload to PyPI
+        env:
+          PYPI_TOKEN: ${{ secrets.EBERRIGAN_PYPI_TOKEN }}
+        run: |
+          echo "Uploading to PyPI..."
+          uvx twine upload -u __token__ -p "$PYPI_TOKEN" dist/* \
+            --non-interactive --skip-existing --disable-progress-bar
+          echo "✅ Package published to PyPI"
+
+      - name: Publish summary
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "🎉 Release $VERSION published successfully!"
+          echo "PyPI: https://pypi.org/project/ariadne-roots/$VERSION/"
+          echo ""
+          echo "Install with: pip install ariadne-roots==$VERSION"
