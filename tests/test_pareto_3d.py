@@ -500,9 +500,9 @@ class TestScalingIntegration:
         wiring_2d, _ = graph_costs(simple_3node_graph)
         wiring_3d, _, _ = graph_costs_3d_path_tortuosity(simple_3node_graph)
 
-        assert math.isclose(wiring_2d, wiring_3d, rel_tol=1e-8), (
-            "2D and 3D should compute same total_root_length"
-        )
+        assert math.isclose(
+            wiring_2d, wiring_3d, rel_tol=1e-8
+        ), "2D and 3D should compute same total_root_length"
 
     def test_3d_and_2d_total_travel_distance_match(self, simple_3node_graph):
         """Test that 3D and 2D return same total_travel_distance."""
@@ -511,9 +511,9 @@ class TestScalingIntegration:
         _, delay_2d = graph_costs(simple_3node_graph)
         _, delay_3d, _ = graph_costs_3d_path_tortuosity(simple_3node_graph)
 
-        assert math.isclose(delay_2d, delay_3d, rel_tol=1e-8), (
-            "2D and 3D should compute same total_travel_distance"
-        )
+        assert math.isclose(
+            delay_2d, delay_3d, rel_tol=1e-8
+        ), "2D and 3D should compute same total_travel_distance"
 
 
 # ========== Parametrized Tests ==========
