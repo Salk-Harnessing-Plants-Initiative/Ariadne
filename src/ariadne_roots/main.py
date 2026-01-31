@@ -371,7 +371,7 @@ class TracerUI(tk.Frame):
 
             # adjust index and menubar
             self.frame_index = next_index
-            self.day_indicator = f"Frame #{self.frame_index+1}"
+            self.day_indicator = f"Frame #{self.frame_index + 1}"
 
         except IndexError:
             self.day_indicator = "End of GIF"
@@ -1001,10 +1001,10 @@ class Tree:
 # Helper functions
 def get_graph_from_json(json_file):
     """Load a JSON file and convert it to a NetworkX graph.
-    
+
     Args:
         json_file (str): Path to the JSON file.
-        
+
     Returns:
         nx.Graph: A NetworkX graph object.
     """
@@ -1013,6 +1013,7 @@ def get_graph_from_json(json_file):
         graph = json_graph.adjacency_graph(data)
 
     return graph
+
 
 class AnalyzerUI(tk.Frame):
     """Analysis mode interface."""
@@ -1056,7 +1057,7 @@ class AnalyzerUI(tk.Frame):
         # Create custom popup window
         scale_win = tk.Toplevel(self.base)
         scale_win.title("Set Scale")
-        scale_win.geometry("350x350")
+        scale_win.geometry("350x420")
         scale_win.grab_set()  # make popup modal
 
         # Labels + Entries
@@ -1075,6 +1076,17 @@ class AnalyzerUI(tk.Frame):
         # Label to show calculated scale
         result_label = tk.Label(scale_win, text="Result: (waiting for input...)")
         result_label.pack(pady=10)
+
+        # Separator line
+        tk.Frame(scale_win, height=1, bg="gray").pack(fill="x", padx=20, pady=5)
+
+        # 3D analysis checkbox (optional, slower)
+        enable_3d_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(
+            scale_win,
+            text="Include 3D Pareto analysis (slower)",
+            variable=enable_3d_var,
+        ).pack(pady=5)
 
         def update_result(*args):
             """Update live result when values change."""
@@ -1113,6 +1125,10 @@ class AnalyzerUI(tk.Frame):
                 config.length_scale_factor = self.length_scale_factor
                 config.length_scale_unit = self.length_scale_unit
 
+                # Store 3D analysis preference
+                self.enable_3d_analysis = enable_3d_var.get()
+                config.enable_3d_analysis = self.enable_3d_analysis
+
                 messagebox.showinfo(
                     "Scale set",
                     f"1 pixel = {self.length_scale_factor:.4f} {self.length_scale_unit}",
@@ -1130,10 +1146,12 @@ class AnalyzerUI(tk.Frame):
             # Set defaults
             self.length_scale_factor = 1.0
             self.length_scale_unit = "px"
+            self.enable_3d_analysis = False
 
             # Store in config module
             config.length_scale_factor = 1.0
             config.length_scale_unit = "px"
+            config.enable_3d_analysis = False
 
             scale_win.destroy()
 
@@ -1191,7 +1209,8 @@ class AnalyzerUI(tk.Frame):
             self.output_path / f"report_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
         )
         report_3d_dest = (
-            self.output_path / f"report_3d_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
+            self.output_path
+            / f"report_3d_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
         )
 
         # add current file count
@@ -1234,9 +1253,12 @@ class AnalyzerUI(tk.Frame):
                 graph = json_graph.adjacency_graph(data)
 
             # perform analysis
-            results, front, randoms, results_3d, front_3d, randoms_3d = quantify.analyze(graph)
+            results, front, randoms, results_3d, front_3d, randoms_3d = (
+                quantify.analyze(graph, enable_3d=config.enable_3d_analysis)
+            )
             results["filename"] = graph_name_noext
-            results_3d["filename"] = graph_name_noext
+            if config.enable_3d_analysis:
+                results_3d["filename"] = graph_name_noext
 
             # Apply scaling transformation to results
             scaled_results = scaling.apply_scaling_transformation(
@@ -1260,14 +1282,18 @@ class AnalyzerUI(tk.Frame):
                 f"Travel distance (random): {results['Travel distance (random)']}"
             )
 
-            with open(report_3d_dest, "a", encoding="utf-8", newline="") as csvfile:
-                if i == 1:
-                    w = csv.DictWriter(csvfile, fieldnames=results_3d.keys())
-                    w.writeheader()
-                
-                w = csv.DictWriter(csvfile, fieldnames=results_3d.keys())
-                w.writerow(results_3d)
+            # 3D analysis output (only when enabled)
+            if config.enable_3d_analysis:
+                # Apply scaling transformation to 3D results (same as 2D)
+                scaled_results_3d = scaling.apply_scaling_transformation(
+                    results_3d, self.length_scale_factor
+                )
 
+                with open(report_3d_dest, "a", encoding="utf-8", newline="") as csvfile:
+                    w = csv.DictWriter(csvfile, fieldnames=scaled_results_3d.keys())
+                    if i == 1:
+                        w.writeheader()
+                    w.writerow(scaled_results_3d)
 
             # make pareto plot and save
             quantify.plot_all(
@@ -1279,16 +1305,21 @@ class AnalyzerUI(tk.Frame):
                 pareto_path,
             )
 
-            # make 3D pareto plot and save
-            quantify.plot_all_3d(
-                front_3d,
-                [results_3d["Total root length"], results_3d["Travel distance"], results_3d["Path tortuosity"]],
-                randoms_3d,
-                results_3d["Total root length (random)"],
-                results_3d["Travel distance (random)"],
-                results_3d["Path tortuosity"],
-                pareto_3d_path,
-            )
+            # make 3D pareto plot and save (only when enabled)
+            if config.enable_3d_analysis:
+                quantify.plot_all_3d(
+                    front_3d,
+                    [
+                        results_3d["Total root length"],
+                        results_3d["Travel distance"],
+                        results_3d["Path tortuosity"],
+                    ],
+                    randoms_3d,
+                    results_3d["Total root length (random)"],
+                    results_3d["Travel distance (random)"],
+                    results_3d["Path tortuosity"],
+                    pareto_3d_path,
+                )
 
             print(f"Processed file {i}/{len(self.tree_paths)}")
             i += 1

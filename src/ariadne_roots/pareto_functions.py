@@ -154,7 +154,7 @@ def graph_costs_3d_path_tortuosity(G, critical_nodes=None):
 
         # if we are trying to  visit an already-visited node, => we have a cycle
         if current_node in visited_nodes:
-            return float("inf"), float("inf")
+            return float("inf"), float("inf"), float("inf")
 
         # we've visited current_node
         visited_nodes.add(current_node)
@@ -187,9 +187,14 @@ def graph_costs_3d_path_tortuosity(G, critical_nodes=None):
 
     # compute the total path coverage
     for i in range(len(travel_distances_to_base)):
-        total_path_coverage += (
-            travel_distances_to_base[i] / straight_distances_to_base[i]
-        )
+        # Handle coincident nodes: if straight distance is 0, tortuosity ratio is 1.0
+        # This occurs when a critical node is at the same position as the base node
+        if straight_distances_to_base[i] == 0:
+            total_path_coverage += 1.0
+        else:
+            total_path_coverage += (
+                travel_distances_to_base[i] / straight_distances_to_base[i]
+            )
 
     total_root_length = sum(sorted(edge_lengths))
     total_travel_distance = sum(sorted(travel_distances_to_base))
@@ -297,6 +302,7 @@ def pareto_cost_3d_path_tortuosity(
     """
     assert 0 <= alpha <= 1
     assert 0 <= beta <= 1
+    assert alpha + beta <= 1, "alpha + beta must be <= 1 (gamma cannot be negative)"
 
     gamma = 1 - alpha - beta
     cost = (
@@ -883,6 +889,10 @@ def pareto_front_3d_path_tortuosity(G):
 
     for alpha in DEFAULT_ALPHAS:
         for beta in DEFAULT_BETAS:
+            # Skip invalid combinations where alpha + beta > 1 (gamma would be negative)
+            if alpha + beta > 1:
+                continue
+
             H = None
             # if alpha = 0 and beta = 1 compute the satellite tree in linear time
             if alpha == 0 and beta == 1:

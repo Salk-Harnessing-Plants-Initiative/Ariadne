@@ -267,9 +267,7 @@ def plot_graph(
         raise ValueError("Node 0 (base node) is not present in the graph.")
 
     # Node sizes
-    node_sizes = [
-        node_base_size + G.degree(n) * node_size_factor for n in G.nodes()
-    ]
+    node_sizes = [node_base_size + G.degree(n) * node_size_factor for n in G.nodes()]
 
     # Assign node colors based on conditions
     node_colors = []
@@ -282,9 +280,7 @@ def plot_graph(
             node_colors.append(secondary_node_color)  # Other nodes
 
     # Edge widths
-    edge_widths = [
-        edge_width_factor * G[u][v].get("weight", 1) for u, v in G.edges()
-    ]
+    edge_widths = [edge_width_factor * G[u][v].get("weight", 1) for u, v in G.edges()]
 
     # Create a matplotlib figure and axes
     fig, ax = plt.subplots(figsize=figsize)
@@ -609,8 +605,14 @@ def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
     plt.close(fig)
 
 
-def plot_all_3d(front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path):  # pragma: no cover
-    """Plot the 3D Pareto front with the actual plant and random tree costs.
+def plot_all_3d(
+    front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path
+):  # pragma: no cover
+    """Plot the 3D Pareto front as a surface with actual plant and random trees.
+
+    Creates a 3D visualization of the Pareto front using triangulated surface
+    interpolation. The surface is colored by path coverage (z-axis) to show
+    the gradient across the front.
 
     Args:
         front_3d (dict): A dictionary of total root lengths, total distances to the base and
@@ -623,72 +625,123 @@ def plot_all_3d(front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path)
         prand (float): The mean path coverage of the random trees
         save_path (str): The file path to save the plot
     """
-    fig = plt.figure()
+    from matplotlib.tri import Triangulation
+    from scipy.spatial import Delaunay
+
+    fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111, projection="3d")
 
-    # Set labels and title
-    ax.set_xlabel("Total Root Length", fontsize=12, labelpad=10)
-    ax.set_ylabel("Travel Distance", fontsize=12, labelpad=10)
-    ax.set_zlabel("Path Coverage", fontsize=12, labelpad=10)
-    ax.set_title("3D Pareto Front Visualization", fontsize=15, pad=20)
+    # Set labels and title with units from config
+    ax.set_xlabel(
+        f"Total Root Length ({config.length_scale_unit})", fontsize=12, labelpad=10
+    )
+    ax.set_ylabel(
+        f"Travel Distance ({config.length_scale_unit})", fontsize=12, labelpad=10
+    )
+    ax.set_zlabel("Path Coverage (ratio)", fontsize=12, labelpad=10)
+    ax.set_title("3D Pareto Front: Root Architecture Trade-offs", fontsize=15, pad=20)
 
     logging.debug(f"Front 3D: {front_3d}")
 
     # Extract x, y, z values for the front
-    x_values = [x[0] for x in front_3d.values()]
-    y_values = [x[1] for x in front_3d.values()]
-    z_values = [x[2] for x in front_3d.values()]
+    x_values = np.array([x[0] for x in front_3d.values()])
+    y_values = np.array([x[1] for x in front_3d.values()])
+    z_values = np.array([x[2] for x in front_3d.values()])
 
-    # Plot the front_3d
-    ax.plot(
-        x_values,
-        y_values,
-        z_values,
-        marker="o",
-        linestyle="-",
-        color="blue",
-        label="Pareto Front",
-    )
+    # Try to create a triangulated surface plot
+    surface_plotted = False
+    if len(x_values) >= 3:
+        try:
+            # Create 2D Delaunay triangulation on (x, y) coordinates
+            points_2d = np.column_stack((x_values, y_values))
+            tri = Delaunay(points_2d)
 
-    # Plot the actual plant
+            # Create matplotlib Triangulation from Delaunay result
+            triangulation = Triangulation(x_values, y_values, tri.simplices)
+
+            # Plot the triangulated surface colored by path coverage
+            surf = ax.plot_trisurf(
+                triangulation,
+                z_values,
+                cmap="viridis",
+                alpha=0.7,
+                edgecolor="none",
+                linewidth=0,
+            )
+
+            # Add colorbar for path coverage
+            cbar = fig.colorbar(surf, ax=ax, shrink=0.5, aspect=10, pad=0.1)
+            cbar.set_label("Path Coverage", fontsize=10)
+
+            surface_plotted = True
+            logging.debug("Successfully created triangulated surface plot")
+
+        except Exception as e:
+            # Triangulation failed (e.g., collinear points)
+            logging.warning(f"Triangulation failed, falling back to scatter plot: {e}")
+
+    # Fallback: scatter plot for Pareto front if surface failed or too few points
+    if not surface_plotted:
+        ax.scatter(
+            x_values,
+            y_values,
+            z_values,
+            c=z_values,
+            cmap="viridis",
+            marker="o",
+            s=50,
+            alpha=0.8,
+            label="Pareto Front",
+        )
+        logging.info("Using scatter plot for Pareto front (triangulation not possible)")
+
+    # Plot the actual plant (orange X marker)
     ax.scatter(
         [actual_3d[0]],
         [actual_3d[1]],
         [actual_3d[2]],
         color="orange",
         marker="X",
-        s=100,
+        s=150,
+        edgecolors="black",
+        linewidths=0.5,
         label="Actual Plant",
+        zorder=5,
     )
 
-    # Plot the random tree costs
-    randoms_3d_array = np.array(randoms_3d)
-    ax.scatter(
-        randoms_3d_array[:, 0],
-        randoms_3d_array[:, 1],
-        randoms_3d_array[:, 2],
-        color="green",
-        marker="+",
-        s=50,
-        alpha=0.6,
-        label="Random Trees",
-    )
+    # Plot the random tree costs (green + markers)
+    if len(randoms_3d) > 0:
+        randoms_3d_array = np.array(randoms_3d)
+        ax.scatter(
+            randoms_3d_array[:, 0],
+            randoms_3d_array[:, 1],
+            randoms_3d_array[:, 2],
+            color="green",
+            marker="+",
+            s=50,
+            alpha=0.6,
+            linewidths=1,
+            label="Random Trees",
+        )
 
-    # Plot the centroid of random trees
+    # Plot the centroid of random trees (red diamond)
     ax.scatter(
         [mrand],
         [srand],
         [prand],
         color="red",
         marker="D",
-        s=80,
-        label="Random Trees Centroid",
+        s=100,
+        edgecolors="black",
+        linewidths=0.5,
+        label="Random Centroid",
+        zorder=5,
     )
 
     # Add legend
-    ax.legend(loc="best", fontsize=10)
+    ax.legend(loc="upper left", fontsize=9)
 
-    # Enable grid and adjust scaling
+    # Enable grid
     ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
 
     # Save as PNG
@@ -1130,8 +1183,18 @@ def calculate_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
-def analyze(G):
-    """Report basic root metrics for a given graph."""
+def analyze(G, enable_3d=True):
+    """Report basic root metrics for a given graph.
+
+    Args:
+        G: NetworkX graph representing the root system.
+        enable_3d: If True, compute 3D Pareto analysis (slower).
+                   If False, return empty 3D results.
+
+    Returns:
+        Tuple of (results, front, randoms, results_3d, front_3d, randoms_3d).
+        When enable_3d=False, results_3d, front_3d, randoms_3d are empty.
+    """
     # check that graph is indeed a tree (acyclic, undirected, connected)
     assert nx.is_tree(G)
 
@@ -1140,7 +1203,6 @@ def analyze(G):
 
     # find top ("root") node
     for node in H.nodes(data="pos"):
-
         if node[1] == [0, 0]:
             root_node = node[0]
     # the pareto functions are hardcoded to assume node 0 is the top.
@@ -1169,7 +1231,12 @@ def analyze(G):
     distance_root = calculate_distance(uppermost_node_pos, lowermost_node_pos)
 
     results, front, randoms = pareto_calcs(H)
-    results_3d, front_3d, randoms_3d = pareto_calcs_3d_path_tortuosity(H)
+
+    # 3D Pareto analysis is optional (slower: 10,201 iterations vs 101 for 2D)
+    if enable_3d:
+        results_3d, front_3d, randoms_3d = pareto_calcs_3d_path_tortuosity(H)
+    else:
+        results_3d, front_3d, randoms_3d = {}, {}, []
 
     # Calculate lateral root distances with lengths and first-to-last distances
     lateral_root_info = calc_len_LRs_with_distances(H)
@@ -1262,7 +1329,7 @@ def analyze(G):
     # Calculate the ratio of the material cost with the Total minimal Distance
     material_distance_ratio = Total_root_length / total_distance
 
-    results["Material Cost to Travel Distance Ratio"] = material_distance_ratio
+    results["Tortuosity"] = material_distance_ratio
 
     # Calculating convex hull area
     points = np.array([H.nodes[node]["pos"] for node in H.nodes()])

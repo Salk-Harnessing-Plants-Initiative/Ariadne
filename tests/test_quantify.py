@@ -789,8 +789,10 @@ def test_analyze(
         # convert to networkx graph
         graph = json_graph.adjacency_graph(data)
 
-        # perform analysis
-        results, front, randoms = analyze(graph)
+        # perform analysis (enable_3d=False for faster test)
+        results, front, randoms, results_3d, front_3d, randoms_3d = analyze(
+            graph, enable_3d=False
+        )
 
         # check the results
         assert len(results) == 38  # 31 original + 7 tradeoff fields
