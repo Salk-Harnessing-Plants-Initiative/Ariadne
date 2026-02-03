@@ -25,6 +25,7 @@ from ariadne_roots.pareto_functions import (
     random_tree_3d_path_tortuosity,
     get_critical_nodes,
 )
+from ariadne_roots.quantify import distance_from_front_3d
 
 
 # ========== Test Fixtures for 3D Functions ==========
@@ -705,3 +706,370 @@ class TestPlotAll3DSurface:
         assert svg_path.exists()
 
         plt.close("all")
+
+
+# ========== Section 12: Tests for distance_from_front_3d ==========
+
+
+class TestDistanceFromFront3D:
+    """Tests for distance_from_front_3d() function.
+
+    Tests for issues #53 (interpolation) and #54 (return gamma).
+    These tests follow TDD - written BEFORE implementation changes.
+    """
+
+    @pytest.fixture
+    def sample_3d_front(self):
+        """Sample 3D Pareto front with known values.
+
+        Creates a grid of (alpha, beta) points with predictable costs.
+        Corner points:
+            - (1.0, 0.0): Steiner - minimizes length
+            - (0.0, 1.0): Satellite - minimizes distance
+            - (0.0, 0.0): Coverage - minimizes tortuosity (gamma=1)
+        """
+        front = {}
+        # Create a 11x11 grid for alpha, beta in [0, 1] with step 0.1
+        for a in range(11):
+            for b in range(11):
+                alpha = a / 10.0
+                beta = b / 10.0
+                if alpha + beta <= 1.0:
+                    gamma = 1.0 - alpha - beta
+                    # Cost model: interpolate between corner values
+                    # Steiner (1,0,0): length=50, distance=200, tortuosity=3.0
+                    # Satellite (0,1,0): length=150, distance=50, tortuosity=2.5
+                    # Coverage (0,0,1): length=100, distance=100, tortuosity=1.0
+                    length = 50 * alpha + 150 * beta + 100 * gamma
+                    distance = 200 * alpha + 50 * beta + 100 * gamma
+                    tortuosity = 3.0 * alpha + 2.5 * beta + 1.0 * gamma
+                    front[(alpha, beta)] = [length, distance, tortuosity]
+        return front
+
+    @pytest.fixture
+    def front_with_zeros(self):
+        """Front with some zero values that should be skipped."""
+        return {
+            (0.0, 0.0): [0.0, 100.0, 2.0],  # Zero length - skip
+            (0.5, 0.0): [100.0, 0.0, 2.0],  # Zero distance - skip
+            (1.0, 0.0): [50.0, 200.0, 3.0],  # Valid
+            (0.0, 1.0): [150.0, 50.0, 2.5],  # Valid
+        }
+
+    @pytest.fixture
+    def single_point_front(self):
+        """Front with only one valid point."""
+        return {
+            (0.5, 0.5): [100.0, 100.0, 2.0],
+        }
+
+    # --- Test 1.2: On-front test ---
+    def test_distance_from_front_3d_on_front(self, sample_3d_front):
+        """Test: actual tree exactly on front returns epsilon ≈ 1.0.
+
+        When the actual tree's costs match a Pareto front point,
+        the epsilon indicator should be approximately 1.0.
+        """
+        # Use a point exactly on the front: (0.5, 0.3) -> gamma = 0.2
+        alpha, beta = 0.5, 0.3
+        front_point = sample_3d_front[(alpha, beta)]
+        actual_tree = tuple(front_point)  # Exact match
+
+        result = distance_from_front_3d(sample_3d_front, actual_tree)
+
+        # Result should be a dict
+        assert isinstance(result, dict), "Should return dict, not tuple"
+        assert "epsilon" in result
+
+        # Epsilon should be approximately 1.0 (on the front)
+        assert math.isclose(result["epsilon"], 1.0, rel_tol=1e-6), (
+            f"Epsilon should be ~1.0 for point on front, got {result['epsilon']}"
+        )
+
+    # --- Test 1.3: Dominated test ---
+    def test_distance_from_front_3d_dominated(self, sample_3d_front):
+        """Test: actual tree worse than front returns epsilon > 1.0.
+
+        A dominated tree has higher costs than optimal, so epsilon > 1.
+        """
+        # Create a tree that's 50% worse than the (0.5, 0.3) point
+        alpha, beta = 0.5, 0.3
+        front_point = sample_3d_front[(alpha, beta)]
+        actual_tree = (
+            front_point[0] * 1.5,  # 50% worse length
+            front_point[1] * 1.5,  # 50% worse distance
+            front_point[2] * 1.5,  # 50% worse tortuosity
+        )
+
+        result = distance_from_front_3d(sample_3d_front, actual_tree)
+
+        assert isinstance(result, dict)
+        assert result["epsilon"] > 1.0, (
+            f"Dominated tree should have epsilon > 1.0, got {result['epsilon']}"
+        )
+        # Should be approximately 1.5 (50% worse)
+        assert math.isclose(result["epsilon"], 1.5, rel_tol=0.1)
+
+    # --- Test 1.4: Dominating test ---
+    def test_distance_from_front_3d_dominating(self, sample_3d_front):
+        """Test: actual tree better than front returns epsilon < 1.0.
+
+        This is unusual (suggests front computation error) but should work.
+        """
+        # Create a tree that's better than any front point
+        alpha, beta = 0.5, 0.3
+        front_point = sample_3d_front[(alpha, beta)]
+        actual_tree = (
+            front_point[0] * 0.8,  # 20% better length
+            front_point[1] * 0.8,  # 20% better distance
+            front_point[2] * 0.8,  # 20% better tortuosity
+        )
+
+        result = distance_from_front_3d(sample_3d_front, actual_tree)
+
+        assert isinstance(result, dict)
+        assert result["epsilon"] < 1.0, (
+            f"Dominating tree should have epsilon < 1.0, got {result['epsilon']}"
+        )
+
+    # --- Test 1.5: Interpolation test ---
+    def test_distance_from_front_3d_interpolation(self, sample_3d_front):
+        """Test: barycentric interpolation between 3 nearest points.
+
+        The interpolated (alpha, beta, gamma) should be weighted average
+        of the 3 closest points using inverse-distance weighting.
+        """
+        # Tree between (0.5, 0.3) and (0.6, 0.3) and (0.5, 0.4)
+        # Should interpolate to intermediate alpha, beta values
+        p1 = sample_3d_front[(0.5, 0.3)]
+        p2 = sample_3d_front[(0.6, 0.3)]
+        p3 = sample_3d_front[(0.5, 0.4)]
+
+        # Weighted average of the three points
+        actual_tree = (
+            (p1[0] + p2[0] + p3[0]) / 3,
+            (p1[1] + p2[1] + p3[1]) / 3,
+            (p1[2] + p2[2] + p3[2]) / 3,
+        )
+
+        result = distance_from_front_3d(sample_3d_front, actual_tree)
+
+        assert isinstance(result, dict)
+        # Interpolated alpha should be between 0.5 and 0.6
+        assert 0.4 <= result["alpha"] <= 0.7, f"Alpha {result['alpha']} out of range"
+        # Interpolated beta should be between 0.3 and 0.4
+        assert 0.2 <= result["beta"] <= 0.5, f"Beta {result['beta']} out of range"
+
+    # --- Test 1.6: Returns dict test ---
+    def test_distance_from_front_3d_returns_dict(self, sample_3d_front):
+        """Test: return format includes epsilon, alpha, beta, gamma.
+
+        The function should return a dict with all required keys.
+        """
+        actual_tree = (100.0, 100.0, 2.0)
+
+        result = distance_from_front_3d(sample_3d_front, actual_tree)
+
+        # Check return type
+        assert isinstance(result, dict), f"Expected dict, got {type(result)}"
+
+        # Check required keys
+        required_keys = ["epsilon", "alpha", "beta", "gamma"]
+        for key in required_keys:
+            assert key in result, f"Missing key: {key}"
+            assert isinstance(result[key], float), f"{key} should be float"
+
+        # Check nested dicts
+        assert "epsilon_components" in result
+        assert isinstance(result["epsilon_components"], dict)
+        assert "material" in result["epsilon_components"]
+        assert "transport" in result["epsilon_components"]
+        assert "coverage" in result["epsilon_components"]
+
+        assert "corner_costs" in result
+        assert isinstance(result["corner_costs"], dict)
+        assert "steiner" in result["corner_costs"]
+        assert "satellite" in result["corner_costs"]
+        assert "coverage" in result["corner_costs"]
+
+    # --- Test 1.7: Gamma computed test ---
+    def test_distance_from_front_3d_gamma_computed(self, sample_3d_front):
+        """Test: gamma = 1 - alpha - beta (issue #54).
+
+        Users should not need to compute gamma manually.
+        """
+        actual_tree = (100.0, 100.0, 2.0)
+
+        result = distance_from_front_3d(sample_3d_front, actual_tree)
+
+        assert "gamma" in result
+        expected_gamma = 1.0 - result["alpha"] - result["beta"]
+
+        assert math.isclose(result["gamma"], expected_gamma, rel_tol=1e-9), (
+            f"gamma should equal 1 - alpha - beta. "
+            f"Got gamma={result['gamma']}, expected={expected_gamma}"
+        )
+
+        # Also verify the constraint
+        total = result["alpha"] + result["beta"] + result["gamma"]
+        assert math.isclose(total, 1.0, rel_tol=1e-9), (
+            f"alpha + beta + gamma should equal 1.0, got {total}"
+        )
+
+    # --- Test 1.8: Division by zero test ---
+    def test_distance_from_front_3d_division_by_zero(self, front_with_zeros):
+        """Test: front points with zeros are skipped.
+
+        Division by zero should be avoided by skipping invalid points.
+        """
+        actual_tree = (100.0, 100.0, 2.0)
+
+        # Should not raise ZeroDivisionError
+        result = distance_from_front_3d(front_with_zeros, actual_tree)
+
+        assert isinstance(result, dict)
+        assert result["epsilon"] != float("inf")
+        assert result["epsilon"] != float("-inf")
+        assert not math.isnan(result["epsilon"])
+
+    # --- Test 1.9: Single point test ---
+    def test_distance_from_front_3d_single_point(self, single_point_front):
+        """Test: edge case with minimal front (1 point).
+
+        Should fall back to nearest-neighbor without crashing.
+        """
+        actual_tree = (120.0, 120.0, 2.5)
+
+        result = distance_from_front_3d(single_point_front, actual_tree)
+
+        assert isinstance(result, dict)
+        # Should return the only point's parameters
+        assert math.isclose(result["alpha"], 0.5, rel_tol=1e-6)
+        assert math.isclose(result["beta"], 0.5, rel_tol=1e-6)
+        assert math.isclose(result["gamma"], 0.0, rel_tol=1e-6)
+
+    # --- Test 1.10: Random tree meaningful test ---
+    def test_distance_from_front_3d_random_tree_meaningful(self, sample_3d_front):
+        """Test: random trees return meaningful epsilon, not just (0, 0).
+
+        Issue #53: Random trees were returning ((0.0, 0.0), scaling) which
+        is mathematically correct but scientifically uninformative.
+        The epsilon value should be the primary metric.
+        """
+        # Simulate a random tree that's 2.75x worse than optimal
+        # Random trees are typically closest to gamma=1 corner (least optimized)
+        coverage_point = sample_3d_front[(0.0, 0.0)]  # gamma=1 corner
+        random_tree = (
+            coverage_point[0] * 2.75,
+            coverage_point[1] * 2.75,
+            coverage_point[2] * 2.75,
+        )
+
+        result = distance_from_front_3d(sample_3d_front, random_tree)
+
+        assert isinstance(result, dict)
+
+        # Epsilon is the meaningful metric for random trees
+        assert result["epsilon"] > 1.0, "Random tree should be dominated (epsilon > 1)"
+        assert math.isclose(result["epsilon"], 2.75, rel_tol=0.1), (
+            f"Expected epsilon ~2.75, got {result['epsilon']}"
+        )
+
+        # Even if alpha, beta are near (0, 0), epsilon tells the story
+        # The test validates that epsilon is returned and meaningful
+
+    # --- Test 1.11: Epsilon components test ---
+    def test_distance_from_front_3d_epsilon_components(self, sample_3d_front):
+        """Test: epsilon_components shows which dimension drives epsilon.
+
+        Returns material/transport/coverage ratios.
+        """
+        # Create tree that's worse in transport only
+        front_point = sample_3d_front[(0.5, 0.3)]
+        actual_tree = (
+            front_point[0] * 1.1,  # 10% worse length
+            front_point[1] * 1.5,  # 50% worse distance (dominant)
+            front_point[2] * 1.2,  # 20% worse tortuosity
+        )
+
+        result = distance_from_front_3d(sample_3d_front, actual_tree)
+
+        assert "epsilon_components" in result
+        components = result["epsilon_components"]
+
+        # Check all components present
+        assert "material" in components
+        assert "transport" in components
+        assert "coverage" in components
+
+        # Epsilon should equal max of components
+        max_component = max(
+            components["material"],
+            components["transport"],
+            components["coverage"],
+        )
+        assert math.isclose(result["epsilon"], max_component, rel_tol=1e-6)
+
+        # Transport should be the dominant component (~1.5)
+        assert components["transport"] > components["material"]
+        assert components["transport"] > components["coverage"]
+
+    # --- Test 1.12: Corner costs test ---
+    def test_distance_from_front_3d_corner_costs(self, sample_3d_front):
+        """Test: corner_costs provides Steiner/Satellite/Coverage reference values.
+
+        These are the costs at the three corners of the Pareto front.
+        """
+        actual_tree = (100.0, 100.0, 2.0)
+
+        result = distance_from_front_3d(sample_3d_front, actual_tree)
+
+        assert "corner_costs" in result
+        corners = result["corner_costs"]
+
+        # Check all corners present
+        assert "steiner" in corners
+        assert "satellite" in corners
+        assert "coverage" in corners
+
+        # Steiner is at (1.0, 0.0)
+        steiner_expected = sample_3d_front[(1.0, 0.0)]
+        assert corners["steiner"] == tuple(steiner_expected) or list(
+            corners["steiner"]
+        ) == steiner_expected
+
+        # Satellite is at (0.0, 1.0)
+        satellite_expected = sample_3d_front[(0.0, 1.0)]
+        assert corners["satellite"] == tuple(satellite_expected) or list(
+            corners["satellite"]
+        ) == satellite_expected
+
+        # Coverage is at (0.0, 0.0)
+        coverage_expected = sample_3d_front[(0.0, 0.0)]
+        assert corners["coverage"] == tuple(coverage_expected) or list(
+            corners["coverage"]
+        ) == coverage_expected
+
+    # --- Additional tests for Python native types ---
+    def test_distance_from_front_3d_returns_python_floats(self, sample_3d_front):
+        """Test: all numeric values are Python native floats, not numpy."""
+        import numpy as np
+
+        actual_tree = (100.0, 100.0, 2.0)
+
+        result = distance_from_front_3d(sample_3d_front, actual_tree)
+
+        # Check top-level floats
+        assert isinstance(result["epsilon"], float)
+        assert not isinstance(result["epsilon"], np.floating)
+        assert isinstance(result["alpha"], float)
+        assert not isinstance(result["alpha"], np.floating)
+        assert isinstance(result["beta"], float)
+        assert not isinstance(result["beta"], np.floating)
+        assert isinstance(result["gamma"], float)
+        assert not isinstance(result["gamma"], np.floating)
+
+        # Check epsilon_components
+        for key, value in result["epsilon_components"].items():
+            assert isinstance(value, float), f"{key} should be Python float"
+            assert not isinstance(value, np.floating)

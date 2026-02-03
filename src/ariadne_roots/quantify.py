@@ -901,37 +901,148 @@ def calculate_tradeoff(front, actual_tree):
 
 
 def distance_from_front_3d(front, actual_tree):
-    """Return the closest (alpha, beta) for the actual tree, and its distance to the 3D front.
+    """Compute the epsilon indicator distance from a tree to the 3D Pareto front.
+
+    Uses the multiplicative ε-indicator, a standard metric in multi-objective
+    optimization (Zitzler et al., 2003). The epsilon value represents the
+    minimum scaling factor needed to make a Pareto-optimal tree dominate the
+    actual tree in all objectives.
+
+    Implements barycentric interpolation with the 3 nearest (α, β) points for
+    higher precision, matching the 2D distance_from_front() approach.
+
+    Formula: ε = min_{r ∈ Front} max_i (actual_i / front_i)
+
+    Interpretation:
+        - ε = 1.0: Tree is on the Pareto front
+        - ε > 1.0: Tree is suboptimal; ε is the scaling factor
+        - ε < 1.0: Tree dominates the front (should not happen)
+
+    References:
+        Zitzler et al. (2003), IEEE Trans. Evol. Comput. 7(2), 117-132
+        Chandrasekhar & Navlakha (2019), Proc. Royal Society B, Supplementary Eq. 2
 
     Args:
-        front (dict): A dictionary of edge_lengths, travel_distances_to_base, and
-            path_coverages for (each alpha, beta) value on the front
-        actual (tuple): The actual total_root_length, total_travel_distance, and
-            total_path_coverage of the original plant
+        front: Dict mapping (alpha, beta) tuples to [length, distance, tortuosity] lists
+        actual_tree: Tuple of (total_root_length, total_travel_distance, path_tortuosity)
 
     Returns:
-        tuple: A tuple containing the characteristic (alpha, beta) value, and the scaling distance
+        Dict with keys:
+            - epsilon: float - multiplicative ε-indicator (scaling factor)
+            - alpha: float - interpolated alpha parameter
+            - beta: float - interpolated beta parameter
+            - gamma: float - computed as 1 - alpha - beta
+            - epsilon_components: dict with material/transport/coverage ratios
+            - corner_costs: dict with steiner/satellite/coverage corner values
     """
-    # for each (alpha, beta) value, find distance to the actual tree
+    # For each (alpha, beta) value, find distance to the actual tree
     distances = {}
+    ratios = {}  # Store component ratios for each point
 
-    for alpha_beta in front.items():
-        alpha_beta_value = alpha_beta[0]
-        alpha_beta_tree = alpha_beta[1]
+    for alpha_beta_value, alpha_beta_tree in front.items():
+        # Division-by-zero guard: skip points with any zero cost dimension
+        if any(v == 0 for v in alpha_beta_tree):
+            continue
 
         material_ratio = actual_tree[0] / alpha_beta_tree[0]
         transport_ratio = actual_tree[1] / alpha_beta_tree[1]
         path_coverage_ratio = actual_tree[2] / alpha_beta_tree[2]
 
-        distances[alpha_beta_value] = max(
-            material_ratio, transport_ratio, path_coverage_ratio
+        epsilon = max(material_ratio, transport_ratio, path_coverage_ratio)
+        distances[alpha_beta_value] = epsilon
+        ratios[alpha_beta_value] = (material_ratio, transport_ratio, path_coverage_ratio)
+
+    # Handle edge case: no valid points
+    if not distances:
+        # Fall back to returning default values if all points have zeros
+        return {
+            "epsilon": float("inf"),
+            "alpha": 0.0,
+            "beta": 0.0,
+            "gamma": 1.0,
+            "epsilon_components": {
+                "material": float("inf"),
+                "transport": float("inf"),
+                "coverage": float("inf"),
+            },
+            "corner_costs": {
+                "steiner": (0.0, 0.0, 0.0),
+                "satellite": (0.0, 0.0, 0.0),
+                "coverage": (0.0, 0.0, 0.0),
+            },
+        }
+
+    # Find the 3 nearest (alpha, beta) points by epsilon distance
+    sorted_points = sorted(distances.items(), key=lambda x: x[1])
+
+    # Get up to 3 closest points
+    n_points = min(3, len(sorted_points))
+    closest_points = sorted_points[:n_points]
+
+    # Extract closest point's epsilon and ratios for the result
+    closest_ab, closest_epsilon = closest_points[0]
+    closest_ratios = ratios[closest_ab]
+
+    # Barycentric interpolation using inverse-distance weighting
+    if n_points == 1:
+        # Single point: use directly
+        alpha = float(closest_ab[0])
+        beta = float(closest_ab[1])
+    else:
+        # Inverse distance weighting for 2 or 3 points
+        # Add small epsilon to avoid division by zero when distance is exactly 0
+        eps_guard = 1e-10
+
+        weights = []
+        for ab, dist in closest_points:
+            weights.append(1.0 / (dist + eps_guard))
+
+        total_weight = sum(weights)
+        normalized_weights = [w / total_weight for w in weights]
+
+        # Interpolate alpha and beta
+        alpha = sum(
+            w * ab[0] for w, (ab, _) in zip(normalized_weights, closest_points)
+        )
+        beta = sum(
+            w * ab[1] for w, (ab, _) in zip(normalized_weights, closest_points)
         )
 
-    closest = min(distances.items(), key=lambda x: x[1])
+        # Clamp to valid range (α ≥ 0, β ≥ 0, α + β ≤ 1)
+        alpha = max(0.0, min(1.0, alpha))
+        beta = max(0.0, min(1.0 - alpha, beta))
 
-    characteristic_alpha_beta, scaling_distance = closest
+    # Compute gamma
+    gamma = 1.0 - alpha - beta
 
-    return characteristic_alpha_beta, scaling_distance
+    # Look up corner costs from the front
+    # Steiner: α=1, β=0, γ=0 (minimizes length)
+    # Satellite: α=0, β=1, γ=0 (minimizes distance)
+    # Coverage: α=0, β=0, γ=1 (minimizes tortuosity)
+    steiner_key = (1.0, 0.0)
+    satellite_key = (0.0, 1.0)
+    coverage_key = (0.0, 0.0)
+
+    steiner_costs = front.get(steiner_key, [0.0, 0.0, 0.0])
+    satellite_costs = front.get(satellite_key, [0.0, 0.0, 0.0])
+    coverage_costs = front.get(coverage_key, [0.0, 0.0, 0.0])
+
+    return {
+        "epsilon": float(closest_epsilon),
+        "alpha": float(alpha),
+        "beta": float(beta),
+        "gamma": float(gamma),
+        "epsilon_components": {
+            "material": float(closest_ratios[0]),
+            "transport": float(closest_ratios[1]),
+            "coverage": float(closest_ratios[2]),
+        },
+        "corner_costs": {
+            "steiner": tuple(float(v) for v in steiner_costs),
+            "satellite": tuple(float(v) for v in satellite_costs),
+            "coverage": tuple(float(v) for v in coverage_costs),
+        },
+    }
 
 
 def pareto_calcs(H):
@@ -973,13 +1084,22 @@ def pareto_calcs(H):
 
 
 def pareto_calcs_3d_path_tortuosity(H):
-    """Perform Pareto-related calculations using 3d Pareto Front with path tortuosity.
+    """Perform Pareto-related calculations using 3D Pareto Front with path tortuosity.
+
+    Uses the multiplicative ε-indicator to measure distance from the Pareto front.
+    Returns interpolated (α, β, γ) parameters and epsilon components.
 
     Args:
         H (nx.Graph): NetworkX graph representing the root system.
 
     Returns:
-        tuple: Tuple containing the results dictionary, the 3D Pareto front, and the random tree costs.
+        tuple: (results_dict, front, randoms) where results_dict contains:
+            - Total root length, Travel distance, Path tortuosity (actual tree)
+            - alpha_3d, beta_3d, gamma_3d (interpolated Pareto weights)
+            - epsilon_3d (multiplicative ε-indicator)
+            - epsilon_3d_material/transport/coverage (ratio components)
+            - Same fields for random trees with "(random)" suffix
+            - Corner costs: Steiner_*_3d, Satellite_*_3d, Coverage_*_3d
     """
     # Calculate the Pareto front using the 3D path tortuosity
     front, actual = pareto_front_3d_path_tortuosity(H)
@@ -987,31 +1107,58 @@ def pareto_calcs_3d_path_tortuosity(H):
     # mactual is the total root length, sactual is the total travel distance, and pactual is the path tortuosity
     mactual, sactual, pactual = actual
 
-    # Calculate the characteristic (alpha, beta) value and the scaling distance
-    plant_alpha_beta, plant_scaling = distance_from_front_3d(front, actual)
+    # Calculate the epsilon indicator and interpolated (alpha, beta, gamma)
+    plant_result = distance_from_front_3d(front, actual)
+
     # Generate random trees
     randoms = random_tree_3d_path_tortuosity(H)
 
-    # Calculate the mean total root length and mean total travel distance and mean path tortuosity of the random trees
-    mrand = np.mean([x[0] for x in randoms])
-    srand = np.mean([x[1] for x in randoms])
-    prand = np.mean([x[2] for x in randoms])
+    # Calculate the mean costs of the random trees
+    mrand = float(np.mean([x[0] for x in randoms]))
+    srand = float(np.mean([x[1] for x in randoms]))
+    prand = float(np.mean([x[2] for x in randoms]))
 
-    # Calculate the characteristic (alpha, beta) value and the scaling distance for the random trees
-    rand_alpha_beta, rand_scaling = distance_from_front_3d(front, (mrand, srand, prand))
+    # Calculate epsilon indicator for the random tree centroid
+    rand_result = distance_from_front_3d(front, (mrand, srand, prand))
 
-    # Assemble the results dictionary
+    # Extract corner costs from plant_result (same for both calls)
+    corner_costs = plant_result["corner_costs"]
+
+    # Assemble the results dictionary with _3d suffix for 3D-specific fields
     results = {
-        "Total root length": mactual,
-        "Travel distance": sactual,
-        "Path tortuosity": pactual,
-        "alpha_beta": plant_alpha_beta,
-        "scaling distance to front": plant_scaling,
+        # Actual tree measurements (same names as 2D for shared fields)
+        "Total root length": float(mactual),
+        "Travel distance": float(sactual),
+        "Path tortuosity": float(pactual),
+        # Interpolated Pareto parameters
+        "alpha_3d": plant_result["alpha"],
+        "beta_3d": plant_result["beta"],
+        "gamma_3d": plant_result["gamma"],
+        # Epsilon indicator (distance from front)
+        "epsilon_3d": plant_result["epsilon"],
+        # Epsilon components (which dimension drives epsilon)
+        "epsilon_3d_material": plant_result["epsilon_components"]["material"],
+        "epsilon_3d_transport": plant_result["epsilon_components"]["transport"],
+        "epsilon_3d_coverage": plant_result["epsilon_components"]["coverage"],
+        # Random tree measurements
         "Total root length (random)": mrand,
         "Travel distance (random)": srand,
         "Path tortuosity (random)": prand,
-        "alpha_beta (random)": rand_alpha_beta,
-        "scaling (random)": rand_scaling,
+        # Random tree Pareto parameters
+        "alpha_3d (random)": rand_result["alpha"],
+        "beta_3d (random)": rand_result["beta"],
+        "gamma_3d (random)": rand_result["gamma"],
+        "epsilon_3d (random)": rand_result["epsilon"],
+        # Corner architecture reference costs
+        "Steiner_length_3d": corner_costs["steiner"][0],
+        "Steiner_distance_3d": corner_costs["steiner"][1],
+        "Steiner_tortuosity_3d": corner_costs["steiner"][2],
+        "Satellite_length_3d": corner_costs["satellite"][0],
+        "Satellite_distance_3d": corner_costs["satellite"][1],
+        "Satellite_tortuosity_3d": corner_costs["satellite"][2],
+        "Coverage_length_3d": corner_costs["coverage"][0],
+        "Coverage_distance_3d": corner_costs["coverage"][1],
+        "Coverage_tortuosity_3d": corner_costs["coverage"][2],
     }
 
     return results, front, randoms
