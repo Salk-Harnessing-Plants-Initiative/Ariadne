@@ -75,6 +75,9 @@ def apply_scaling_transformation(results, scale_factor, excluded_fields=None):
             "Tradeoff",
             "Actual_ratio",
             "Optimal_ratio",
+            # 3D Pareto analysis fields (ratios and parameter tuples)
+            "Path tortuosity",  # Ratio: sum of (travel_dist / straight_dist)
+            "alpha_beta",  # Parameter tuple, not a length
         }
 
     scaled_results = {}
