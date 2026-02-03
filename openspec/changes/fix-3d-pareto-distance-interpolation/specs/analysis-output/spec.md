@@ -104,7 +104,13 @@ This naming follows the multiplicative ε-indicator terminology from multi-objec
 | `epsilon_3d_material` | Length ratio: actual/optimal |
 | `epsilon_3d_transport` | Distance ratio: actual/optimal |
 | `epsilon_3d_coverage` | Tortuosity ratio: actual/optimal |
-| `*_3d (random)` | Same fields for random trees |
+| `alpha_3d (random)` | Interpolated α weight for random tree |
+| `beta_3d (random)` | Interpolated β weight for random tree |
+| `gamma_3d (random)` | Computed γ = 1 - α - β for random tree |
+| `epsilon_3d (random)` | Multiplicative ε-indicator for random tree |
+| `epsilon_3d_material (random)` | Length ratio for random tree |
+| `epsilon_3d_transport (random)` | Distance ratio for random tree |
+| `epsilon_3d_coverage (random)` | Tortuosity ratio for random tree |
 | `Steiner_length_3d` | Corner cost (α=1) |
 | `Steiner_distance_3d` | Corner cost (α=1) |
 | `Steiner_tortuosity_3d` | Corner cost (α=1) |

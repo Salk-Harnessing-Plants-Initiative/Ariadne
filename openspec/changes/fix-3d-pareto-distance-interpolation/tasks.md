@@ -12,6 +12,7 @@
 - [x] 1.10 Write `test_distance_from_front_3d_random_tree_meaningful()` - random trees return epsilon > 1, not (0, 0)
 - [x] 1.11 Write `test_distance_from_front_3d_epsilon_components()` - verify material/transport/coverage ratios returned
 - [x] 1.12 Write `test_distance_from_front_3d_corner_costs()` - verify Steiner/Satellite/Coverage corner values
+- [x] 1.13 Write `test_pareto_calcs_3d_random_epsilon_components()` - verify random tree epsilon components in results
 
 ## 2. Implementation
 
@@ -23,10 +24,11 @@
 - [x] 2.6 Add corner_costs dict (lookup Steiner/Satellite/Coverage from front)
 - [x] 2.7 Update callers in `pareto_calcs_3d_path_tortuosity()` to handle new return format
 - [x] 2.8 Update `results_3d` dict keys to use new field names
+- [x] 2.9 Add random tree epsilon components to results dict
 
 ## 3. Integration & Validation
 
-- [x] 3.1 Run full test suite: `uv run pytest -v` (191 passed)
+- [x] 3.1 Run full test suite: `uv run pytest -v` (192 passed)
 - [ ] 3.2 Verify 3D analysis with real root data produces meaningful epsilon values
 - [x] 3.3 Run linting: `uv run ruff check src/` (pre-existing issues only)
 - [x] 3.4 Run formatting: `uv run black --check .` (Python version warning only)

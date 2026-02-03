@@ -1149,6 +1149,10 @@ def pareto_calcs_3d_path_tortuosity(H):
         "beta_3d (random)": rand_result["beta"],
         "gamma_3d (random)": rand_result["gamma"],
         "epsilon_3d (random)": rand_result["epsilon"],
+        # Random tree epsilon components
+        "epsilon_3d_material (random)": rand_result["epsilon_components"]["material"],
+        "epsilon_3d_transport (random)": rand_result["epsilon_components"]["transport"],
+        "epsilon_3d_coverage (random)": rand_result["epsilon_components"]["coverage"],
         # Corner architecture reference costs
         "Steiner_length_3d": corner_costs["steiner"][0],
         "Steiner_distance_3d": corner_costs["steiner"][1],

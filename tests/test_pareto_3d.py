@@ -25,7 +25,7 @@ from ariadne_roots.pareto_functions import (
     random_tree_3d_path_tortuosity,
     get_critical_nodes,
 )
-from ariadne_roots.quantify import distance_from_front_3d
+from ariadne_roots.quantify import distance_from_front_3d, pareto_calcs_3d_path_tortuosity
 
 
 # ========== Test Fixtures for 3D Functions ==========
@@ -1073,3 +1073,38 @@ class TestDistanceFromFront3D:
         for key, value in result["epsilon_components"].items():
             assert isinstance(value, float), f"{key} should be Python float"
             assert not isinstance(value, np.floating)
+
+
+# ========== Test pareto_calcs_3d_path_tortuosity() ==========
+
+
+class TestParetoCalcs3DPathTortuosity:
+    """Tests for pareto_calcs_3d_path_tortuosity integration function."""
+
+    def test_pareto_calcs_3d_random_epsilon_components(self, simple_3node_graph):
+        """Test that random tree epsilon components are included in results.
+
+        TDD test for issue #53/#54: ensure full parity between actual and random
+        tree epsilon components in the results dictionary.
+        """
+        results, front, randoms = pareto_calcs_3d_path_tortuosity(simple_3node_graph)
+
+        # Verify actual tree epsilon components exist
+        assert "epsilon_3d_material" in results
+        assert "epsilon_3d_transport" in results
+        assert "epsilon_3d_coverage" in results
+
+        # Verify random tree epsilon components exist (the new fields)
+        assert "epsilon_3d_material (random)" in results
+        assert "epsilon_3d_transport (random)" in results
+        assert "epsilon_3d_coverage (random)" in results
+
+        # Verify they are valid float values
+        assert isinstance(results["epsilon_3d_material (random)"], float)
+        assert isinstance(results["epsilon_3d_transport (random)"], float)
+        assert isinstance(results["epsilon_3d_coverage (random)"], float)
+
+        # Verify they are positive (ratios should be > 0)
+        assert results["epsilon_3d_material (random)"] > 0
+        assert results["epsilon_3d_transport (random)"] > 0
+        assert results["epsilon_3d_coverage (random)"] > 0
