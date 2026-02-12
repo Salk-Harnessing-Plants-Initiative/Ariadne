@@ -25,7 +25,10 @@ from ariadne_roots.pareto_functions import (
     random_tree_3d_path_tortuosity,
     get_critical_nodes,
 )
-from ariadne_roots.quantify import distance_from_front_3d, pareto_calcs_3d_path_tortuosity
+from ariadne_roots.quantify import (
+    distance_from_front_3d,
+    pareto_calcs_3d_path_tortuosity,
+)
 
 
 # ========== Test Fixtures for 3D Functions ==========
@@ -501,9 +504,9 @@ class TestScalingIntegration:
         wiring_2d, _ = graph_costs(simple_3node_graph)
         wiring_3d, _, _ = graph_costs_3d_path_tortuosity(simple_3node_graph)
 
-        assert math.isclose(
-            wiring_2d, wiring_3d, rel_tol=1e-8
-        ), "2D and 3D should compute same total_root_length"
+        assert math.isclose(wiring_2d, wiring_3d, rel_tol=1e-8), (
+            "2D and 3D should compute same total_root_length"
+        )
 
     def test_3d_and_2d_total_travel_distance_match(self, simple_3node_graph):
         """Test that 3D and 2D return same total_travel_distance."""
@@ -512,9 +515,9 @@ class TestScalingIntegration:
         _, delay_2d = graph_costs(simple_3node_graph)
         _, delay_3d, _ = graph_costs_3d_path_tortuosity(simple_3node_graph)
 
-        assert math.isclose(
-            delay_2d, delay_3d, rel_tol=1e-8
-        ), "2D and 3D should compute same total_travel_distance"
+        assert math.isclose(delay_2d, delay_3d, rel_tol=1e-8), (
+            "2D and 3D should compute same total_travel_distance"
+        )
 
 
 # ========== Parametrized Tests ==========
@@ -1034,21 +1037,24 @@ class TestDistanceFromFront3D:
 
         # Steiner is at (1.0, 0.0)
         steiner_expected = sample_3d_front[(1.0, 0.0)]
-        assert corners["steiner"] == tuple(steiner_expected) or list(
-            corners["steiner"]
-        ) == steiner_expected
+        assert (
+            corners["steiner"] == tuple(steiner_expected)
+            or list(corners["steiner"]) == steiner_expected
+        )
 
         # Satellite is at (0.0, 1.0)
         satellite_expected = sample_3d_front[(0.0, 1.0)]
-        assert corners["satellite"] == tuple(satellite_expected) or list(
-            corners["satellite"]
-        ) == satellite_expected
+        assert (
+            corners["satellite"] == tuple(satellite_expected)
+            or list(corners["satellite"]) == satellite_expected
+        )
 
         # Coverage is at (0.0, 0.0)
         coverage_expected = sample_3d_front[(0.0, 0.0)]
-        assert corners["coverage"] == tuple(coverage_expected) or list(
-            corners["coverage"]
-        ) == coverage_expected
+        assert (
+            corners["coverage"] == tuple(coverage_expected)
+            or list(corners["coverage"]) == coverage_expected
+        )
 
     # --- Additional tests for Python native types ---
     def test_distance_from_front_3d_returns_python_floats(self, sample_3d_front):

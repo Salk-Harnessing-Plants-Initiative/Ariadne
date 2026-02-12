@@ -950,7 +950,11 @@ def distance_from_front_3d(front, actual_tree):
 
         epsilon = max(material_ratio, transport_ratio, path_coverage_ratio)
         distances[alpha_beta_value] = epsilon
-        ratios[alpha_beta_value] = (material_ratio, transport_ratio, path_coverage_ratio)
+        ratios[alpha_beta_value] = (
+            material_ratio,
+            transport_ratio,
+            path_coverage_ratio,
+        )
 
     # Handle edge case: no valid points
     if not distances:
@@ -1001,12 +1005,8 @@ def distance_from_front_3d(front, actual_tree):
         normalized_weights = [w / total_weight for w in weights]
 
         # Interpolate alpha and beta
-        alpha = sum(
-            w * ab[0] for w, (ab, _) in zip(normalized_weights, closest_points)
-        )
-        beta = sum(
-            w * ab[1] for w, (ab, _) in zip(normalized_weights, closest_points)
-        )
+        alpha = sum(w * ab[0] for w, (ab, _) in zip(normalized_weights, closest_points))
+        beta = sum(w * ab[1] for w, (ab, _) in zip(normalized_weights, closest_points))
 
         # Clamp to valid range (α ≥ 0, β ≥ 0, α + β ≤ 1)
         alpha = max(0.0, min(1.0, alpha))
