@@ -1084,7 +1084,7 @@ class AnalyzerUI(tk.Frame):
         enable_3d_var = tk.BooleanVar(value=False)
         tk.Checkbutton(
             scale_win,
-            text="Include 3D Pareto analysis (slower)",
+            text="Add path tortuosity to Pareto (3D, slower)",
             variable=enable_3d_var,
         ).pack(pady=5)
 
@@ -1213,8 +1213,10 @@ class AnalyzerUI(tk.Frame):
             / f"report_3d_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
         )
 
-        # add current file count
-        self.output_info = f"Current files: ({len(self.tree_paths)})"
+        # Show analyzing status immediately
+        self.output_info = f"Analyzing {len(self.tree_paths)} file(s)..."
+        self.output.config(text=self.output_info)
+        self.base.update_idletasks()  # Force GUI refresh to show status
         i = 1
 
         for json_file in self.tree_paths:
@@ -1229,6 +1231,7 @@ class AnalyzerUI(tk.Frame):
             # update current file count list
             self.output_info = self.output_info + "\n" + graph_name
             self.output.config(text=self.output_info)
+            self.base.update_idletasks()  # Force GUI refresh to show progress
 
             # load and process graph data
             with open(json_file, mode="r") as h:
