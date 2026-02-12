@@ -504,9 +504,9 @@ class TestScalingIntegration:
         wiring_2d, _ = graph_costs(simple_3node_graph)
         wiring_3d, _, _ = graph_costs_3d_path_tortuosity(simple_3node_graph)
 
-        assert math.isclose(wiring_2d, wiring_3d, rel_tol=1e-8), (
-            "2D and 3D should compute same total_root_length"
-        )
+        assert math.isclose(
+            wiring_2d, wiring_3d, rel_tol=1e-8
+        ), "2D and 3D should compute same total_root_length"
 
     def test_3d_and_2d_total_travel_distance_match(self, simple_3node_graph):
         """Test that 3D and 2D return same total_travel_distance."""
@@ -515,9 +515,9 @@ class TestScalingIntegration:
         _, delay_2d = graph_costs(simple_3node_graph)
         _, delay_3d, _ = graph_costs_3d_path_tortuosity(simple_3node_graph)
 
-        assert math.isclose(delay_2d, delay_3d, rel_tol=1e-8), (
-            "2D and 3D should compute same total_travel_distance"
-        )
+        assert math.isclose(
+            delay_2d, delay_3d, rel_tol=1e-8
+        ), "2D and 3D should compute same total_travel_distance"
 
 
 # ========== Parametrized Tests ==========
@@ -785,9 +785,9 @@ class TestDistanceFromFront3D:
         assert "epsilon" in result
 
         # Epsilon should be approximately 1.0 (on the front)
-        assert math.isclose(result["epsilon"], 1.0, rel_tol=1e-6), (
-            f"Epsilon should be ~1.0 for point on front, got {result['epsilon']}"
-        )
+        assert math.isclose(
+            result["epsilon"], 1.0, rel_tol=1e-6
+        ), f"Epsilon should be ~1.0 for point on front, got {result['epsilon']}"
 
     # --- Test 1.3: Dominated test ---
     def test_distance_from_front_3d_dominated(self, sample_3d_front):
@@ -807,9 +807,9 @@ class TestDistanceFromFront3D:
         result = distance_from_front_3d(sample_3d_front, actual_tree)
 
         assert isinstance(result, dict)
-        assert result["epsilon"] > 1.0, (
-            f"Dominated tree should have epsilon > 1.0, got {result['epsilon']}"
-        )
+        assert (
+            result["epsilon"] > 1.0
+        ), f"Dominated tree should have epsilon > 1.0, got {result['epsilon']}"
         # Should be approximately 1.5 (50% worse)
         assert math.isclose(result["epsilon"], 1.5, rel_tol=0.1)
 
@@ -831,9 +831,9 @@ class TestDistanceFromFront3D:
         result = distance_from_front_3d(sample_3d_front, actual_tree)
 
         assert isinstance(result, dict)
-        assert result["epsilon"] < 1.0, (
-            f"Dominating tree should have epsilon < 1.0, got {result['epsilon']}"
-        )
+        assert (
+            result["epsilon"] < 1.0
+        ), f"Dominating tree should have epsilon < 1.0, got {result['epsilon']}"
 
     # --- Test 1.5: Interpolation test ---
     def test_distance_from_front_3d_interpolation(self, sample_3d_front):
@@ -915,9 +915,9 @@ class TestDistanceFromFront3D:
 
         # Also verify the constraint
         total = result["alpha"] + result["beta"] + result["gamma"]
-        assert math.isclose(total, 1.0, rel_tol=1e-9), (
-            f"alpha + beta + gamma should equal 1.0, got {total}"
-        )
+        assert math.isclose(
+            total, 1.0, rel_tol=1e-9
+        ), f"alpha + beta + gamma should equal 1.0, got {total}"
 
     # --- Test 1.8: Division by zero test ---
     def test_distance_from_front_3d_division_by_zero(self, front_with_zeros):
@@ -974,9 +974,9 @@ class TestDistanceFromFront3D:
 
         # Epsilon is the meaningful metric for random trees
         assert result["epsilon"] > 1.0, "Random tree should be dominated (epsilon > 1)"
-        assert math.isclose(result["epsilon"], 2.75, rel_tol=0.1), (
-            f"Expected epsilon ~2.75, got {result['epsilon']}"
-        )
+        assert math.isclose(
+            result["epsilon"], 2.75, rel_tol=0.1
+        ), f"Expected epsilon ~2.75, got {result['epsilon']}"
 
         # Even if alpha, beta are near (0, 0), epsilon tells the story
         # The test validates that epsilon is returned and meaningful
