@@ -58,8 +58,10 @@ class TestAnalysisProgressFeedback:
         source = main_py.read_text()
 
         # The initial message should indicate analysis is starting
-        assert 'Analyzing {len(self.tree_paths)} file(s)...' in source or \
-               'f"Analyzing {len(self.tree_paths)} file(s)..."' in source, (
+        assert (
+            'Analyzing {len(self.tree_paths)} file(s)...' in source
+            or 'f"Analyzing {len(self.tree_paths)} file(s)..."' in source
+        ), (
             "Expected initial 'Analyzing N file(s)...' status message not found. "
             "Users need immediate feedback that analysis has started."
         )
@@ -75,7 +77,7 @@ class TestAnalysisProgressFeedback:
 
         # Find the section where initial status is set and verify refresh follows
         # Look for pattern: set output_info with "Analyzing" then update display
-        lines = source.split('\n')
+        lines = source.split("\n")
         found_initial_status = False
         found_refresh_after = False
 
@@ -137,7 +139,7 @@ class TestStableLayout:
         source = main_py.read_text()
 
         # Find the left_frame.pack() call and ensure it doesn't have expand=True
-        lines = source.split('\n')
+        lines = source.split("\n")
         for i, line in enumerate(lines):
             if 'self.left_frame.pack(' in line:
                 # Check this line and next few lines for expand=True
@@ -190,7 +192,7 @@ class TestCleanVisualLayout:
         source = main_py.read_text()
 
         # Find the right_frame.pack() call and check for padx or pady
-        lines = source.split('\n')
+        lines = source.split("\n")
         for i, line in enumerate(lines):
             if 'self.right_frame.pack(' in line:
                 pack_call = line
