@@ -16,3 +16,13 @@ Use `@/openspec/AGENTS.md` to learn:
 Keep this managed block so 'openspec update' can refresh the instructions.
 
 <!-- OPENSPEC:END -->
+
+# Package Management
+
+**NEVER install packages to the base Python environment.** Always use uv:
+- `uv run <command>` - Run commands within the project environment
+- `uv tool run <tool>` - Run standalone tools without installing
+- `uv add <package>` - Add dependencies to the project
+- `uv pip install` - Install to project venv only
+
+Never use `pip install` or `pip3 install` directly.

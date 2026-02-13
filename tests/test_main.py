@@ -40,9 +40,9 @@ class TestAnalysisProgressFeedback:
 
         # Look for the pattern: update output label followed by update_idletasks()
         # The update should happen inside the analysis loop after setting file name
-        assert "self.output.config(text=self.output_info)" in source, (
-            "Expected output label config call not found"
-        )
+        assert (
+            "self.output.config(text=self.output_info)" in source
+        ), "Expected output label config call not found"
         assert "self.output.update_idletasks()" in source, (
             "Expected update_idletasks() call not found. "
             "The GUI must call update_idletasks() to refresh the label during analysis."
@@ -91,12 +91,12 @@ class TestAnalysisProgressFeedback:
                         break
                 break
 
-        assert found_initial_status, (
-            "Initial 'Analyzing' status message assignment not found"
-        )
-        assert found_refresh_after, (
-            "update_idletasks() must be called immediately after setting initial status"
-        )
+        assert (
+            found_initial_status
+        ), "Initial 'Analyzing' status message assignment not found"
+        assert (
+            found_refresh_after
+        ), "update_idletasks() must be called immediately after setting initial status"
 
 
 class TestStableLayout:
@@ -112,9 +112,9 @@ class TestStableLayout:
         source = main_py.read_text()
 
         # Look for left_frame with explicit width parameter
-        assert "self.left_frame = tk.Frame(self.frame, width=" in source, (
-            "left_frame must have an explicit width to prevent layout shifts"
-        )
+        assert (
+            "self.left_frame = tk.Frame(self.frame, width=" in source
+        ), "left_frame must have an explicit width to prevent layout shifts"
 
     def test_left_frame_pack_propagate_false(self):
         """Test that left_frame has pack_propagate(False) to maintain fixed size.
@@ -125,9 +125,9 @@ class TestStableLayout:
         main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
         source = main_py.read_text()
 
-        assert "self.left_frame.pack_propagate(False)" in source, (
-            "left_frame must have pack_propagate(False) to maintain fixed width"
-        )
+        assert (
+            "self.left_frame.pack_propagate(False)" in source
+        ), "left_frame must have pack_propagate(False) to maintain fixed width"
 
     def test_left_frame_does_not_expand(self):
         """Test that left_frame pack does not use expand=True.
@@ -149,9 +149,9 @@ class TestStableLayout:
                     pack_call += lines[j]
                     j += 1
 
-                assert "expand=True" not in pack_call, (
-                    "left_frame.pack() should not use expand=True"
-                )
+                assert (
+                    "expand=True" not in pack_call
+                ), "left_frame.pack() should not use expand=True"
                 break
 
 
@@ -167,9 +167,9 @@ class TestCleanVisualLayout:
         main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
         source = main_py.read_text()
 
-        assert 'anchor="nw"' in source or "anchor='nw'" in source, (
-            "output label must have anchor='nw' for top-left text alignment"
-        )
+        assert (
+            'anchor="nw"' in source or "anchor='nw'" in source
+        ), "output label must have anchor='nw' for top-left text alignment"
 
     def test_output_label_has_justify_left(self):
         """Test that output label has justify='left' for left-aligned multi-line text.
@@ -179,9 +179,9 @@ class TestCleanVisualLayout:
         main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
         source = main_py.read_text()
 
-        assert 'justify="left"' in source or "justify='left'" in source, (
-            "output label must have justify='left' for left-aligned text"
-        )
+        assert (
+            'justify="left"' in source or "justify='left'" in source
+        ), "output label must have justify='left' for left-aligned text"
 
     def test_right_frame_has_padding(self):
         """Test that right_frame pack has padding for visual separation.
@@ -202,9 +202,9 @@ class TestCleanVisualLayout:
                     j += 1
 
                 has_padding = "padx=" in pack_call or "pady=" in pack_call
-                assert has_padding, (
-                    "right_frame.pack() should have padding (padx or pady)"
-                )
+                assert (
+                    has_padding
+                ), "right_frame.pack() should have padding (padx or pady)"
                 break
 
     def test_analyzer_window_is_compact(self):
@@ -217,9 +217,9 @@ class TestCleanVisualLayout:
         source = main_py.read_text()
 
         # The old size was 750x600 which is too large
-        assert "750x600" not in source, (
-            "Analyzer window should not be 750x600 - that's too large for the content"
-        )
+        assert (
+            "750x600" not in source
+        ), "Analyzer window should not be 750x600 - that's too large for the content"
 
 
 class TestScalingIntegration:
