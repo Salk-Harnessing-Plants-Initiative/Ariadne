@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- GUI checkbox "Include 3D Pareto analysis (slower)" in scale dialog for optional 3D analysis
+- 3D surface plot visualization using Delaunay triangulation for Pareto front
+  - Surface colored by path coverage using viridis colormap
+  - Colorbar showing path coverage gradient
+  - Graceful fallback to scatter plot when triangulation fails (collinear points)
+- `enable_3d` parameter to `analyze()` function (default: True for backward compatibility)
+- Explicit exclusions in scaling.py for 3D ratio fields: "Path tortuosity", "alpha_beta"
+- Comprehensive test suite for 3D Pareto functions (`tests/test_pareto_3d.py`)
+
+### Fixed
+
+- **3D Pareto robustness fixes:**
+  - Cycle detection in `graph_costs_3d_path_tortuosity` now returns 3 inf values (was returning 2)
+  - Division by zero protection for coincident nodes in path tortuosity calculation
+  - Parameter validation: `alpha + beta <= 1` assertion in `pareto_cost_3d_path_tortuosity`
+  - Invalid (alpha, beta) combinations now skipped in `pareto_front_3d_path_tortuosity`
+- 3D results scaling now applied consistently with 2D results in main.py
+- Restored "Tortuosity" key name in results dict (was incorrectly renamed during branch merge)
+
+### Changed
+
+- `plot_all_3d()` now uses triangulated surface instead of line plot for better visualization
+- 3D analysis is optional via GUI checkbox (disabled by default for performance)
 - Alpha interpolation for more precise characteristic alpha values in Pareto front analysis
   - `distance_from_front()` now interpolates between the two closest discrete alpha values
   - Returns Python floats (not strings) for clean CSV serialization
