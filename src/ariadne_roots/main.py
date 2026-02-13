@@ -1021,7 +1021,7 @@ class AnalyzerUI(tk.Frame):
     def __init__(self, base):
         super().__init__(base)
         self.base = base
-        self.base.geometry("750x600")
+        self.base.geometry("650x200")
         self.base.title("Ariadne: Analyze")
 
         # Initialize scale factors with defaults first
@@ -1032,21 +1032,24 @@ class AnalyzerUI(tk.Frame):
         self.frame = tk.Frame(self.base)
         self.frame.pack(side="top", fill="both", expand=True)
 
-        # left-hand menu
-        self.left_frame = tk.Frame(self.frame)
-        self.left_frame.pack(side="left", fill="both", expand=True)
+        # left-hand menu (fixed width to prevent layout shifts during analysis)
+        self.left_frame = tk.Frame(self.frame, width=150)
+        self.left_frame.pack(side="left", fill="y")
+        self.left_frame.pack_propagate(False)  # Maintain fixed width
 
         self.load_button = tk.Button(
             self.left_frame, text="Load file(s)", command=self.import_file
         )
-        self.load_button.pack(side="top", expand=True)
+        self.load_button.pack(side="top", pady=20, padx=10)
 
         # right-hand output
         self.right_frame = tk.Frame(self.frame)
-        self.right_frame.pack(side="right", fill="both", expand=True)
+        self.right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
         self.output_info = "Current files:"
-        self.output = tk.Label(self.right_frame, text=self.output_info)
+        self.output = tk.Label(
+            self.right_frame, text=self.output_info, anchor="nw", justify="left"
+        )
         self.output.pack(side="top", fill="both", expand=True)
 
         # Ask user for scale info at startup
@@ -1213,10 +1216,13 @@ class AnalyzerUI(tk.Frame):
             / f"report_3d_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
         )
 
+        # Disable button during analysis to prevent re-clicks and rendering issues
+        self.load_button.config(state="disabled")
+
         # Show analyzing status immediately
         self.output_info = f"Analyzing {len(self.tree_paths)} file(s)..."
         self.output.config(text=self.output_info)
-        self.base.update_idletasks()  # Force GUI refresh to show status
+        self.output.update_idletasks()  # Force label refresh only
         i = 1
 
         for json_file in self.tree_paths:
@@ -1231,7 +1237,7 @@ class AnalyzerUI(tk.Frame):
             # update current file count list
             self.output_info = self.output_info + "\n" + graph_name
             self.output.config(text=self.output_info)
-            self.base.update_idletasks()  # Force GUI refresh to show progress
+            self.output.update_idletasks()  # Force label refresh only
 
             # load and process graph data
             with open(json_file, mode="r") as h:
@@ -1341,6 +1347,9 @@ class AnalyzerUI(tk.Frame):
             f"You can now open the output folder to view results."
         )
         messagebox.showinfo("Analysis Complete", completion_msg)
+
+        # Re-enable button after analysis
+        self.load_button.config(state="normal")
 
     def clear(self):
         """Clean up a previously imported file."""

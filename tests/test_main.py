@@ -43,9 +43,9 @@ class TestAnalysisProgressFeedback:
         assert "self.output.config(text=self.output_info)" in source, (
             "Expected output label config call not found"
         )
-        assert "self.base.update_idletasks()" in source, (
+        assert "self.output.update_idletasks()" in source, (
             "Expected update_idletasks() call not found. "
-            "The GUI must call update_idletasks() to refresh during the analysis loop."
+            "The GUI must call update_idletasks() to refresh the label during analysis."
         )
 
     def test_initial_analyzing_status_message(self):
@@ -94,6 +94,129 @@ class TestAnalysisProgressFeedback:
         )
         assert found_refresh_after, (
             "update_idletasks() must be called immediately after setting initial status"
+        )
+
+
+class TestStableLayout:
+    """Tests for stable GUI layout that prevents button position shifts."""
+
+    def test_left_frame_has_fixed_width(self):
+        """Test that left_frame has an explicit width to prevent layout shifts.
+
+        The left panel must have a fixed width so it doesn't resize when
+        the right panel content (file list) changes.
+        """
+        main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
+        source = main_py.read_text()
+
+        # Look for left_frame with explicit width parameter
+        assert "self.left_frame = tk.Frame(self.frame, width=" in source, (
+            "left_frame must have an explicit width to prevent layout shifts"
+        )
+
+    def test_left_frame_pack_propagate_false(self):
+        """Test that left_frame has pack_propagate(False) to maintain fixed size.
+
+        Without pack_propagate(False), the frame would resize based on its
+        children, defeating the purpose of the fixed width.
+        """
+        main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
+        source = main_py.read_text()
+
+        assert "self.left_frame.pack_propagate(False)" in source, (
+            "left_frame must have pack_propagate(False) to maintain fixed width"
+        )
+
+    def test_left_frame_does_not_expand(self):
+        """Test that left_frame pack does not use expand=True.
+
+        Using expand=True would cause the frame to resize when other
+        widgets change, leading to button position shifts.
+        """
+        main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
+        source = main_py.read_text()
+
+        # Find the left_frame.pack() call and ensure it doesn't have expand=True
+        lines = source.split('\n')
+        for i, line in enumerate(lines):
+            if 'self.left_frame.pack(' in line:
+                # Check this line and next few lines for expand=True
+                pack_call = line
+                j = i + 1
+                while j < len(lines) and ')' not in pack_call:
+                    pack_call += lines[j]
+                    j += 1
+
+                assert 'expand=True' not in pack_call, (
+                    "left_frame.pack() should not use expand=True"
+                )
+                break
+
+
+class TestCleanVisualLayout:
+    """Tests for clean visual layout with proper text alignment and spacing."""
+
+    def test_output_label_has_anchor_nw(self):
+        """Test that output label has anchor='nw' for top-left text alignment.
+
+        Text should be aligned to the top-left of the label area, not centered
+        in a large empty space.
+        """
+        main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
+        source = main_py.read_text()
+
+        assert 'anchor="nw"' in source or "anchor='nw'" in source, (
+            "output label must have anchor='nw' for top-left text alignment"
+        )
+
+    def test_output_label_has_justify_left(self):
+        """Test that output label has justify='left' for left-aligned multi-line text.
+
+        Multi-line text (file list) should be left-justified, not centered.
+        """
+        main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
+        source = main_py.read_text()
+
+        assert 'justify="left"' in source or "justify='left'" in source, (
+            "output label must have justify='left' for left-aligned text"
+        )
+
+    def test_right_frame_has_padding(self):
+        """Test that right_frame pack has padding for visual separation.
+
+        The right panel should have padding to create visual breathing room.
+        """
+        main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
+        source = main_py.read_text()
+
+        # Find the right_frame.pack() call and check for padx or pady
+        lines = source.split('\n')
+        for i, line in enumerate(lines):
+            if 'self.right_frame.pack(' in line:
+                pack_call = line
+                j = i + 1
+                while j < len(lines) and ')' not in pack_call:
+                    pack_call += lines[j]
+                    j += 1
+
+                has_padding = 'padx=' in pack_call or 'pady=' in pack_call
+                assert has_padding, (
+                    "right_frame.pack() should have padding (padx or pady)"
+                )
+                break
+
+    def test_analyzer_window_is_compact(self):
+        """Test that Analyzer window size is compact, not oversized.
+
+        The window should be appropriately sized for its content,
+        not excessively large with wasted space.
+        """
+        main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
+        source = main_py.read_text()
+
+        # The old size was 750x600 which is too large
+        assert '750x600' not in source, (
+            "Analyzer window should not be 750x600 - that's too large for the content"
         )
 
 
