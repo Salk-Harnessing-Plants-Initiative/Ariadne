@@ -222,6 +222,85 @@ class TestCleanVisualLayout:
         ), "Analyzer window should not be 750x600 - that's too large for the content"
 
 
+class Test3DPlotDataConsistency:
+    """Tests for 3D Pareto plot data consistency with CSV output."""
+
+    def test_plot_all_3d_receives_random_path_tortuosity(self):
+        """Test that plot_all_3d receives Path tortuosity (random) for prand argument.
+
+        The prand parameter (6th argument) must be the mean path tortuosity
+        of 1000 random trees, NOT the actual plant's path tortuosity.
+        Using the actual plant's value would place the Random Centroid marker
+        at the wrong z-coordinate on the 3D plot.
+        """
+        main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
+        source = main_py.read_text()
+
+        # Find the plot_all_3d call
+        lines = source.split("\n")
+        in_plot_call = False
+        plot_call_lines = []
+
+        for i, line in enumerate(lines):
+            if "quantify.plot_all_3d(" in line:
+                in_plot_call = True
+                plot_call_lines.append(line)
+            elif in_plot_call:
+                plot_call_lines.append(line)
+                if ")" in line and line.strip().endswith(")"):
+                    break
+
+        plot_call = "\n".join(plot_call_lines)
+
+        # The call should include Path tortuosity (random) for the prand parameter
+        # It should NOT use Path tortuosity without (random) suffix for prand
+        assert 'results_3d["Path tortuosity (random)"]' in plot_call, (
+            "plot_all_3d should receive 'Path tortuosity (random)' for the prand parameter. "
+            f"Found call:\n{plot_call}"
+        )
+
+    def test_3d_plot_random_metrics_all_use_random_suffix(self):
+        """Test that all random tree metrics passed to plot_all_3d use (random) suffix.
+
+        The last three positional arguments to plot_all_3d are:
+        - mrand: Total root length (random)
+        - srand: Travel distance (random)
+        - prand: Path tortuosity (random)
+
+        All must use the (random) suffix to ensure consistency between
+        the CSV output and the plot visualization.
+        """
+        main_py = Path(__file__).parent.parent / "src" / "ariadne_roots" / "main.py"
+        source = main_py.read_text()
+
+        # Find the plot_all_3d call and extract the random metric arguments
+        lines = source.split("\n")
+        in_plot_call = False
+        plot_call_lines = []
+
+        for i, line in enumerate(lines):
+            if "quantify.plot_all_3d(" in line:
+                in_plot_call = True
+                plot_call_lines.append(line)
+            elif in_plot_call:
+                plot_call_lines.append(line)
+                if ")" in line and line.strip().endswith(")"):
+                    break
+
+        plot_call = "\n".join(plot_call_lines)
+
+        # Verify all three random metrics use (random) suffix
+        assert (
+            'results_3d["Total root length (random)"]' in plot_call
+        ), "mrand should be 'Total root length (random)'"
+        assert (
+            'results_3d["Travel distance (random)"]' in plot_call
+        ), "srand should be 'Travel distance (random)'"
+        assert (
+            'results_3d["Path tortuosity (random)"]' in plot_call
+        ), "prand should be 'Path tortuosity (random)'"
+
+
 class TestScalingIntegration:
     """Integration tests for scaling workflow (mock-based)."""
 

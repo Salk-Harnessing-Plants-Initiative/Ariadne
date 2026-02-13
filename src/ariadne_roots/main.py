@@ -1326,7 +1326,7 @@ class AnalyzerUI(tk.Frame):
                     randoms_3d,
                     results_3d["Total root length (random)"],
                     results_3d["Travel distance (random)"],
-                    results_3d["Path tortuosity"],
+                    results_3d["Path tortuosity (random)"],
                     pareto_3d_path,
                 )
 

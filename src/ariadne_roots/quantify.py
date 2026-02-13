@@ -1050,9 +1050,6 @@ def pareto_calcs(H):
     front, actual = pareto_front(H)
     mactual, sactual = actual
 
-    # for debug: show total_root_length, total_travel_distance
-    # print(list(front.items())[0:5])
-
     # Calculate tradeoff metrics
     tradeoff_info = calculate_tradeoff(front, actual)
 
