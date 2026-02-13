@@ -59,7 +59,7 @@ class TestAnalysisProgressFeedback:
 
         # The initial message should indicate analysis is starting
         assert (
-            'Analyzing {len(self.tree_paths)} file(s)...' in source
+            "Analyzing {len(self.tree_paths)} file(s)..." in source
             or 'f"Analyzing {len(self.tree_paths)} file(s)..."' in source
         ), (
             "Expected initial 'Analyzing N file(s)...' status message not found. "
@@ -82,11 +82,11 @@ class TestAnalysisProgressFeedback:
         found_refresh_after = False
 
         for i, line in enumerate(lines):
-            if 'Analyzing' in line and 'file(s)' in line and 'output_info' in line:
+            if "Analyzing" in line and "file(s)" in line and "output_info" in line:
                 found_initial_status = True
                 # Check next few lines for update_idletasks
                 for j in range(i + 1, min(i + 5, len(lines))):
-                    if 'update_idletasks()' in lines[j]:
+                    if "update_idletasks()" in lines[j]:
                         found_refresh_after = True
                         break
                 break
@@ -141,15 +141,15 @@ class TestStableLayout:
         # Find the left_frame.pack() call and ensure it doesn't have expand=True
         lines = source.split("\n")
         for i, line in enumerate(lines):
-            if 'self.left_frame.pack(' in line:
+            if "self.left_frame.pack(" in line:
                 # Check this line and next few lines for expand=True
                 pack_call = line
                 j = i + 1
-                while j < len(lines) and ')' not in pack_call:
+                while j < len(lines) and ")" not in pack_call:
                     pack_call += lines[j]
                     j += 1
 
-                assert 'expand=True' not in pack_call, (
+                assert "expand=True" not in pack_call, (
                     "left_frame.pack() should not use expand=True"
                 )
                 break
@@ -194,14 +194,14 @@ class TestCleanVisualLayout:
         # Find the right_frame.pack() call and check for padx or pady
         lines = source.split("\n")
         for i, line in enumerate(lines):
-            if 'self.right_frame.pack(' in line:
+            if "self.right_frame.pack(" in line:
                 pack_call = line
                 j = i + 1
-                while j < len(lines) and ')' not in pack_call:
+                while j < len(lines) and ")" not in pack_call:
                     pack_call += lines[j]
                     j += 1
 
-                has_padding = 'padx=' in pack_call or 'pady=' in pack_call
+                has_padding = "padx=" in pack_call or "pady=" in pack_call
                 assert has_padding, (
                     "right_frame.pack() should have padding (padx or pady)"
                 )
@@ -217,7 +217,7 @@ class TestCleanVisualLayout:
         source = main_py.read_text()
 
         # The old size was 750x600 which is too large
-        assert '750x600' not in source, (
+        assert "750x600" not in source, (
             "Analyzer window should not be 750x600 - that's too large for the content"
         )
 
