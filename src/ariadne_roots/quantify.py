@@ -614,6 +614,10 @@ def plot_all_3d(
     interpolation. The surface is colored by path coverage (z-axis) to show
     the gradient across the front.
 
+    Data is scaled internally using config.length_scale_factor, matching the
+    2D plot_all() behavior. Length (x) and distance (y) are scaled, while
+    path coverage (z) is dimensionless and not scaled.
+
     Args:
         front_3d (dict): A dictionary of total root lengths, total distances to the base and
             path_coverages for each (alpha, beta) value on the front
@@ -627,6 +631,10 @@ def plot_all_3d(
     """
     from matplotlib.tri import Triangulation
     from scipy.spatial import Delaunay
+
+    def scale_data(data):
+        """Scale data by user-configured factor."""
+        return data * config.length_scale_factor
 
     fig = plt.figure(figsize=(12, 9))
     ax = fig.add_subplot(111, projection="3d")
@@ -643,9 +651,9 @@ def plot_all_3d(
 
     logging.debug(f"Front 3D: {front_3d}")
 
-    # Extract x, y, z values for the front
-    x_values = np.array([x[0] for x in front_3d.values()])
-    y_values = np.array([x[1] for x in front_3d.values()])
+    # Extract and scale x, y values; z (path coverage) is dimensionless, not scaled
+    x_values = np.array([scale_data(x[0]) for x in front_3d.values()])
+    y_values = np.array([scale_data(x[1]) for x in front_3d.values()])
     z_values = np.array([x[2] for x in front_3d.values()])
 
     # Try to create a triangulated surface plot
@@ -695,10 +703,10 @@ def plot_all_3d(
         )
         logging.info("Using scatter plot for Pareto front (triangulation not possible)")
 
-    # Plot the actual plant (orange X marker)
+    # Plot the actual plant (orange X marker) - scale x,y but not z (dimensionless)
     ax.scatter(
-        [actual_3d[0]],
-        [actual_3d[1]],
+        [scale_data(actual_3d[0])],
+        [scale_data(actual_3d[1])],
         [actual_3d[2]],
         color="orange",
         marker="X",
@@ -709,12 +717,12 @@ def plot_all_3d(
         zorder=5,
     )
 
-    # Plot the random tree costs (green + markers)
+    # Plot the random tree costs (green + markers) - scale x,y but not z
     if len(randoms_3d) > 0:
         randoms_3d_array = np.array(randoms_3d)
         ax.scatter(
-            randoms_3d_array[:, 0],
-            randoms_3d_array[:, 1],
+            randoms_3d_array[:, 0] * config.length_scale_factor,
+            randoms_3d_array[:, 1] * config.length_scale_factor,
             randoms_3d_array[:, 2],
             color="green",
             marker="+",
@@ -724,10 +732,10 @@ def plot_all_3d(
             label="Random Trees",
         )
 
-    # Plot the centroid of random trees (red diamond)
+    # Plot the centroid of random trees (red diamond) - scale x,y but not z
     ax.scatter(
-        [mrand],
-        [srand],
+        [scale_data(mrand)],
+        [scale_data(srand)],
         [prand],
         color="red",
         marker="D",
