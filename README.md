@@ -285,7 +285,7 @@ The RSA traits included in the CSV are
 
 #### 3D Pareto Analysis Fields (Optional)
 
-When **"Include 3D Pareto analysis"** is enabled during analysis, additional fields are computed that include path coverage as a third objective:
+When **"Add path tortuosity to Pareto (3D, slower)"** is enabled during analysis, additional fields are computed that include path coverage as a third objective:
 
 - **Path tortuosity:** Sum of tortuosity values for all root paths
 - **alpha_3d, beta_3d, gamma_3d:** Interpolated Pareto weights (α + β + γ = 1)

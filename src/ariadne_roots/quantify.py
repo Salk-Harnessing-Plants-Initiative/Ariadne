@@ -34,7 +34,7 @@ from ariadne_roots import config
 
 # Set up logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler()],
 )
@@ -649,7 +649,7 @@ def plot_all_3d(
     ax.set_zlabel("Path Coverage (ratio)", fontsize=12, labelpad=10)
     ax.set_title("3D Pareto Front: Root Architecture Trade-offs", fontsize=15, pad=20)
 
-    logging.debug(f"Front 3D: {front_3d}")
+    logging.debug(f"Front 3D: {len(front_3d)} points")
 
     # Extract and scale x, y values; z (path coverage) is dimensionless, not scaled
     x_values = np.array([scale_data(x[0]) for x in front_3d.values()])

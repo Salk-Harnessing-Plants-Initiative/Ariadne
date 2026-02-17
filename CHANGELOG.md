@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- GUI checkbox "Include 3D Pareto analysis (slower)" in scale dialog for optional 3D analysis
+- GUI checkbox "Add path tortuosity to Pareto (3D, slower)" in scale dialog for optional 3D analysis
 - 3D surface plot visualization using Delaunay triangulation for Pareto front
   - Surface colored by path coverage using viridis colormap
   - Colorbar showing path coverage gradient
