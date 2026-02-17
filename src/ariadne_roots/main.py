@@ -371,7 +371,7 @@ class TracerUI(tk.Frame):
 
             # adjust index and menubar
             self.frame_index = next_index
-            self.day_indicator = f"Frame #{self.frame_index+1}"
+            self.day_indicator = f"Frame #{self.frame_index + 1}"
 
         except IndexError:
             self.day_indicator = "End of GIF"
@@ -998,13 +998,30 @@ class Tree:
                 q.put(n)
 
 
+# Helper functions
+def get_graph_from_json(json_file):
+    """Load a JSON file and convert it to a NetworkX graph.
+
+    Args:
+        json_file (str): Path to the JSON file.
+
+    Returns:
+        nx.Graph: A NetworkX graph object.
+    """
+    with open(json_file, mode="r") as h:
+        data = json.load(h)
+        graph = json_graph.adjacency_graph(data)
+
+    return graph
+
+
 class AnalyzerUI(tk.Frame):
     """Analysis mode interface."""
 
     def __init__(self, base):
         super().__init__(base)
         self.base = base
-        self.base.geometry("750x600")
+        self.base.geometry("650x200")
         self.base.title("Ariadne: Analyze")
 
         # Initialize scale factors with defaults first
@@ -1015,21 +1032,24 @@ class AnalyzerUI(tk.Frame):
         self.frame = tk.Frame(self.base)
         self.frame.pack(side="top", fill="both", expand=True)
 
-        # left-hand menu
-        self.left_frame = tk.Frame(self.frame)
-        self.left_frame.pack(side="left", fill="both", expand=True)
+        # left-hand menu (fixed width to prevent layout shifts during analysis)
+        self.left_frame = tk.Frame(self.frame, width=150)
+        self.left_frame.pack(side="left", fill="y")
+        self.left_frame.pack_propagate(False)  # Maintain fixed width
 
         self.load_button = tk.Button(
             self.left_frame, text="Load file(s)", command=self.import_file
         )
-        self.load_button.pack(side="top", expand=True)
+        self.load_button.pack(side="top", pady=20, padx=10)
 
         # right-hand output
         self.right_frame = tk.Frame(self.frame)
-        self.right_frame.pack(side="right", fill="both", expand=True)
+        self.right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
         self.output_info = "Current files:"
-        self.output = tk.Label(self.right_frame, text=self.output_info)
+        self.output = tk.Label(
+            self.right_frame, text=self.output_info, anchor="nw", justify="left"
+        )
         self.output.pack(side="top", fill="both", expand=True)
 
         # Ask user for scale info at startup
@@ -1040,7 +1060,7 @@ class AnalyzerUI(tk.Frame):
         # Create custom popup window
         scale_win = tk.Toplevel(self.base)
         scale_win.title("Set Scale")
-        scale_win.geometry("350x350")
+        scale_win.geometry("350x420")
         scale_win.grab_set()  # make popup modal
 
         # Labels + Entries
@@ -1059,6 +1079,17 @@ class AnalyzerUI(tk.Frame):
         # Label to show calculated scale
         result_label = tk.Label(scale_win, text="Result: (waiting for input...)")
         result_label.pack(pady=10)
+
+        # Separator line
+        tk.Frame(scale_win, height=1, bg="gray").pack(fill="x", padx=20, pady=5)
+
+        # 3D analysis checkbox (optional, slower)
+        enable_3d_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(
+            scale_win,
+            text="Add path tortuosity to Pareto (3D, slower)",
+            variable=enable_3d_var,
+        ).pack(pady=5)
 
         def update_result(*args):
             """Update live result when values change."""
@@ -1097,6 +1128,10 @@ class AnalyzerUI(tk.Frame):
                 config.length_scale_factor = self.length_scale_factor
                 config.length_scale_unit = self.length_scale_unit
 
+                # Store 3D analysis preference
+                self.enable_3d_analysis = enable_3d_var.get()
+                config.enable_3d_analysis = self.enable_3d_analysis
+
                 messagebox.showinfo(
                     "Scale set",
                     f"1 pixel = {self.length_scale_factor:.4f} {self.length_scale_unit}",
@@ -1114,10 +1149,12 @@ class AnalyzerUI(tk.Frame):
             # Set defaults
             self.length_scale_factor = 1.0
             self.length_scale_unit = "px"
+            self.enable_3d_analysis = False
 
             # Store in config module
             config.length_scale_factor = 1.0
             config.length_scale_unit = "px"
+            config.enable_3d_analysis = False
 
             scale_win.destroy()
 
@@ -1174,21 +1211,33 @@ class AnalyzerUI(tk.Frame):
         report_dest = (
             self.output_path / f"report_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
         )
+        report_3d_dest = (
+            self.output_path
+            / f"report_3d_{str(timestamp.strftime('%Y%m%d_%H%M%S'))}.csv"
+        )
 
-        # add current file count
-        self.output_info = f"Current files: ({len(self.tree_paths)})"
+        # Disable button during analysis to prevent re-clicks and rendering issues
+        self.load_button.config(state="disabled")
+
+        # Show analyzing status immediately
+        self.output_info = f"Analyzing {len(self.tree_paths)} file(s)..."
+        self.output.config(text=self.output_info)
+        self.output.update_idletasks()  # Force label refresh only
         i = 1
 
         for json_file in self.tree_paths:
             graph_name = json_file.split("/")[-1]
             graph_name_noext = graph_name[:-5]
             pareto_name = graph_name_noext + "_pareto.png"
-            # plot_name = graph_name_noext + '_tree.png'
+            pareto_3d_name = graph_name_noext + "_pareto_3d.png"
+
             pareto_path = self.output_path / pareto_name
+            pareto_3d_path = self.output_path / pareto_3d_name
 
             # update current file count list
             self.output_info = self.output_info + "\n" + graph_name
             self.output.config(text=self.output_info)
+            self.output.update_idletasks()  # Force label refresh only
 
             # load and process graph data
             with open(json_file, mode="r") as h:
@@ -1212,47 +1261,77 @@ class AnalyzerUI(tk.Frame):
 
                 graph = json_graph.adjacency_graph(data)
 
-                # perform analysis
-                results, front, randoms = quantify.analyze(graph)
-                results["filename"] = graph_name_noext
+            # perform analysis
+            results, front, randoms, results_3d, front_3d, randoms_3d = (
+                quantify.analyze(graph, enable_3d=config.enable_3d_analysis)
+            )
+            results["filename"] = graph_name_noext
+            if config.enable_3d_analysis:
+                results_3d["filename"] = graph_name_noext
 
-                # Apply scaling transformation to results
-                scaled_results = scaling.apply_scaling_transformation(
-                    results, self.length_scale_factor
+            # Apply scaling transformation to results
+            scaled_results = scaling.apply_scaling_transformation(
+                results, self.length_scale_factor
+            )
+
+            # Write scaled results to CSV
+            with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
+                w = csv.DictWriter(csvfile, fieldnames=scaled_results.keys())
+                if i == 1:  # Write header only for the first file
+                    w.writeheader()
+                w.writerow(scaled_results)
+
+            # debug
+            logging.debug(f"Total root length: {results['Total root length']}")
+            logging.debug(f"Travel distance: {results['Travel distance']}")
+            logging.debug(
+                f"Total root length (random): {results['Total root length (random)']}"
+            )
+            logging.debug(
+                f"Travel distance (random): {results['Travel distance (random)']}"
+            )
+
+            # 3D analysis output (only when enabled)
+            if config.enable_3d_analysis:
+                # Apply scaling transformation to 3D results (same as 2D)
+                scaled_results_3d = scaling.apply_scaling_transformation(
+                    results_3d, self.length_scale_factor
                 )
 
-                # Write scaled results to CSV
-                with open(report_dest, "a", encoding="utf-8", newline="") as csvfile:
-                    w = csv.DictWriter(csvfile, fieldnames=scaled_results.keys())
-                    if i == 1:  # Write header only for the first file
+                with open(report_3d_dest, "a", encoding="utf-8", newline="") as csvfile:
+                    w = csv.DictWriter(csvfile, fieldnames=scaled_results_3d.keys())
+                    if i == 1:
                         w.writeheader()
-                    w.writerow(scaled_results)
+                    w.writerow(scaled_results_3d)
 
-                # debug
-                logging.debug(f"Total root length: {results['Total root length']}")
-                logging.debug(f"Travel distance: {results['Travel distance']}")
-                logging.debug(
-                    f"Total root length (random): {results['Total root length (random)']}"
-                )
-                logging.debug(
-                    f"Travel distance (random): {results['Travel distance (random)']}"
-                )
+            # make pareto plot and save
+            quantify.plot_all(
+                front,
+                [results["Total root length"], results["Travel distance"]],
+                randoms,
+                results["Total root length (random)"],
+                results["Travel distance (random)"],
+                pareto_path,
+            )
 
-                # make pareto plot and save (using unscaled results - plot_all handles scaling)
-                quantify.plot_all(
-                    front,
+            # make 3D pareto plot and save (only when enabled)
+            if config.enable_3d_analysis:
+                quantify.plot_all_3d(
+                    front_3d,
                     [
-                        results["Total root length"],
-                        results["Travel distance"],
+                        results_3d["Total root length"],
+                        results_3d["Travel distance"],
+                        results_3d["Path tortuosity"],
                     ],
-                    randoms,
-                    results["Total root length (random)"],
-                    results["Travel distance (random)"],
-                    pareto_path,
+                    randoms_3d,
+                    results_3d["Total root length (random)"],
+                    results_3d["Travel distance (random)"],
+                    results_3d["Path tortuosity (random)"],
+                    pareto_3d_path,
                 )
 
-                print(f"Processed file {i}/{len(self.tree_paths)}")
-                i += 1
+            print(f"Processed file {i}/{len(self.tree_paths)}")
+            i += 1
 
         # show confirmation message
         print("Finished.")
@@ -1268,6 +1347,9 @@ class AnalyzerUI(tk.Frame):
             f"You can now open the output folder to view results."
         )
         messagebox.showinfo("Analysis Complete", completion_msg)
+
+        # Re-enable button after analysis
+        self.load_button.config(state="normal")
 
     def clear(self):
         """Clean up a previously imported file."""

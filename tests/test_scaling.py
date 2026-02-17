@@ -267,3 +267,138 @@ class TestScalingTransformation:
         assert scaled["Satellite_length"] == 32523.42 * 2.0
         assert scaled["Satellite_distance"] == 32523.42 * 2.0
         assert scaled["Total root length"] == 200.0
+
+    def test_3d_weight_fields_not_scaled(self):
+        """Test that 3D Pareto weight fields (beta_3d, gamma_3d) are NOT scaled.
+
+        These are dimensionless weights in range [0, 1] representing the
+        trade-off position on the Pareto surface. Scaling them would produce
+        scientifically meaningless values.
+        """
+        results = {
+            "beta_3d": 0.02,
+            "gamma_3d": 0.98,
+            "beta_3d (random)": 0.15,
+            "gamma_3d (random)": 0.45,
+            "Total root length": 100.0,  # Should be scaled
+        }
+
+        scaled = apply_scaling_transformation(
+            results, 0.01
+        )  # Small factor to make bug obvious
+
+        # Weight fields should NOT be scaled (remain unchanged)
+        assert (
+            scaled["beta_3d"] == 0.02
+        ), "beta_3d should not be scaled (dimensionless weight)"
+        assert (
+            scaled["gamma_3d"] == 0.98
+        ), "gamma_3d should not be scaled (dimensionless weight)"
+        assert (
+            scaled["beta_3d (random)"] == 0.15
+        ), "beta_3d (random) should not be scaled"
+        assert (
+            scaled["gamma_3d (random)"] == 0.45
+        ), "gamma_3d (random) should not be scaled"
+        # Verify length fields ARE scaled
+        assert scaled["Total root length"] == 1.0
+
+    def test_3d_epsilon_fields_not_scaled(self):
+        """Test that 3D epsilon indicator fields are NOT scaled.
+
+        Epsilon is the multiplicative distance from the Pareto front (ratio >= 1.0).
+        Scaling it would produce scientifically meaningless values.
+        """
+        results = {
+            "epsilon_3d": 1.078,
+            "epsilon_3d_material": 1.02,
+            "epsilon_3d_transport": 1.05,
+            "epsilon_3d_coverage": 1.078,
+            "epsilon_3d (random)": 3.15,
+            "epsilon_3d_material (random)": 3.15,
+            "epsilon_3d_transport (random)": 1.8,
+            "epsilon_3d_coverage (random)": 2.1,
+            "Total root length": 100.0,
+        }
+
+        scaled = apply_scaling_transformation(results, 0.01)
+
+        # Epsilon fields should NOT be scaled
+        assert scaled["epsilon_3d"] == 1.078, "epsilon_3d should not be scaled (ratio)"
+        assert scaled["epsilon_3d_material"] == 1.02
+        assert scaled["epsilon_3d_transport"] == 1.05
+        assert scaled["epsilon_3d_coverage"] == 1.078
+        assert scaled["epsilon_3d (random)"] == 3.15
+        assert scaled["epsilon_3d_material (random)"] == 3.15
+        assert scaled["epsilon_3d_transport (random)"] == 1.8
+        assert scaled["epsilon_3d_coverage (random)"] == 2.1
+
+    def test_3d_scaling_preserves_dimensionless_fields_integration(self):
+        """Integration test: verify all 3D dimensionless fields are preserved after scaling.
+
+        This simulates a real 3D analysis output and verifies that scaling
+        for length conversion (e.g., pixels to mm) preserves all dimensionless
+        ratio and weight fields while correctly scaling length fields.
+        """
+        # Simulated 3D analysis output (realistic values)
+        results_3d = {
+            # Dimensionless fields - SHOULD NOT be scaled
+            "alpha_3d": 0.0,
+            "beta_3d": 0.02,
+            "gamma_3d": 0.98,
+            "epsilon_3d": 1.078,
+            "epsilon_3d_material": 1.02,
+            "epsilon_3d_transport": 1.05,
+            "epsilon_3d_coverage": 1.078,
+            "alpha_3d (random)": 0.0,
+            "beta_3d (random)": 0.15,
+            "gamma_3d (random)": 0.45,
+            "epsilon_3d (random)": 3.15,
+            "epsilon_3d_material (random)": 3.15,
+            "epsilon_3d_transport (random)": 1.8,
+            "epsilon_3d_coverage (random)": 2.1,
+            "Path tortuosity": 15.5,
+            "Path tortuosity (random)": 12.3,
+            # Length fields - SHOULD be scaled
+            "Total root length": 5000.0,
+            "Travel distance": 8000.0,
+            "Total root length (random)": 6500.0,
+            "Travel distance (random)": 9200.0,
+        }
+
+        scale_factor = 0.0254  # Example: pixels to mm
+
+        scaled = apply_scaling_transformation(results_3d, scale_factor)
+
+        # Verify all dimensionless fields are unchanged
+        dimensionless_fields = [
+            "alpha_3d",
+            "beta_3d",
+            "gamma_3d",
+            "epsilon_3d",
+            "epsilon_3d_material",
+            "epsilon_3d_transport",
+            "epsilon_3d_coverage",
+            "alpha_3d (random)",
+            "beta_3d (random)",
+            "gamma_3d (random)",
+            "epsilon_3d (random)",
+            "epsilon_3d_material (random)",
+            "epsilon_3d_transport (random)",
+            "epsilon_3d_coverage (random)",
+            "Path tortuosity",
+            "Path tortuosity (random)",
+        ]
+
+        for field in dimensionless_fields:
+            assert scaled[field] == results_3d[field], (
+                f"{field} should not be scaled (dimensionless). "
+                f"Expected {results_3d[field]}, got {scaled[field]}"
+            )
+
+        # Verify length fields ARE scaled
+        assert (
+            scaled["Total root length"]
+            == results_3d["Total root length"] * scale_factor
+        )
+        assert scaled["Travel distance"] == results_3d["Travel distance"] * scale_factor

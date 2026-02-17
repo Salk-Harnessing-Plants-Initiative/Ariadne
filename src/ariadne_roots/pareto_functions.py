@@ -100,6 +100,108 @@ def graph_costs(G, critical_nodes=None):
     return total_root_length, total_travel_distance
 
 
+def graph_costs_3d_path_tortuosity(G, critical_nodes=None):
+    """Use BFS to compute the wiring cost, conduction delay and total path coverage of a graph G.
+
+    Args:
+        G (nx.Graph): The graph to compute the costs for
+        critical_nodes (list): The list of critical nodes to consider. If None, all
+            nodes are considered.
+
+    Returns:
+        total_root_length (float): The wiring cost of the graph. Wiring cost is the total length of
+            the edges in the network.
+        total_travel_distance (float): The conduction delay of the graph. Conduction delay is the sum of
+            the distances from each point to the base node. By default, computes conduction
+            delay for all nodes. If you specify a set of critical nodes, then only those
+            nodes are used for computing conduction delay.
+        total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per
+            path is defined as the ratio of the actual path length to the shortest path
+            length between the base node and the root tip. The total path coverage is the sum of
+            the tortuosity of all the root paths.
+    """
+    # initialize costs
+    total_root_length = 0
+    total_travel_distance = 0
+    total_path_coverage = 0
+
+    # dictionary that stores each node's distance to the base_node
+    distance_to_base = {}
+    # this method assumes node 0 is the base_node
+    base_node = 0
+    # base node has distance 0 from the base_node
+    distance_to_base[base_node] = 0
+    # position of the base node
+    base_pos = G.nodes[base_node]["pos"]
+
+    # dictionary that stores each node's parent_node in the bfs
+    # this way we avoid visiting the same node twice
+    parent_node = {}
+    parent_node[base_node] = None
+
+    # nodes_to_visit: nodes that have been discovered but not yet visited
+    nodes_to_visit = [base_node]
+    visited_nodes = set()
+
+    # lists that store the edge lengths, the distances from the nodes to each base_node,
+    # and the straight distances from the nodes to the base_node
+    edge_lengths = []
+    travel_distances_to_base = []
+    straight_distances_to_base = []
+    while len(nodes_to_visit) > 0:
+        # visit the next discovered but not visited node
+        current_node = nodes_to_visit.pop(0)
+
+        # if we are trying to  visit an already-visited node, => we have a cycle
+        if current_node in visited_nodes:
+            return float("inf"), float("inf"), float("inf")
+
+        # we've visited current_node
+        visited_nodes.add(current_node)
+
+        # go through current_node's children and add the unvisited nodes to the nodes_to_visit
+        for child_node in G.neighbors(current_node):
+            # ignore current_node's parent_node, this was already visited in the bfs
+            if child_node != parent_node[current_node]:
+                edge_length = G[current_node][child_node]["weight"]
+                edge_lengths.append(edge_length)
+
+                # to get to the base_node, the child_node must go to current_node and then to the base_node
+                # thus, child_node's distance_to_base = distance from child_node to current_node + distance from current_node to base
+                child_distance_to_base = edge_length + distance_to_base[current_node]
+                distance_to_base[child_node] = child_distance_to_base
+
+                # if we have specified a set of critical nodes, only those nodes contribute to conduction delay
+                if critical_nodes == None or child_node in critical_nodes:
+                    travel_distances_to_base.append(child_distance_to_base)
+                    # position of the critical node
+                    child_pos = G.nodes[child_node]["pos"]
+                    # straight distance from the critical node to the base node
+                    straight_distance_to_base = point_dist(base_pos, child_pos)
+                    straight_distances_to_base.append(straight_distance_to_base)
+                parent_node[child_node] = current_node
+                nodes_to_visit.append(child_node)
+
+    # if not every node was visited, => graph is not connected
+    assert len(visited_nodes) == G.number_of_nodes()
+
+    # compute the total path coverage
+    for i in range(len(travel_distances_to_base)):
+        # Handle coincident nodes: if straight distance is 0, tortuosity ratio is 1.0
+        # This occurs when a critical node is at the same position as the base node
+        if straight_distances_to_base[i] == 0:
+            total_path_coverage += 1.0
+        else:
+            total_path_coverage += (
+                travel_distances_to_base[i] / straight_distances_to_base[i]
+            )
+
+    total_root_length = sum(sorted(edge_lengths))
+    total_travel_distance = sum(sorted(travel_distances_to_base))
+
+    return total_root_length, total_travel_distance, total_path_coverage
+
+
 def slope_vector(p1, p2):
     """Given two n-dimensional points, computes the slope m between p1 and p2
 
@@ -195,11 +297,12 @@ def pareto_cost_3d_path_tortuosity(
         conduction delay)
     total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per
         path is defined as the ratio of the actual path length to the shortest path
-        length between the root and the root tip. The total root coverage is the sum of
+        length between the root and the root tip. The total path coverage is the sum of
         the tortuosity of all the root paths.
     """
     assert 0 <= alpha <= 1
     assert 0 <= beta <= 1
+    assert alpha + beta <= 1, "alpha + beta must be <= 1 (gamma cannot be negative)"
 
     gamma = 1 - alpha - beta
     cost = (
@@ -291,6 +394,12 @@ def pareto_steiner_fast(G, alpha):
 
     The algorithm uses a greedy approach: always take the edge that will reduce the
     pareto cost of the tree by the smallest amount
+
+    When alpha = 0, the cost is (1 - alpha) * W = W, so the algorithm will try to minimize
+    the wiring cost
+
+    When alpha = 1, the cost is alpha * D = D, so the algorithm will try to minimize the
+    conduction delay.
     """
     assert 0 <= alpha <= 1
 
@@ -489,8 +598,10 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
 
     When alpha = beta = 0, gamma = 1 => cost = -total_path_coverage will be minimized =>
         total_path_coverage will be maximized
-    When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized
-    When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized
+    When alpha = gamma = 0, beta = 1 => cost = total_travel_distance will be minimized =>
+        Satellite tree will be constructed
+    When beta = gamma = 0, alpha = 1 => cost = total_root_length will be minimized =>
+        Steiner tree will be constructed
 
     total_root_length: the sum of the lengths of the edges in the root network
         (a.k.a. material cost, wiring cost)
@@ -499,7 +610,7 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
         conduction delay)
     total_path_coverage: the sum of the tortuosity of all the root paths. The tortuosity per
         path is defined as the ratio of the actual path length to the shortest path
-        length between the root and the root tip. The total root coverage is the sum of
+        length between the base node and the root tip. The total path coverage is the sum of
         the tortuosity of all the root paths.
 
     The algorithm uses a greedy approach: always take the edge that will reduce the
@@ -703,10 +814,23 @@ def pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta):
 
 
 def pareto_front(G):
-    """Given a graph G, compute the Pareto front of optimal solutions
+    """Given a graph G, compute the Pareto front of optimal solutions for the wiring cost and conduction delay.
 
     This allows to compare how G was connected and how G could have been connected had it
-    been trying to optimize wiring cost and conduction delay
+    been trying to optimize wiring cost and conduction delay.
+
+    When alpha = 0, the algorithm computes the satellite tree in linear time. This is the tree
+    that connects the base node to all of the critical nodes in G.
+
+    When alpha != 0, the algorithm computes the Pareto-optimal tree connecting the base node to all
+    of the critical nodes in G. The algorithm attempts to optimize alpha * D + (1 - alpha) * W
+    where D is the conduction delay and W is the wiring cost.
+
+    Args:
+        G (nx.Graph): The graph to compute the Pareto front for
+    Returns:
+        front (dict): A dictionary of edge_lengths, travel_distances_to_base for each alpha value on the front
+        actual (tuple): The actual total_root_length, total_travel_distance of the original plant
     """
     critical_nodes = get_critical_nodes(G)
 
@@ -735,9 +859,70 @@ def pareto_front(G):
     return front, actual
 
 
+def pareto_front_3d_path_tortuosity(G):
+    """
+    Given a graph G, compute the Pareto front of optimal solutions for the 3D path tortuosity
+
+    This allows to compare how G was connected and how G could have been connected had it
+    been trying to optimize wiring cost, conduction delay, and path tortuosity
+
+    Args:
+        G (nx.Graph): The graph to compute the Pareto front for
+    Returns:
+        front (dict): A dictionary of edge_lengths, travel_distances_to_base, and
+            path_coverages for (each alpha, beta) value on the front
+        actual (tuple): The actual total_root_length, total_travel_distance, and
+            total_path_coverage of the original plant
+    """
+    critical_nodes = get_critical_nodes(G)
+
+    # test: compute the actual total_root_length, total_travel_distance, and
+    # total_path_coverage for the original plant
+    mactual, sactual, pactual = graph_costs_3d_path_tortuosity(
+        G, critical_nodes=critical_nodes
+    )
+    actual = (mactual, sactual, pactual)
+
+    # dictionary of edge_lengths, travel_distances_to_base, and path_coverages for each
+    # alpha, beta value on the front
+    front = {}
+
+    for alpha in DEFAULT_ALPHAS:
+        for beta in DEFAULT_BETAS:
+            # Skip invalid combinations where alpha + beta > 1 (gamma would be negative)
+            if alpha + beta > 1:
+                continue
+
+            H = None
+            # if alpha = 0 and beta = 1 compute the satellite tree in linear time
+            if alpha == 0 and beta == 1:
+                H = satellite_tree(G)
+            else:
+                H = pareto_steiner_fast_3d_path_tortuosity(G, alpha, beta)
+
+            # compute the wiring cost, conduction delay and path coverage
+            # only the original critical nodes contribute to conduction delay
+            total_root_length, total_travel_distance, total_path_coverage = (
+                graph_costs_3d_path_tortuosity(H, critical_nodes=critical_nodes)
+            )
+            front[(alpha, beta)] = [
+                total_root_length,
+                total_travel_distance,
+                total_path_coverage,
+            ]
+
+    return front, actual
+
+
 def random_tree(G):
     """Given a graph G, compute 1000 random spanning trees as in Conn et al. 2017.
     Only consider the critical nodes (and root node) of G.
+
+    Args:
+        G (nx.Graph): The graph to compute the random trees for
+    Returns:
+        costs (list): A list of (mactual, sactual) tuples for each random tree which
+            represent the wiring cost and conduction delay of the tree.
     """
     random.seed(a=None)
     random_trees = []  # list of 1000 random trees
@@ -773,5 +958,54 @@ def random_tree(G):
         # compute costs for each R, to compare with G
         mactual, sactual = graph_costs(R)
         costs.append((mactual, sactual))
+
+    return costs
+
+
+def random_tree_3d_path_tortuosity(G):
+    """
+    Given a graph G, compute 1000 random spanning trees as in Conn et al. 2017.
+    Only consider the critical nodes (and root node) of G.
+
+    Args:
+        G (nx.Graph): The graph to compute the random trees for
+    Returns:
+        costs (list): A list of (mactual, sactual, pactual) tuples for each random tree which
+            represent the wiring cost, conduction delay, and path coverage of the tree.
+    """
+    random.seed(a=None)
+    random_trees = []  # list of 1000 random trees
+    costs = []
+
+    for i in range(1000):  # 1000 random trees
+        # instantiate random tree
+        R = nx.Graph()
+        G_critical_nodes = get_critical_nodes(G)
+
+        while len(G_critical_nodes) > 0:
+            # randomly draw 1 node from G's critical nodes
+            index = random.randrange(len(G_critical_nodes))
+            g = G_critical_nodes[index]
+
+            if len(R.nodes) > 0:  # if R is not empty
+                # add the new point AND a random edge
+                r_index = random.randrange(len(R.nodes))  # get a random node from R
+                r = list(R.nodes)[r_index]
+                R.add_node(g, pos=G.nodes.data()[g]["pos"])
+                R.add_edge(r, g, weight=node_dist(R, r, g))
+
+            else:  # if R is empty
+                # add the new point
+                R.add_node(g, pos=G.nodes.data()[g]["pos"])
+
+            # remove added node from candidate list and repeat
+            del G_critical_nodes[index]
+
+        random_trees.append(R)
+
+    for R in random_trees:
+        # compute costs for each R, to compare with G
+        mactual, sactual, pactual = graph_costs_3d_path_tortuosity(R)
+        costs.append((mactual, sactual, pactual))
 
     return costs

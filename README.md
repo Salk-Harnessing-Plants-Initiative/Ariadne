@@ -24,6 +24,17 @@
 
 🔨 That said, if you're interested in tinkering with the code, enjoy! PRs are always welcome. And please reach out with any comments, ideas, suggestions, or feedback.
 
+## Documentation
+
+📚 **Detailed documentation for scientists and developers:**
+
+| Document | Description |
+|----------|-------------|
+| [Scientific Methods](docs/scientific-methods.md) | Pareto optimality calculations, mathematical formulas, and academic references |
+| [Output Fields Reference](docs/output-fields.md) | Complete reference for all CSV output fields with units and interpretation |
+
+For citing the underlying methods, see the [References](#references) section or the [Scientific Methods](docs/scientific-methods.md) documentation.
+
 ## Installation
 
 Ariadne is installed as a Python package called `ariadne-roots`. We recommend using a package manager and creating an isolated environment for `ariadne-roots` and its dependencies.
@@ -272,6 +283,17 @@ The RSA traits included in the CSV are
 - **Total minimal distance:** Sum of LR minimal distances plus PR minimal length
 - **Tortuosity (Material/Total Distance Ratio):** Total root length divided by total minimal distance
 
+#### 3D Pareto Analysis Fields (Optional)
+
+When **"Add path tortuosity to Pareto (3D, slower)"** is enabled during analysis, additional fields are computed that include path coverage as a third objective:
+
+- **Path tortuosity:** Sum of tortuosity values for all root paths
+- **alpha_3d, beta_3d, gamma_3d:** Interpolated Pareto weights (α + β + γ = 1)
+- **epsilon_3d:** Multiplicative ε-indicator measuring distance from the 3D Pareto front
+- **epsilon_3d_material/transport/coverage:** Individual ratio components showing which objective constrains optimality
+- **Corner costs (Steiner/Satellite/Coverage):** Reference values for optimal architectures at each corner of the Pareto surface
+
+For complete field descriptions, see the [Output Fields Reference](docs/output-fields.md).
 
 ##### Keybinds
 * `Left-click`: place/select node. 

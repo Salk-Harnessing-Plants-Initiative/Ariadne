@@ -13,17 +13,31 @@ import numpy as np
 import copy
 import networkx as nx
 import math
+import logging
 
 from queue import Queue
 from scipy.spatial import ConvexHull  # Import ConvexHull class
 
-from ariadne_roots.pareto_functions import pareto_front, random_tree
+from ariadne_roots.pareto_functions import (
+    pareto_front,
+    random_tree,
+    pareto_front_3d_path_tortuosity,
+    random_tree_3d_path_tortuosity,
+    get_critical_nodes,
+)
 from ariadne_roots import config
 
 
 # parser = argparse.ArgumentParser(description='select file')
 # parser.add_argument('-i', '--input', help='Full path to input file', required=True)
 # args = parser.parse_args()
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler()],
+)
 
 
 def distance(p1, p2):
@@ -188,6 +202,125 @@ def make_graph_alt(target):  # pragma: no cover
                 node_num += 1
                 group_num += 1
     return G
+
+
+def plot_graph(
+    G,
+    node_size_factor=20,
+    node_base_size=2,
+    edge_width_factor=1.0,
+    base_node_color="#2E8B57",
+    secondary_node_color="#A0522D",
+    edge_color="#3D2B1F",
+    critical_node_color="#FF0000",
+    with_labels=False,
+    title="Root System Graph",
+    figsize=(10, 15),
+    show_grid=True,
+    save_path=None,
+):  # pragma: no cover
+    """Plots a root-system graph using node positions from their attributes, with axes and optional grid.
+
+    Args:
+        G (networkx.DiGraph): The graph to be plotted. Must have node positions stored
+            as attributes. Assumes the graph is directed.
+        node_size_factor (float, optional): Multiplier for node sizes based on degree.
+            Defaults to 20.
+        node_base_size (int, optional): Base size for all nodes.
+            Defaults to 2.
+        edge_width_factor (float, optional): Multiplier for edge widths.
+            Defaults to 1.0.
+        base_node_color (str, optional): Color for the base node (node 0).
+            Defaults to "#2E8B57".
+        secondary_node_color (str, optional): Color for all other nodes.
+            Defaults to "#A0522D".
+        edge_color (str, optional): Color of the edges. Defaults to
+            "#3D2B1F".
+        critical_node_color (str, optional): Color for nodes with degree == 1 (critical nodes).
+            Defaults to "#FF0000".
+        with_labels (bool, optional): Whether to display labels on nodes.
+            Defaults to False.
+        title (str, optional): Title for the plot. Defaults to "Root System Graph".
+        figsize (tuple, optional): Size of the plot figure (width, height).
+            Defaults to (10, 15).
+        show_grid (bool, optional): Whether to display a grid. Defaults to True.
+        save_path (str, optional): The file path to save the plot. Defaults to None.
+
+    Raises:
+        ValueError: If any node is missing a "pos" attribute.
+
+    Returns:
+        Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]:
+            The matplotlib figure and axes objects for further customization.
+    """
+    # Extract positions from the nodes' "pos" attribute
+    try:
+        pos = nx.get_node_attributes(G, "pos")
+        if len(pos) != len(G.nodes()):
+            raise ValueError("Not all nodes have a 'pos' attribute.")
+    except KeyError:
+        raise ValueError("Nodes must have a 'pos' attribute for plotting.")
+
+    # Define the base node explicitly as node 0
+    base_node = 0
+    if base_node not in G.nodes():
+        raise ValueError("Node 0 (base node) is not present in the graph.")
+
+    # Node sizes
+    node_sizes = [node_base_size + G.degree(n) * node_size_factor for n in G.nodes()]
+
+    # Assign node colors based on conditions
+    node_colors = []
+    for n in G.nodes():
+        if n == base_node:
+            node_colors.append(base_node_color)  # Base node
+        elif G.degree(n) == 1:
+            node_colors.append(critical_node_color)  # critical nodes
+        else:
+            node_colors.append(secondary_node_color)  # Other nodes
+
+    # Edge widths
+    edge_widths = [edge_width_factor * G[u][v].get("weight", 1) for u, v in G.edges()]
+
+    # Create a matplotlib figure and axes
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Draw the graph on the given axes
+    nx.draw(
+        G,
+        pos,
+        ax,
+        with_labels=with_labels,
+        node_size=node_sizes,
+        node_color=node_colors,
+        edge_color=edge_color,
+        width=edge_widths,
+        arrows=True,  # Show direction since the graph is directed
+    )
+
+    # Invert the y-axis to match the coordinate system
+    ax.invert_yaxis()
+
+    # Add x and y axes to plot
+    ax.set_axis_on()
+    ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+
+    # Set grid and axis labels
+    if show_grid:
+        ax.grid(color="lightgray", linestyle="--", linewidth=0.5)
+    ax.set_aspect("equal", adjustable="datalim")
+    ax.set_xlabel("X Position", fontsize=12)
+    ax.set_ylabel("Y Position", fontsize=12)
+
+    # Add title
+    ax.set_title(title, fontsize=14)
+
+    # Save the plot if a save path is provided
+    if save_path:
+        plt.savefig(save_path, bbox_inches="tight", dpi=300, facecolor="w")
+        print(f"Plot saved to {save_path}")
+
+    return fig, ax
 
 
 def save_plot(path, name, title):  # pragma: no cover
@@ -472,6 +605,163 @@ def plot_all(front, actual, randoms, mrand, srand, dest):  # pragma: no cover
     plt.close(fig)
 
 
+def plot_all_3d(
+    front_3d, actual_3d, randoms_3d, mrand, srand, prand, save_path
+):  # pragma: no cover
+    """Plot the 3D Pareto front as a surface with actual plant and random trees.
+
+    Creates a 3D visualization of the Pareto front using triangulated surface
+    interpolation. The surface is colored by path coverage (z-axis) to show
+    the gradient across the front.
+
+    Data is scaled internally using config.length_scale_factor, matching the
+    2D plot_all() behavior. Length (x) and distance (y) are scaled, while
+    path coverage (z) is dimensionless and not scaled.
+
+    Args:
+        front_3d (dict): A dictionary of total root lengths, total distances to the base and
+            path_coverages for each (alpha, beta) value on the front
+        actual_3d (tuple): The actual total_root_length, total_travel_distance, and
+            total_path_coverage of the original plant
+        randoms_3d (list): A list of random tree costs
+        mrand (float): The mean total root length of the random trees
+        srand (float): The mean total travel distance of the random trees
+        prand (float): The mean path coverage of the random trees
+        save_path (str): The file path to save the plot
+    """
+    from matplotlib.tri import Triangulation
+    from scipy.spatial import Delaunay
+
+    def scale_data(data):
+        """Scale data by user-configured factor."""
+        return data * config.length_scale_factor
+
+    fig = plt.figure(figsize=(12, 9))
+    ax = fig.add_subplot(111, projection="3d")
+
+    # Set labels and title with units from config
+    ax.set_xlabel(
+        f"Total Root Length ({config.length_scale_unit})", fontsize=12, labelpad=10
+    )
+    ax.set_ylabel(
+        f"Travel Distance ({config.length_scale_unit})", fontsize=12, labelpad=10
+    )
+    ax.set_zlabel("Path Coverage (ratio)", fontsize=12, labelpad=10)
+    ax.set_title("3D Pareto Front: Root Architecture Trade-offs", fontsize=15, pad=20)
+
+    logging.debug(f"Front 3D: {len(front_3d)} points")
+
+    # Extract and scale x, y values; z (path coverage) is dimensionless, not scaled
+    x_values = np.array([scale_data(x[0]) for x in front_3d.values()])
+    y_values = np.array([scale_data(x[1]) for x in front_3d.values()])
+    z_values = np.array([x[2] for x in front_3d.values()])
+
+    # Try to create a triangulated surface plot
+    surface_plotted = False
+    if len(x_values) >= 3:
+        try:
+            # Create 2D Delaunay triangulation on (x, y) coordinates
+            points_2d = np.column_stack((x_values, y_values))
+            tri = Delaunay(points_2d)
+
+            # Create matplotlib Triangulation from Delaunay result
+            triangulation = Triangulation(x_values, y_values, tri.simplices)
+
+            # Plot the triangulated surface colored by path coverage
+            surf = ax.plot_trisurf(
+                triangulation,
+                z_values,
+                cmap="viridis",
+                alpha=0.7,
+                edgecolor="none",
+                linewidth=0,
+            )
+
+            # Add colorbar for path coverage
+            cbar = fig.colorbar(surf, ax=ax, shrink=0.5, aspect=10, pad=0.1)
+            cbar.set_label("Path Coverage", fontsize=10)
+
+            surface_plotted = True
+            logging.debug("Successfully created triangulated surface plot")
+
+        except Exception as e:
+            # Triangulation failed (e.g., collinear points)
+            logging.warning(f"Triangulation failed, falling back to scatter plot: {e}")
+
+    # Fallback: scatter plot for Pareto front if surface failed or too few points
+    if not surface_plotted:
+        ax.scatter(
+            x_values,
+            y_values,
+            z_values,
+            c=z_values,
+            cmap="viridis",
+            marker="o",
+            s=50,
+            alpha=0.8,
+            label="Pareto Front",
+        )
+        logging.info("Using scatter plot for Pareto front (triangulation not possible)")
+
+    # Plot the actual plant (orange X marker) - scale x,y but not z (dimensionless)
+    ax.scatter(
+        [scale_data(actual_3d[0])],
+        [scale_data(actual_3d[1])],
+        [actual_3d[2]],
+        color="orange",
+        marker="X",
+        s=150,
+        edgecolors="black",
+        linewidths=0.5,
+        label="Actual Plant",
+        zorder=5,
+    )
+
+    # Plot the random tree costs (green + markers) - scale x,y but not z
+    if len(randoms_3d) > 0:
+        randoms_3d_array = np.array(randoms_3d)
+        ax.scatter(
+            randoms_3d_array[:, 0] * config.length_scale_factor,
+            randoms_3d_array[:, 1] * config.length_scale_factor,
+            randoms_3d_array[:, 2],
+            color="green",
+            marker="+",
+            s=50,
+            alpha=0.6,
+            linewidths=1,
+            label="Random Trees",
+        )
+
+    # Plot the centroid of random trees (red diamond) - scale x,y but not z
+    ax.scatter(
+        [scale_data(mrand)],
+        [scale_data(srand)],
+        [prand],
+        color="red",
+        marker="D",
+        s=100,
+        edgecolors="black",
+        linewidths=0.5,
+        label="Random Centroid",
+        zorder=5,
+    )
+
+    # Add legend
+    ax.legend(loc="upper left", fontsize=9)
+
+    # Enable grid
+    ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+
+    # Save as PNG
+    plt.savefig(save_path, bbox_inches="tight", dpi=300)
+
+    # Also save as SVG for better quality
+    svg_dest = save_path.with_suffix(".svg")
+    plt.savefig(svg_dest, bbox_inches="tight", format="svg")
+
+    plt.close(fig)
+
+
 def distance_from_front(front, actual_tree):
     """Return the interpolated alpha for the actual tree, and its distance to the front.
 
@@ -618,13 +908,155 @@ def calculate_tradeoff(front, actual_tree):
     }
 
 
+def distance_from_front_3d(front, actual_tree):
+    """Compute the epsilon indicator distance from a tree to the 3D Pareto front.
+
+    Uses the multiplicative ε-indicator, a standard metric in multi-objective
+    optimization (Zitzler et al., 2003). The epsilon value represents the
+    minimum scaling factor needed to make a Pareto-optimal tree dominate the
+    actual tree in all objectives.
+
+    Implements barycentric interpolation with the 3 nearest (α, β) points for
+    higher precision, matching the 2D distance_from_front() approach.
+
+    Formula: ε = min_{r ∈ Front} max_i (actual_i / front_i)
+
+    Interpretation:
+        - ε = 1.0: Tree is on the Pareto front
+        - ε > 1.0: Tree is suboptimal; ε is the scaling factor
+        - ε < 1.0: Tree dominates the front (should not happen)
+
+    References:
+        Zitzler et al. (2003), IEEE Trans. Evol. Comput. 7(2), 117-132
+        Chandrasekhar & Navlakha (2019), Proc. Royal Society B, Supplementary Eq. 2
+
+    Args:
+        front: Dict mapping (alpha, beta) tuples to [length, distance, tortuosity] lists
+        actual_tree: Tuple of (total_root_length, total_travel_distance, path_tortuosity)
+
+    Returns:
+        Dict with keys:
+            - epsilon: float - multiplicative ε-indicator (scaling factor)
+            - alpha: float - interpolated alpha parameter
+            - beta: float - interpolated beta parameter
+            - gamma: float - computed as 1 - alpha - beta
+            - epsilon_components: dict with material/transport/coverage ratios
+            - corner_costs: dict with steiner/satellite/coverage corner values
+    """
+    # For each (alpha, beta) value, find distance to the actual tree
+    distances = {}
+    ratios = {}  # Store component ratios for each point
+
+    for alpha_beta_value, alpha_beta_tree in front.items():
+        # Division-by-zero guard: skip points with any zero cost dimension
+        if any(v == 0 for v in alpha_beta_tree):
+            continue
+
+        material_ratio = actual_tree[0] / alpha_beta_tree[0]
+        transport_ratio = actual_tree[1] / alpha_beta_tree[1]
+        path_coverage_ratio = actual_tree[2] / alpha_beta_tree[2]
+
+        epsilon = max(material_ratio, transport_ratio, path_coverage_ratio)
+        distances[alpha_beta_value] = epsilon
+        ratios[alpha_beta_value] = (
+            material_ratio,
+            transport_ratio,
+            path_coverage_ratio,
+        )
+
+    # Handle edge case: no valid points
+    if not distances:
+        # Fall back to returning default values if all points have zeros
+        return {
+            "epsilon": float("inf"),
+            "alpha": 0.0,
+            "beta": 0.0,
+            "gamma": 1.0,
+            "epsilon_components": {
+                "material": float("inf"),
+                "transport": float("inf"),
+                "coverage": float("inf"),
+            },
+            "corner_costs": {
+                "steiner": (0.0, 0.0, 0.0),
+                "satellite": (0.0, 0.0, 0.0),
+                "coverage": (0.0, 0.0, 0.0),
+            },
+        }
+
+    # Find the 3 nearest (alpha, beta) points by epsilon distance
+    sorted_points = sorted(distances.items(), key=lambda x: x[1])
+
+    # Get up to 3 closest points
+    n_points = min(3, len(sorted_points))
+    closest_points = sorted_points[:n_points]
+
+    # Extract closest point's epsilon and ratios for the result
+    closest_ab, closest_epsilon = closest_points[0]
+    closest_ratios = ratios[closest_ab]
+
+    # Barycentric interpolation using inverse-distance weighting
+    if n_points == 1:
+        # Single point: use directly
+        alpha = float(closest_ab[0])
+        beta = float(closest_ab[1])
+    else:
+        # Inverse distance weighting for 2 or 3 points
+        # Add small epsilon to avoid division by zero when distance is exactly 0
+        eps_guard = 1e-10
+
+        weights = []
+        for ab, dist in closest_points:
+            weights.append(1.0 / (dist + eps_guard))
+
+        total_weight = sum(weights)
+        normalized_weights = [w / total_weight for w in weights]
+
+        # Interpolate alpha and beta
+        alpha = sum(w * ab[0] for w, (ab, _) in zip(normalized_weights, closest_points))
+        beta = sum(w * ab[1] for w, (ab, _) in zip(normalized_weights, closest_points))
+
+        # Clamp to valid range (α ≥ 0, β ≥ 0, α + β ≤ 1)
+        alpha = max(0.0, min(1.0, alpha))
+        beta = max(0.0, min(1.0 - alpha, beta))
+
+    # Compute gamma
+    gamma = 1.0 - alpha - beta
+
+    # Look up corner costs from the front
+    # Steiner: α=1, β=0, γ=0 (minimizes length)
+    # Satellite: α=0, β=1, γ=0 (minimizes distance)
+    # Coverage: α=0, β=0, γ=1 (minimizes tortuosity)
+    steiner_key = (1.0, 0.0)
+    satellite_key = (0.0, 1.0)
+    coverage_key = (0.0, 0.0)
+
+    steiner_costs = front.get(steiner_key, [0.0, 0.0, 0.0])
+    satellite_costs = front.get(satellite_key, [0.0, 0.0, 0.0])
+    coverage_costs = front.get(coverage_key, [0.0, 0.0, 0.0])
+
+    return {
+        "epsilon": float(closest_epsilon),
+        "alpha": float(alpha),
+        "beta": float(beta),
+        "gamma": float(gamma),
+        "epsilon_components": {
+            "material": float(closest_ratios[0]),
+            "transport": float(closest_ratios[1]),
+            "coverage": float(closest_ratios[2]),
+        },
+        "corner_costs": {
+            "steiner": tuple(float(v) for v in steiner_costs),
+            "satellite": tuple(float(v) for v in satellite_costs),
+            "coverage": tuple(float(v) for v in coverage_costs),
+        },
+    }
+
+
 def pareto_calcs(H):
     """Perform Pareto-related calculations."""
     front, actual = pareto_front(H)
     mactual, sactual = actual
-
-    # for debug: show total_root_length, total_travel_distance
-    print(list(front.items())[0:5])
 
     # Calculate tradeoff metrics
     tradeoff_info = calculate_tradeoff(front, actual)
@@ -652,6 +1084,91 @@ def pareto_calcs(H):
 
     # Merge tradeoff metrics into results
     results.update(tradeoff_info)
+
+    return results, front, randoms
+
+
+def pareto_calcs_3d_path_tortuosity(H):
+    """Perform Pareto-related calculations using 3D Pareto Front with path tortuosity.
+
+    Uses the multiplicative ε-indicator to measure distance from the Pareto front.
+    Returns interpolated (α, β, γ) parameters and epsilon components.
+
+    Args:
+        H (nx.Graph): NetworkX graph representing the root system.
+
+    Returns:
+        tuple: (results_dict, front, randoms) where results_dict contains:
+            - Total root length, Travel distance, Path tortuosity (actual tree)
+            - alpha_3d, beta_3d, gamma_3d (interpolated Pareto weights)
+            - epsilon_3d (multiplicative ε-indicator)
+            - epsilon_3d_material/transport/coverage (ratio components)
+            - Same fields for random trees with "(random)" suffix
+            - Corner costs: Steiner_*_3d, Satellite_*_3d, Coverage_*_3d
+    """
+    # Calculate the Pareto front using the 3D path tortuosity
+    front, actual = pareto_front_3d_path_tortuosity(H)
+    # Extract the actual tree values
+    # mactual is the total root length, sactual is the total travel distance, and pactual is the path tortuosity
+    mactual, sactual, pactual = actual
+
+    # Calculate the epsilon indicator and interpolated (alpha, beta, gamma)
+    plant_result = distance_from_front_3d(front, actual)
+
+    # Generate random trees
+    randoms = random_tree_3d_path_tortuosity(H)
+
+    # Calculate the mean costs of the random trees
+    mrand = float(np.mean([x[0] for x in randoms]))
+    srand = float(np.mean([x[1] for x in randoms]))
+    prand = float(np.mean([x[2] for x in randoms]))
+
+    # Calculate epsilon indicator for the random tree centroid
+    rand_result = distance_from_front_3d(front, (mrand, srand, prand))
+
+    # Extract corner costs from plant_result (same for both calls)
+    corner_costs = plant_result["corner_costs"]
+
+    # Assemble the results dictionary with _3d suffix for 3D-specific fields
+    results = {
+        # Actual tree measurements (same names as 2D for shared fields)
+        "Total root length": float(mactual),
+        "Travel distance": float(sactual),
+        "Path tortuosity": float(pactual),
+        # Interpolated Pareto parameters
+        "alpha_3d": plant_result["alpha"],
+        "beta_3d": plant_result["beta"],
+        "gamma_3d": plant_result["gamma"],
+        # Epsilon indicator (distance from front)
+        "epsilon_3d": plant_result["epsilon"],
+        # Epsilon components (which dimension drives epsilon)
+        "epsilon_3d_material": plant_result["epsilon_components"]["material"],
+        "epsilon_3d_transport": plant_result["epsilon_components"]["transport"],
+        "epsilon_3d_coverage": plant_result["epsilon_components"]["coverage"],
+        # Random tree measurements
+        "Total root length (random)": mrand,
+        "Travel distance (random)": srand,
+        "Path tortuosity (random)": prand,
+        # Random tree Pareto parameters
+        "alpha_3d (random)": rand_result["alpha"],
+        "beta_3d (random)": rand_result["beta"],
+        "gamma_3d (random)": rand_result["gamma"],
+        "epsilon_3d (random)": rand_result["epsilon"],
+        # Random tree epsilon components
+        "epsilon_3d_material (random)": rand_result["epsilon_components"]["material"],
+        "epsilon_3d_transport (random)": rand_result["epsilon_components"]["transport"],
+        "epsilon_3d_coverage (random)": rand_result["epsilon_components"]["coverage"],
+        # Corner architecture reference costs
+        "Steiner_length_3d": corner_costs["steiner"][0],
+        "Steiner_distance_3d": corner_costs["steiner"][1],
+        "Steiner_tortuosity_3d": corner_costs["steiner"][2],
+        "Satellite_length_3d": corner_costs["satellite"][0],
+        "Satellite_distance_3d": corner_costs["satellite"][1],
+        "Satellite_tortuosity_3d": corner_costs["satellite"][2],
+        "Coverage_length_3d": corner_costs["coverage"][0],
+        "Coverage_distance_3d": corner_costs["coverage"][1],
+        "Coverage_tortuosity_3d": corner_costs["coverage"][2],
+    }
 
     return results, front, randoms
 
@@ -822,8 +1339,18 @@ def calculate_distance(p1, p2):
     return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
-def analyze(G):
-    """Report basic root metrics for a given graph."""
+def analyze(G, enable_3d=True):
+    """Report basic root metrics for a given graph.
+
+    Args:
+        G: NetworkX graph representing the root system.
+        enable_3d: If True, compute 3D Pareto analysis (slower).
+                   If False, return empty 3D results.
+
+    Returns:
+        Tuple of (results, front, randoms, results_3d, front_3d, randoms_3d).
+        When enable_3d=False, results_3d, front_3d, randoms_3d are empty.
+    """
     # check that graph is indeed a tree (acyclic, undirected, connected)
     assert nx.is_tree(G)
 
@@ -832,7 +1359,6 @@ def analyze(G):
 
     # find top ("root") node
     for node in H.nodes(data="pos"):
-
         if node[1] == [0, 0]:
             root_node = node[0]
     # the pareto functions are hardcoded to assume node 0 is the top.
@@ -861,6 +1387,12 @@ def analyze(G):
     distance_root = calculate_distance(uppermost_node_pos, lowermost_node_pos)
 
     results, front, randoms = pareto_calcs(H)
+
+    # 3D Pareto analysis is optional (slower: 10,201 iterations vs 101 for 2D)
+    if enable_3d:
+        results_3d, front_3d, randoms_3d = pareto_calcs_3d_path_tortuosity(H)
+    else:
+        results_3d, front_3d, randoms_3d = {}, {}, []
 
     # Calculate lateral root distances with lengths and first-to-last distances
     lateral_root_info = calc_len_LRs_with_distances(H)
@@ -962,4 +1494,4 @@ def analyze(G):
 
     results["Convex Hull Area"] = float(convex_hull_area)
 
-    return results, front, randoms
+    return results, front, randoms, results_3d, front_3d, randoms_3d

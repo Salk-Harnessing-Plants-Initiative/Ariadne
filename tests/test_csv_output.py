@@ -29,7 +29,7 @@ class TestCSVFieldTypes:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         # Numeric fields that should be float or int
         numeric_fields = [
@@ -79,7 +79,7 @@ class TestCSVFieldTypes:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         lr_angles = results.get("LR angles", [])
         assert isinstance(lr_angles, list), "LR angles should be a list"
@@ -98,7 +98,7 @@ class TestCSVFieldTypes:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         lr_lengths = results.get("LR lengths", [])
         assert isinstance(lr_lengths, list), "LR lengths should be a list"
@@ -117,7 +117,7 @@ class TestCSVFieldTypes:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         lr_minimal_lengths = results.get("LR minimal lengths", [])
         assert isinstance(
@@ -142,7 +142,7 @@ class TestCSVFieldRanges:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         positive_fields = [
             "Total root length",
@@ -163,7 +163,7 @@ class TestCSVFieldRanges:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         lr_angles = results.get("LR angles", [])
         for i, angle in enumerate(lr_angles):
@@ -185,7 +185,7 @@ class TestCSVFieldRanges:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         if results.get("LR density") is not None:
             assert results["LR density"] >= 0, "LR density should be non-negative"
@@ -201,7 +201,7 @@ class TestCSVFieldRanges:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         alpha = results.get("alpha")
         if alpha is not None:
@@ -221,7 +221,7 @@ class TestCSVSerialization:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         # Serialize to CSV
         output = io.StringIO()
@@ -244,7 +244,7 @@ class TestCSVSerialization:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         # Check string representation of array fields
         for field in ["LR angles", "LR lengths", "LR minimal lengths"]:
@@ -273,7 +273,7 @@ class TestMattPlatreData:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         # Check LR angles specifically (the field Matt reported)
         for i, angle in enumerate(results.get("LR angles", [])):
@@ -292,7 +292,7 @@ class TestMattPlatreData:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         # Check LR angles specifically (the field Matt reported)
         for i, angle in enumerate(results.get("LR angles", [])):
@@ -311,7 +311,7 @@ class TestMattPlatreData:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         # Check LR angles specifically (the field Matt reported)
         for i, angle in enumerate(results.get("LR angles", [])):
@@ -330,7 +330,7 @@ class TestMattPlatreData:
             data = json.load(f)
             graph = json_graph.adjacency_graph(data)
 
-        results, _, _ = quantify.analyze(graph)
+        results, _, _, _, _, _ = quantify.analyze(graph, enable_3d=False)
 
         # LR angles should be 0-180
         for angle in results.get("LR angles", []):
