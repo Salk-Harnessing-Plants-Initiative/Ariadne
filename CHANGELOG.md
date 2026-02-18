@@ -7,16 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0a1] - 2026-02-18 (Pre-release)
+
 ### Added
 
-- GUI checkbox "Add path tortuosity to Pareto (3D, slower)" in scale dialog for optional 3D analysis
-- 3D surface plot visualization using Delaunay triangulation for Pareto front
-  - Surface colored by path coverage using viridis colormap
-  - Colorbar showing path coverage gradient
+- **3D Pareto path tortuosity analysis** (PR #19) - Major new capability for analyzing root system architecture in three dimensions
+  - GUI checkbox "Add path tortuosity to Pareto (3D, slower)" in scale dialog for optional 3D analysis
+  - 3D surface plot visualization using Delaunay triangulation for Pareto front
+  - Surface colored by path coverage using viridis colormap with colorbar
   - Graceful fallback to scatter plot when triangulation fails (collinear points)
-- `enable_3d` parameter to `analyze()` function (default: True for backward compatibility)
+  - `enable_3d` parameter to `analyze()` function (default: True for backward compatibility)
+- **Tradeoff calculation** for comparing actual root architecture to optimal Steiner/Satellite architectures (Conn et al., 2019)
+  - New `calculate_tradeoff()` function computes Steiner (material-optimal) and Satellite (transport-optimal) points
+  - 7 new CSV output fields: `Tradeoff`, `Steiner_length`, `Steiner_distance`, `Satellite_length`, `Satellite_distance`, `Actual_ratio`, `Optimal_ratio`
+- **Alpha interpolation** for more precise characteristic alpha values in Pareto front analysis
+  - `distance_from_front()` now interpolates between the two closest discrete alpha values
+  - Returns Python floats (not strings) for clean CSV serialization
+- Comprehensive test suite for 3D Pareto functions (`tests/test_pareto_3d.py`, `tests/test_scientific_integration.py`)
+- Scientific documentation (`docs/scientific-methods.md`, `docs/output-fields.md`)
 - Explicit exclusions in scaling.py for 3D ratio fields: "Path tortuosity", "alpha_beta"
-- Comprehensive test suite for 3D Pareto functions (`tests/test_pareto_3d.py`)
 
 ### Fixed
 
@@ -26,34 +35,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Parameter validation: `alpha + beta <= 1` assertion in `pareto_cost_3d_path_tortuosity`
   - Invalid (alpha, beta) combinations now skipped in `pareto_front_3d_path_tortuosity`
 - 3D results scaling now applied consistently with 2D results in main.py
+- 3D plot internal scaling to match CSV output values
+- Fixed `np.float64` serialization in CSV output for LR angles, lengths, and other numeric fields
+- Fixed double-scaling bug in Pareto front graph visualization where data was scaled twice
 - Restored "Tortuosity" key name in results dict (was incorrectly renamed during branch merge)
 
 ### Changed
 
 - `plot_all_3d()` now uses triangulated surface instead of line plot for better visualization
 - 3D analysis is optional via GUI checkbox (disabled by default for performance)
-- Alpha interpolation for more precise characteristic alpha values in Pareto front analysis
-  - `distance_from_front()` now interpolates between the two closest discrete alpha values
-  - Returns Python floats (not strings) for clean CSV serialization
-  - Added tests for interpolation, edge cases, and type validation
-- Tradeoff calculation for comparing actual root architecture to optimal Steiner/Satellite architectures (Conn et al., 2019)
-  - New `calculate_tradeoff()` function computes Steiner (material-optimal) and Satellite (transport-optimal) points
-  - 7 new CSV output fields: `Tradeoff`, `Steiner_length`, `Steiner_distance`, `Satellite_length`, `Satellite_distance`, `Actual_ratio`, `Optimal_ratio`
-  - Tradeoff metric quantifies how close actual root is to theoretically optimal architectures
-  - Dimensionless ratio fields excluded from scaling transformation
+- Dimensionless ratio fields excluded from scaling transformation
 
-### Fixed
-
-- Fixed `np.float64` serialization in CSV output for LR angles, lengths, and other numeric fields
-- Fixed double-scaling bug in Pareto front graph visualization where data was scaled twice
-- Updated test fixtures to use Python native floats instead of numpy types
-
-### Added
-
-- Comprehensive CSV output validation tests (`tests/test_csv_output.py`)
-  - Field type validation (Python native types, not numpy)
-  - Field range validation (angles 0-180°, lengths ≥ 0, etc.)
-  - CSV serialization validation (no numpy type strings)
+**Note**: This is a pre-release version (alpha 1 of 0.2.0) for testing the new 3D Pareto analysis features.
 
 ## [0.1.0a1] - 2024-11-11 (Pre-release)
 
@@ -106,7 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-file batch processing
 - NetworkX-based graph algorithms for root networks
 
-[Unreleased]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/compare/v0.1.0a1...HEAD
+[Unreleased]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/compare/v0.2.0a1...HEAD
+[0.2.0a1]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/compare/v0.1.0a1...v0.2.0a1
 [0.1.0a1]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/compare/v0.0.3...v0.1.0a1
 [0.0.3]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/releases/tag/v0.0.2
