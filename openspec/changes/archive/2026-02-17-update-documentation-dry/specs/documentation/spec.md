@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Scientific Methods Documentation
 
@@ -22,6 +22,8 @@ The documentation MUST include:
 - **WHEN** they need to understand the mathematical basis
 - **THEN** they can find formulas and explanations in `docs/scientific-methods.md`
 - **AND** the documentation cross-references relevant code locations
+
+## ADDED Requirements
 
 ### Requirement: Output Fields Documentation
 

@@ -82,7 +82,7 @@ The test suite SHALL include tests that verify random operations are reproducibl
 - **THEN** returned costs are identical across multiple calls
 - **AND** mean values (mrand, srand, prand) are reproducible
 
-### Requirement: Test Fixtures from Real Data
+### Requirement: Real Data Regression Tests
 
 The test suite SHALL include regression tests using saved expected outputs from real analysis runs.
 
