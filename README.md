@@ -8,11 +8,11 @@
 
 📷 It features a GUI for semi-automated image segmentation
 
-<img src="assets/color-final.gif" width="250" height="250">
+<img src="https://raw.githubusercontent.com/Salk-Harnessing-Plants-Initiative/Ariadne/v0.2.0/assets/color-final.gif" width="250" height="250">
 
 ⏰ with support for time-series GIFs
 
-<img src="assets/early-final.gif" width="250" height="250">
+<img src="https://raw.githubusercontent.com/Salk-Harnessing-Plants-Initiative/Ariadne/v0.2.0/assets/early-final.gif" width="250" height="250">
 
 ☠️ that creates dynamic 2D skeleton graphs of the root system architecture (RSA).
 
@@ -30,10 +30,10 @@
 
 | Document | Description |
 |----------|-------------|
-| [Scientific Methods](docs/scientific-methods.md) | Pareto optimality calculations, mathematical formulas, and academic references |
-| [Output Fields Reference](docs/output-fields.md) | Complete reference for all CSV output fields with units and interpretation |
+| [Scientific Methods](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/blob/v0.2.0/docs/scientific-methods.md) | Pareto optimality calculations, mathematical formulas, and academic references |
+| [Output Fields Reference](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/blob/v0.2.0/docs/output-fields.md) | Complete reference for all CSV output fields with units and interpretation |
 
-For citing the underlying methods, see the [References](#references) section or the [Scientific Methods](docs/scientific-methods.md) documentation.
+For citing the underlying methods, see the [References](#references) section or the [Scientific Methods](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/blob/v0.2.0/docs/scientific-methods.md) documentation.
 
 ## Installation
 
@@ -191,7 +191,7 @@ Follow the instructions to install [Miniforge3](https://github.com/conda-forge/m
 1. **Click on “Trace”** to trace roots.
 2. The following window should open:
 
-    <img src="assets/Trace_Menu.png" width="450" height="450">
+    <img src="https://raw.githubusercontent.com/Salk-Harnessing-Plants-Initiative/Ariadne/v0.2.0/assets/Trace_Menu.png" width="450" height="450">
 
 3. **Click on “Import image file”** and select the image to trace the roots.
 4. **Select the zoom factor for your image** 
@@ -226,7 +226,7 @@ Follow the instructions to install [Miniforge3](https://github.com/conda-forge/m
 3. **Run the analysis:**
     - Click on "Analyze" in Ariadne.
 
-    <img src="assets/Welcome.png" width="400" height="250">
+    <img src="https://raw.githubusercontent.com/Salk-Harnessing-Plants-Initiative/Ariadne/v0.2.0/assets/Welcome.png" width="400" height="250">
 
     - **Set scaling parameters** (optional):
         - A dialog will appear asking you to configure measurement units
@@ -293,7 +293,7 @@ When **"Add path tortuosity to Pareto (3D, slower)"** is enabled during analysis
 - **epsilon_3d_material/transport/coverage:** Individual ratio components showing which objective constrains optimality
 - **Corner costs (Steiner/Satellite/Coverage):** Reference values for optimal architectures at each corner of the Pareto surface
 
-For complete field descriptions, see the [Output Fields Reference](docs/output-fields.md).
+For complete field descriptions, see the [Output Fields Reference](https://github.com/Salk-Harnessing-Plants-Initiative/Ariadne/blob/v0.2.0/docs/output-fields.md).
 
 ##### Keybinds
 * `Left-click`: place/select node. 
